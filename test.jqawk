@@ -1,0 +1,7 @@
+{ print "name is '" + $.name + "'"; }
+$.name == "tiny tony" {
+  print "  thats a tiny tony!!";
+}
+$.age > 60 {
+  print "  thats a old tony!!";
+}
