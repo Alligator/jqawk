@@ -440,8 +440,8 @@ class Evaluator {
     throw new Error('expected top level JSON to be an array or object');
   }
 
-  async run(file) {
-    this.json = JSON.parse(await Deno.readTextFile(file));
+  async run(json) {
+    this.json = json;
 
     this.forEachRecord((record) => {
       this.prog.forEach(({ pattern, body }) => {
@@ -478,9 +478,10 @@ let file;
 if (args.f) {
   src = Deno.readTextFileSync(args.f);
   file = args._[0];
-} else if (args._.length < 2) {
-  usage()
 } else {
+  if (args._.length < 1) {
+    usage()
+  }
   src = args._[0];
   file = args._[1];
 }
@@ -490,8 +491,17 @@ const prog = p.parseProgram();
 
 try {
   const e = new Evaluator(prog);
-  await e.run(file);
+
+  if (file) {
+    const json = JSON.parse(await Deno.readTextFile(file));
+    await e.run(json);
+  } else {
+    const stdin = await Deno.readAll(Deno.stdin);
+    const content = new TextDecoder().decode(stdin);
+    const json = JSON.parse(content);
+    await e.run(json);
+  }
 } catch (e) {
-  console.error(e);
+  console.error(e.message);
   Deno.exit(1);
 }
