@@ -1,3 +1,5 @@
+import { parse } from "https://deno.land/std@0.106.0/flags/mod.ts";
+
 class Lexer {
   constructor(src) {
     this.src = src;
@@ -19,10 +21,10 @@ class Lexer {
   }
 
   simpleToken(type) {
-    return { type };
+    return { type, line: this.line };
   }
   stringToken(type, str) {
-    return { type, str };
+    return { type, str, line: this.line };
   }
 
   isAlpha(c) {
@@ -112,7 +114,10 @@ class Lexer {
       case '>': return this.simpleToken('greater');
       case '{': return this.simpleToken('lcurly');
       case '}': return this.simpleToken('rcurly');
+      case '[': return this.simpleToken('lsquare');
+      case ']': return this.simpleToken('rsquare');
       case '.': return this.simpleToken('dot');
+      case ',': return this.simpleToken('comma');
       case ';': return this.simpleToken('semicolon');
       case '=': {
         if (this.peek() === '=') {
@@ -175,23 +180,38 @@ class Parser {
   }
 }
 
-function jsonVal(value) {
-  return { type: 'json', value };
-}
-
 function val(value) {
-  return { value };
+  if (value === null) {
+    return { type: null };
+  }
+  switch (typeof value) {
+    case 'number':
+      return { type: 'number', value };
+    case 'string':
+      return { type: 'string', value };
+    case 'boolean':
+      return { type: 'bool', value };
+    case 'object': {
+      if (Array.isArray(value)) {
+        return { type: 'array', value };
+      }
+      return { type: 'object', value };
+    }
+  }
+
+  throw new Error(`cannot create a value from ${value}`);
 }
 
 class Evaluator {
   constructor(prog) {
     this.prog = prog;
     this.pos = 0;
+    this.environment = {};
   }
 
   // hand rolled pratt parser
   // this should probably be in it's own class...
-  evaluate(context, tokens, startType) {
+  evaluate(tokens, startType) {
     const precedence = {
       none: 0,
       assign: 10,
@@ -217,16 +237,38 @@ class Evaluator {
 
     const consume = (type) => {
       if (current.type !== type) {
-        throw new Error(`expected ${type} but got ${current.type}`);
+        fatal(`expected ${type} but got ${current.type}`);
       }
       advance();
+    };
+
+    const fatal = (msg) => {
+      throw new Error(`error on line ${current.line}: ${msg}`);
     };
 
     // grammar
     const printStatement = () => {
       consume('print');
-      const arg = expression(precedence.assign);
-      console.log(arg.value);
+      const args = [];
+      while (current.type !== 'semicolon') {
+        args.push(expression());
+        if (current.type === 'comma') {
+          consume('comma');
+        } else {
+          break;
+        }
+      }
+
+      console.log(args.map((arg) => {
+        switch (arg.type) {
+          case 'array':
+            return '<array>';
+          case 'object':
+            return '<object>';
+          default:
+            return arg.value;
+        }
+      }).join(' '));
     };
 
     const statement = () => {
@@ -257,9 +299,9 @@ class Evaluator {
       consume('dot');
       consume('identifier');
       if (left.type !== 'json' || typeof left.value !== 'object') {
-        throw new Error('cannot access member of non object or non JSON value');
+        fatal('cannot access member of non object or non JSON value');
       }
-      return jsonVal(left.value[prev.str]);
+      return val(left.value[prev.str]);
     };
 
     const binary = (left) => {
@@ -277,11 +319,31 @@ class Evaluator {
           return val(left.value + right.value);
       }
 
-      throw new Error(`unknown operator ${token.type}`);
+      fatal(`unknown operator ${token.type}`);
     };
 
     const identifier = () => {
-      return context;
+      if (current.type === 'identifier') {
+        consume('identifier');
+        const key = prev.str;
+        if (key in this.environment) {
+          return this.environment[key];
+        }
+        fatal(`unknown variable ${key}`);
+      }
+      return this.environment[''];
+    };
+
+    const subscript = (left) => {
+      consume('lsquare');
+      const key = expression();
+      consume('rsquare');
+
+      if (!Array.isArray(left.value)) {
+        fatal('cannot aubscript non array value');
+      }
+
+      return val(left.value[key.value]);
     };
 
     const getRule = (type) => {
@@ -314,15 +376,19 @@ class Evaluator {
           prec: precedence.add,
           infix: binary,
         },
+        lsquare: {
+          prec: precedence.fn,
+          infix: subscript,
+        },
       }[type] || { prec: precedence.none };
       return r;
     };
 
-    const expression = (prec) => {
+    const expression = (prec = precedence.assign) => {
       const token = current;
       const rule = getRule(token.type);
       if (!rule.prefix) {
-        throw new Error(`unexpected prefix ${token.type}`);
+        fatal(`unexpected prefix ${token.type}`);
       }
 
       advance();
@@ -331,7 +397,7 @@ class Evaluator {
       while (prec <= getRule(current.type).prec) {
         const infixRule = getRule(current.type);
         if (!infixRule.infix) {
-          throw new Error(`unexpected infix ${current.type}`);
+          fatal(`unexpected infix ${current.type}`);
         }
         left = infixRule.infix(left);
       }
@@ -349,15 +415,28 @@ class Evaluator {
     }
 
     if (pos < tokens.length) {
-      throw new Error(`dangling tokens ${JSON.stringify(tokens.slice(pos, pos + 5))}`);
+      fatal(`dangling tokens ${JSON.stringify(tokens.slice(pos, pos + 5))}`);
     }
     return result;
   }
 
   forEachRecord(cb) {
-    while (this.pos < this.json.length) {
-      cb(this.json[this.pos++]);
+    if (Array.isArray(this.json)) {
+      while (this.pos < this.json.length) {
+        cb(this.json[this.pos++]);
+      }
+      return;
     }
+
+    if (typeof this.json === 'object') {
+      Object.keys(this.json).forEach((key) => {
+        this.environment.key = val(key);
+        cb(this.json[key]);
+      });
+      return;
+    }
+
+    throw new Error('expected top level JSON to be an array or object');
   }
 
   async run(file) {
@@ -365,24 +444,53 @@ class Evaluator {
 
     this.forEachRecord((record) => {
       this.prog.forEach(({ pattern, body }) => {
-        const recordVal = jsonVal(record);
+        this.environment[''] = val(record);
         let result;
         if (pattern.length === 0) {
           result = { value: true };
         } else {
-          result = this.evaluate(recordVal, pattern, 'expression');
+          result = this.evaluate(pattern, 'expression');
         }
         if (result.value) {
-          this.evaluate(recordVal, body, 'statement');
+          this.evaluate(body, 'statement');
         }
       });
     });
   }
 }
 
-const src = Deno.readTextFileSync(Deno.args[0]);
+function usage() {
+  console.log('usage: jqawk -f program_file file');
+  console.log('       jqawk \'program\' file');
+  Deno.exit(0);
+}
+
+const args = parse(Deno.args);
+
+if (args.h || args.help || args._.length < 1) {
+  usage();
+}
+
+let src;
+let file;
+
+if (args.f) {
+  src = Deno.readTextFileSync(args.f);
+  file = args._[0];
+} else if (args._.length < 2) {
+  usage()
+} else {
+  src = args._[0];
+  file = args._[1];
+}
+
 const p = new Parser(src);
 const prog = p.parseProgram();
 
-const e = new Evaluator(prog);
-e.run(Deno.args[1]);
+try {
+  const e = new Evaluator(prog);
+  await e.run(file);
+} catch (e) {
+  console.error(e);
+  Deno.exit(1);
+}
