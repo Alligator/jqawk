@@ -298,8 +298,8 @@ class Evaluator {
     const member = (left) => {
       consume('dot');
       consume('identifier');
-      if (left.type !== 'json' || typeof left.value !== 'object') {
-        fatal('cannot access member of non object or non JSON value');
+      if (left.type !== 'object') {
+        fatal('cannot access member of non object');
       }
       return val(left.value[prev.str]);
     };
@@ -339,8 +339,8 @@ class Evaluator {
       const key = expression();
       consume('rsquare');
 
-      if (!Array.isArray(left.value)) {
-        fatal('cannot aubscript non array value');
+      if (left.type !== 'array') {
+        fatal('cannot subscript non array value');
       }
 
       return val(left.value[key.value]);
@@ -423,6 +423,7 @@ class Evaluator {
   forEachRecord(cb) {
     if (Array.isArray(this.json)) {
       while (this.pos < this.json.length) {
+        this.environment.key = val(this.pos);
         cb(this.json[this.pos++]);
       }
       return;
