@@ -39,6 +39,10 @@ class Lexer {
     switch (word) {
       case 'print':
         return this.simpleToken('print');
+      case 'BEGIN':
+        return this.simpleToken('begin');
+      case 'END':
+        return this.simpleToken('end');
       default:
         return this.stringToken('identifier', word);
     }
@@ -156,7 +160,12 @@ class Parser {
   parseProgram() {
     this.advance();
 
-    const rules = [];
+    const rules = {
+      begin: [],
+      main: [],
+      end: [],
+    };
+
     while (this.current.type !== 'eof') {
       const pattern = [];
       while (this.current.type !== 'lcurly') {
@@ -173,7 +182,14 @@ class Parser {
       }
 
       this.consume('rcurly');
-      rules.push({ pattern, body });
+
+      if (pattern.length && pattern[0].type === 'begin') {
+        rules.begin.push({ pattern, body });
+      } else if (pattern.length && pattern[0].type === 'end') {
+        rules.end.push({ pattern, body });
+      } else {
+        rules.main.push({ pattern, body });
+      }
     }
 
     return rules;
@@ -231,7 +247,7 @@ class Evaluator {
       prev = current;
       current = tokens[pos++];
       if (!current) {
-        current = { type: 'eof' };
+        current = { type: 'eof', line: prev.line };
       }
     };
 
@@ -443,19 +459,29 @@ class Evaluator {
   async run(json) {
     this.json = json;
 
-    this.forEachRecord((record) => {
-      this.prog.forEach(({ pattern, body }) => {
-        this.environment[''] = val(record);
-        let result;
-        if (pattern.length === 0) {
-          result = { value: true };
-        } else {
-          result = this.evaluate(pattern, 'expression');
-        }
-        if (result.value) {
-          this.evaluate(body, 'statement');
-        }
+    this.prog.begin.forEach(({ body }) => {
+      this.evaluate(body, 'statement');
+    });
+
+    if (this.json) {
+      this.forEachRecord((record) => {
+        this.prog.main.forEach(({ pattern, body }) => {
+          this.environment[''] = val(record);
+          let result;
+          if (pattern.length === 0) {
+            result = { value: true };
+          } else {
+            result = this.evaluate(pattern, 'expression');
+          }
+          if (result.value) {
+            this.evaluate(body, 'statement');
+         }
+        });
       });
+    }
+
+    this.prog.end.forEach(({ body }) => {
+      this.evaluate(body, 'statement');
     });
   }
 }
@@ -501,6 +527,7 @@ try {
     const json = JSON.parse(content);
     await e.run(json);
   }
+
 } catch (e) {
   console.error(e.message);
   Deno.exit(1);
