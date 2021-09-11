@@ -33,11 +33,29 @@ const tests = [
     input: '{ "key one": 1, "key two": 2 }',
     expected: 'key one\nkey two\n',
   },
+  {
+    name: 'selector',
+    prog: '{ print $; }',
+    args: ['-s', '$.one'],
+    input: '{ "one": [1, 2, 3] }',
+    expected: '1\n2\n3\n',
+  },
+  {
+    name: 'addition',
+    prog: '{ total = total + $; } END { print total; }',
+    input: '[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]',
+    expected: '55\n',
+  },
 ];
 
-async function run(prog, input) {
+async function run(test) {
+  const {
+    prog,
+    input,
+    args = [],
+  } = test;
   const p = Deno.run({
-    cmd: ['deno', 'run', '-A', 'jqawk.js', prog],
+    cmd: ['deno', 'run', '-A', 'jqawk.js', ...args, prog],
     stdin: 'piped',
     stdout: 'piped',
     stderr: 'piped',
@@ -63,7 +81,7 @@ async function run(prog, input) {
 
 for (let i = 0; i < tests.length; i++) {
   const test = tests[i];
-  const { output, success, err } = await run(test.prog, test.input);
+  const { output, success, err } = await run(test);
 
   if (!success) {
     console.log(`!! - ${test.name} failed`);

@@ -31,7 +31,7 @@ class Lexer {
     return /^[a-zA-Z]+/.test(c);
   }
   identifier() {
-    while (this.isAlpha(this.peek())) {
+    while (!this.atEOF() && this.isAlpha(this.peek())) {
       this.advance();
     }
 
@@ -52,7 +52,7 @@ class Lexer {
     return /^[0-9]+/.test(c);
   }
   number() {
-    while (this.isNumeric(this.peek())) {
+    while (!this.atEOF() && this.isNumeric(this.peek())) {
       this.advance();
     }
 
@@ -228,7 +228,7 @@ class Evaluator {
 
   // hand rolled pratt parser
   // this should probably be in it's own class...
-  evaluate(tokens, startType) {
+  evaluate(environment, fields, tokens, startType) {
     const precedence = {
       none: 0,
       assign: 10,
@@ -279,9 +279,11 @@ class Evaluator {
       console.log(args.map((arg) => {
         switch (arg.type) {
           case 'array':
-            return '<array>';
+            return Deno.inspect(arg.value);
           case 'object':
-            return '<object>';
+            return Deno.inspect(arg.value);
+          case null:
+            return '<null>';
           default:
             return arg.value;
         }
@@ -321,6 +323,32 @@ class Evaluator {
       return val(left.value[prev.str]);
     };
 
+    const coerceTypes = (left, right) => {
+      if (left.type === right.type) {
+        return;
+      }
+
+      if (left.type === null) {
+        // create a default
+        left.type = right.type;
+        switch (right.type) {
+          case 'number':
+            left.value = 0;
+            break;
+          case 'string':
+            left.value = '';
+            break;
+          case 'array':
+            left.value = [];
+            break;
+          case 'object':
+            left.value = {};
+            break;
+        }
+        return;
+      }
+    }
+
     const binary = (left) => {
       const token = current;
       advance();
@@ -333,6 +361,7 @@ class Evaluator {
         case 'equalequal':
           return val(left.value === right.value);
         case 'plus':
+          coerceTypes(left, right);
           return val(left.value + right.value);
       }
 
@@ -341,19 +370,24 @@ class Evaluator {
 
     const identifier = () => {
       const key = prev.str;
-      if (!(key in this.environment)) {
-        this.environment[key] = val(null);
+      if (!(key in environment)) {
+        environment[key] = val(null);
       }
-      return this.environment[key];
+      return environment[key];
     };
 
     const field = () => {
+      let key = 'root';
       if (current.type === 'identifier') {
         consume('identifier');
-        const key = prev.str;
-        return this.fields[key];
+        key = prev.str;
       }
-      return this.fields.root;
+
+      if (!(key in fields)) {
+        fatal(`unknown field ${key}`);
+      }
+
+      return fields[key];
     };
 
     const subscript = (left) => {
@@ -458,19 +492,19 @@ class Evaluator {
     return result;
   }
 
-  forEachRecord(cb) {
-    if (Array.isArray(this.json)) {
-      while (this.pos < this.json.length) {
+  forEachRecord(json, cb) {
+    if (Array.isArray(json)) {
+      while (this.pos < json.length) {
         this.fields.key = val(this.pos);
-        cb(this.json[this.pos++]);
+        cb(json[this.pos++]);
       }
       return;
     }
 
-    if (typeof this.json === 'object') {
-      Object.keys(this.json).forEach((key) => {
+    if (typeof json === 'object') {
+      Object.keys(json).forEach((key) => {
         this.fields.key = val(key);
-        cb(this.json[key]);
+        cb(json[key]);
       });
       return;
     }
@@ -478,39 +512,81 @@ class Evaluator {
     throw new Error('expected top level JSON to be an array or object');
   }
 
-  async run(json) {
-    this.json = json;
+  getRoot(selector, json) {
+    if (!selector) {
+      return val(json);
+    }
+    const lexer = new Lexer(selector);
+    const tokens = [];
+    while (true) {
+      const token = lexer.nextToken();
+      if (token.type === 'eof') {
+        break;
+      }
+      tokens.push(token);
+    }
+
+    const root = this.evaluate(
+      {},
+      { root: val(json) },
+      tokens,
+      'expression',
+    );
+
+    return root;
+  }
+
+  async run(selector, json) {
+    const root = this.getRoot(selector, json);
 
     this.prog.begin.forEach(({ body }) => {
-      this.evaluate(body, 'statement');
+      this.evaluate(this.environment, this.fields, body, 'statement');
     });
 
-    if (this.json) {
-      this.forEachRecord((record) => {
+    if (root) {
+      this.forEachRecord(root.value, (record) => {
         this.prog.main.forEach(({ pattern, body }) => {
           this.fields.root = val(record);
           let result;
           if (pattern.length === 0) {
             result = { value: true };
           } else {
-            result = this.evaluate(pattern, 'expression');
+            result = this.evaluate(
+              this.environment,
+              this.fields,
+              pattern,
+              'expression',
+            );
           }
           if (result.value) {
-            this.evaluate(body, 'statement');
-         }
+            this.evaluate(
+              this.environment,
+              this.fields,
+              body,
+              'statement',
+            );
+          }
         });
       });
     }
 
     this.prog.end.forEach(({ body }) => {
-      this.evaluate(body, 'statement');
+      this.evaluate(
+        this.environment,
+        this.fields,
+        body,
+        'statement',
+      );
     });
   }
 }
 
 function usage() {
-  console.log('usage: jqawk -f program_file file');
-  console.log('       jqawk \'program\' file');
+  console.log('usage: jqawk -f program_file [args] file');
+  console.log('       jqawk \'program\' [args] file');
+  console.log('');
+  console.log('arguments: -s  selector');
+  console.log('           -h  display this message');
   Deno.exit(0);
 }
 
@@ -522,6 +598,7 @@ if (args.h || args.help || args._.length < 1) {
 
 let src;
 let file;
+let selector = args.s;
 
 if (args.f) {
   src = Deno.readTextFileSync(args.f);
@@ -542,12 +619,12 @@ try {
 
   if (file) {
     const json = JSON.parse(await Deno.readTextFile(file));
-    await e.run(json);
+    await e.run(selector, json);
   } else {
     const stdin = await Deno.readAll(Deno.stdin);
     const content = new TextDecoder().decode(stdin);
     const json = JSON.parse(content);
-    await e.run(json);
+    await e.run(selector, json);
   }
 
 } catch (e) {
