@@ -79,20 +79,27 @@ async function run(test) {
   };
 }
 
+function logSuccess(text) {
+  console.log(`\x1b[92mok\x1b[0m - ${text}`);
+}
+function logFailure(text) {
+  console.log(`\x1b[91m!!\x1b[0m - ${text}`);
+}
+
 for (let i = 0; i < tests.length; i++) {
   const test = tests[i];
   const { output, success, err } = await run(test);
 
   if (!success) {
-    console.log(`!! - ${test.name} failed`);
+    logFailure(test.name);
     console.log(`  ${err.trim()}`);
     continue;
   }
 
   if (output === test.expected) {
-    console.log(`ok - ${test.name}`);
+    logSuccess(test.name);
   } else {
-    console.log(`!! - ${test.name} failed`);
+    logFailure(test.name);
     console.log(`  expected: ${JSON.stringify(test.expected)}`);
     console.log(`       got: ${JSON.stringify(output)}`);
   }
