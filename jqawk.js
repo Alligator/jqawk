@@ -128,7 +128,7 @@ class Lexer {
           this.advance();
           return this.simpleToken('equalequal');
         }
-        break;
+        return this.simpleToken('equal');
       }
     }
 
@@ -223,6 +223,7 @@ class Evaluator {
     this.prog = prog;
     this.pos = 0;
     this.environment = {};
+    this.fields = {};
   }
 
   // hand rolled pratt parser
@@ -339,15 +340,20 @@ class Evaluator {
     };
 
     const identifier = () => {
+      const key = prev.str;
+      if (!(key in this.environment)) {
+        this.environment[key] = val(null);
+      }
+      return this.environment[key];
+    };
+
+    const field = () => {
       if (current.type === 'identifier') {
         consume('identifier');
         const key = prev.str;
-        if (key in this.environment) {
-          return this.environment[key];
-        }
-        fatal(`unknown variable ${key}`);
+        return this.fields[key];
       }
-      return this.environment[''];
+      return this.fields.root;
     };
 
     const subscript = (left) => {
@@ -360,6 +366,14 @@ class Evaluator {
       }
 
       return val(left.value[key.value]);
+    };
+
+    const assign = (left) => {
+      consume('equal');
+      const value = expression();
+      left.type = value.type;
+      left.value = value.value;
+      return left;
     };
 
     const getRule = (type) => {
@@ -382,7 +396,7 @@ class Evaluator {
         },
         dollar: {
           prec: precedence.none,
-          prefix: identifier,
+          prefix: field,
         },
         equalequal: {
           prec: precedence.comp,
@@ -395,6 +409,14 @@ class Evaluator {
         lsquare: {
           prec: precedence.fn,
           infix: subscript,
+        },
+        identifier: {
+          prec: precedence.none,
+          prefix: identifier,
+        },
+        equal: {
+          prec: precedence.assign,
+          infix: assign,
         },
       }[type] || { prec: precedence.none };
       return r;
@@ -439,7 +461,7 @@ class Evaluator {
   forEachRecord(cb) {
     if (Array.isArray(this.json)) {
       while (this.pos < this.json.length) {
-        this.environment.key = val(this.pos);
+        this.fields.key = val(this.pos);
         cb(this.json[this.pos++]);
       }
       return;
@@ -447,7 +469,7 @@ class Evaluator {
 
     if (typeof this.json === 'object') {
       Object.keys(this.json).forEach((key) => {
-        this.environment.key = val(key);
+        this.fields.key = val(key);
         cb(this.json[key]);
       });
       return;
@@ -466,7 +488,7 @@ class Evaluator {
     if (this.json) {
       this.forEachRecord((record) => {
         this.prog.main.forEach(({ pattern, body }) => {
-          this.environment[''] = val(record);
+          this.fields.root = val(record);
           let result;
           if (pattern.length === 0) {
             result = { value: true };
