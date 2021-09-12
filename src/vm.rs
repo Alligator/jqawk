@@ -154,6 +154,11 @@ impl Vm {
     self.fields.insert(String::from("root"), root);
     let rules = self.rules.clone();
     for rule in rules.iter() {
+      if rule.pattern.len() == 0 {
+        self.eval(rule.body.clone());
+        continue;
+      }
+
       self.eval(rule.pattern.clone());
       match self.stack.pop() {
         Some(v) => {
@@ -161,7 +166,7 @@ impl Vm {
             self.eval(rule.body.clone());
           }
         }
-        _ => panic!("expected one number on the stack after pattern"),
+        _ => panic!("expected one value on the stack after pattern"),
       }
     }
   }

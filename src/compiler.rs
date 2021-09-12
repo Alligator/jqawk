@@ -164,7 +164,9 @@ impl Compiler {
   }
 
   fn compile_rule(&mut self) -> JqaRule {
-    self.expression(Precedence::Assignment);
+    if self.current.kind != TokenKind::LCurly {
+      self.expression(Precedence::Assignment);
+    }
 
     let pattern = self.output.clone();
     self.output.clear();
