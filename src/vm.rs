@@ -1,5 +1,6 @@
 use std::fmt;
 use std::collections::HashMap;
+use std::io;
 use serde_json;
 use crate::compiler::JqaRule;
 
@@ -9,13 +10,14 @@ pub enum OpCode {
   PushImmediate(Value),
   GetMember,
   Equal,
+  Greater,
   Print,
 }
 
 #[derive(PartialEq, Clone, Debug)]
 pub enum Value {
   Str(String),
-  Num(i64),
+  Num(f64),
   Object(serde_json::Value),
   Array(serde_json::Value),
 }
@@ -31,8 +33,18 @@ impl Value {
     if v.is_string() {
       return Value::Str(v.as_str().unwrap().to_string());
     }
+    if v.is_number() {
+      return Value::Num(v.as_f64().unwrap());
+    }
 
-    return Value::Num(0);
+    return Value::Num(0.0);
+  }
+
+  fn from_opt(v: Option<&serde_json::Value>) -> Value {
+    match v {
+      Some(v) => Value::from(v.clone()),
+      None => Value::Num(0.0),
+    }
   }
 
   fn compare(&self, other: Value) -> bool {
@@ -42,11 +54,27 @@ impl Value {
     }
   }
 
+  fn greater(self, other: Value) -> bool {
+    match (self, other) {
+      (Value::Num(a), Value::Num(b)) => a > b,
+      _ => false,
+    }
+  }
+
   fn truthy(self) -> bool {
     match self {
       Value::Str(s) => s.len() > 0,
-      Value::Num(n) => n != 0,
+      Value::Num(n) => n != 0.0,
       _ => false,
+    }
+  }
+
+  fn display_type(self) -> &'static str {
+    match self {
+      Value::Str(_) => "string",
+      Value::Num(_) => "number",
+      Value::Array(_) => "array",
+      Value::Object(_) => "object",
     }
   }
 }
@@ -56,22 +84,43 @@ impl fmt::Display for Value {
     write!(f, "{}", match self {
       Value::Str(s) => String::from(s),
       Value::Num(n) => format!("{}", n),
-      _ => format!("{:?}", self),
+      Value::Array(v) | Value::Object(v) => format!("{:#}", v),
     })
   }
 }
 
+
+fn for_each_in<F: FnMut(Value)>(v: Value, mut func: F) {
+  match v {
+    Value::Array(a) => {
+      let arr = a.as_array().unwrap();
+      for item in arr {
+        let val = Value::from(item.clone());
+        func(val);
+      }
+    },
+    Value::Object(o) => {
+      let obj = o.as_object().unwrap();
+      for (_k, v) in obj.iter() {
+        let val = Value::from(v.clone());
+        func(val);
+      }
+    },
+    _ => panic!("JSON must be an object or an array"),
+  }
+}
+
+
 pub struct Vm {
-  rules: Vec<JqaRule>,
   fields: HashMap<String, Value>,
   stack: Vec<Value>,
   dbg: bool,
 }
 
+
 impl Vm {
-  pub fn new(rules: Vec<JqaRule>, dbg: bool) -> Vm {
+  pub fn new(dbg: bool) -> Vm {
     Vm {
-      rules,
       fields: HashMap::new(),
       stack: Vec::new(),
       dbg,
@@ -121,25 +170,42 @@ impl Vm {
           let member = self.pop();
           let obj = self.pop();
 
-          let key = match member {
-            Value::Str(s) => s,
-            _ => panic!("nope"),
-          };
-
           match obj {
+            Value::Array(a) => {
+              let idx = match member {
+                Value::Num(n) => n,
+                _ => panic!("cannot index an array with a {}", member.display_type()),
+              };
+
+              let arr = a.as_array().unwrap();
+              let val = arr.iter().nth(idx as usize);
+              self.push(Value::from_opt(val));
+            },
             Value::Object(o) => {
+              let key = match member {
+                Value::Str(s) => s,
+                Value::Num(n) => n.to_string(),
+                _ => panic!("cannot access member on object with {}", member.display_type()),
+              };
+
               let obj = o.as_object().unwrap();
               let val = obj.get(&key).unwrap();
               self.push(Value::from(val.clone()));
             },
-            _ => panic!("can only access members on objects"),
+            _ => panic!("can only access members on objects or arrays, found {}", obj.display_type()),
           }
         },
         OpCode::Equal => {
-          let left = self.pop();
           let right = self.pop();
+          let left = self.pop();
           let result = left.compare(right);
-          self.push(Value::Num(if result { 1 } else { 0 }));
+          self.push(Value::Num(if result { 1.0 } else { 0.0 }));
+        },
+        OpCode::Greater => {
+          let right = self.pop();
+          let left = self.pop();
+          let result = left.greater(right);
+          self.push(Value::Num(if result { 1.0 } else { 0.0 }));
         },
         OpCode::Print => {
           let val = self.pop();
@@ -150,9 +216,8 @@ impl Vm {
     }
   }
 
-  fn eval_rules(&mut self, root: Value) {
+  fn eval_rules(&mut self, rules: &Vec<JqaRule>, root: Value) {
     self.fields.insert(String::from("root"), root);
-    let rules = self.rules.clone();
     for rule in rules.iter() {
       if rule.pattern.len() == 0 {
         self.eval(rule.body.clone());
@@ -171,16 +236,20 @@ impl Vm {
     }
   }
 
-  pub fn run(&mut self, content: &str) {
-    let v: serde_json::Value = serde_json::from_str(content).unwrap();
-    match v {
-      serde_json::Value::Array(a) => {
-        for item in a {
-          let val = Value::from(item);
-          self.eval_rules(val);
-        }
+  pub fn run<T>(&mut self, rdr:T, selector: Vec<OpCode>, rules: Vec<JqaRule>) where T: io::Read {
+    let v: serde_json::Value = serde_json::from_reader(rdr)
+      .expect("error parsing JSON");
+    
+    self.fields.insert(String::from("root"), Value::from(v));
+    self.eval(selector);
+
+    match self.stack.pop() {
+      Some(v) => {
+        for_each_in(v, |val| {
+          self.eval_rules(&rules, val);
+        });
       },
-      _ => panic!("JSON must be an object or an array"),
+      _ => panic!("expected a value on the stack after the selector"),
     }
   }
 }

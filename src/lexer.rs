@@ -7,8 +7,13 @@ pub enum TokenKind {
     EqualEqual,
     LCurly,
     RCurly,
+    LSquare,
+    RSquare,
+    LAngle,
+    RAngle,
     Semicolon,
     Str,
+    Num,
     Identifier,
     Print,
     Error, 
@@ -23,9 +28,14 @@ impl fmt::Display for TokenKind {
         TokenKind::EqualEqual => "==",
         TokenKind::LCurly => "{",
         TokenKind::RCurly => "}",
+        TokenKind::LSquare => "[",
+        TokenKind::RSquare => "]",
+        TokenKind::LAngle => "<",
+        TokenKind::RAngle => ">",
         TokenKind::Semicolon => ";",
         TokenKind::Print => "print",
         TokenKind::Str => "<string>",
+        TokenKind::Num => "<num>",
         TokenKind::Identifier => "<identifier>",
         TokenKind::Error => "<error>",
         TokenKind::EOF => "<eof>",
@@ -37,36 +47,25 @@ impl fmt::Display for TokenKind {
 pub struct Token {
   pub kind: TokenKind,
   pub str: Option<String>,
+  pub line: usize,
 }
 
 impl fmt::Display for Token {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
       match self.kind {
-        TokenKind::Str | TokenKind::Identifier => write!(f, "{}", self.str.as_ref().unwrap()),
+        TokenKind::Str | TokenKind::Identifier | TokenKind::Num =>
+          write!(f, "{}", self.str.as_ref().unwrap()),
         _ => write!(f, "{}", self.kind),
       }
     }
 }
 
 impl Token {
-  pub fn simple(kind: TokenKind) -> Token {
+  pub fn new(kind: TokenKind, line: usize) -> Token {
     Token {
       kind: kind,
       str: None,
-    }
-  }
-
-  pub fn str(kind: TokenKind, str: &str) -> Token {
-    Token {
-      kind: kind,
-      str: Some(String::from(str)),
-    }
-  }
-
-  pub fn err(message: String) -> Token {
-    Token {
-      kind: TokenKind::Error,
-      str: Some(message),
+      line,
     }
   }
 }
@@ -76,7 +75,7 @@ pub struct Lexer {
     src: String,
     pos: usize,
     token_start: usize,
-    line: u64,
+    line: usize,
 }
 
 impl Lexer {
@@ -86,6 +85,30 @@ impl Lexer {
             pos: 0,
             token_start: 0,
             line: 1,
+        }
+    }
+
+    fn simple_token(&self, kind: TokenKind) -> Token {
+        Token {
+            kind,
+            str: None,
+            line: self.line,
+        }
+    }
+
+    fn str_token(&self, kind: TokenKind, str: &str) -> Token {
+        Token {
+            kind,
+            str: Some(String::from(str)),
+            line: self.line,
+        }
+    }
+
+    fn err_token(&self, message: String) -> Token {
+        Token {
+            kind: TokenKind::Error,
+            str: Some(message),
+            line: self.line,
         }
     }
 
@@ -119,9 +142,17 @@ impl Lexer {
         let ident = &self.src[self.token_start..self.pos];
 
         match ident {
-          "print" => Token::simple(TokenKind::Print),
-          _ => Token::str(TokenKind::Identifier, ident),
+          "print" => self.simple_token(TokenKind::Print),
+          _ => self.str_token(TokenKind::Identifier, ident),
         }
+    }
+
+    fn number(&mut self) -> Token {
+        while self.peek().unwrap_or_default().is_ascii_digit() {
+            self.advance();
+        }
+        let num = &self.src[self.token_start..self.pos];
+        return self.str_token(TokenKind::Num, num);
     }
 
     fn string(&mut self) -> Token {
@@ -129,12 +160,12 @@ impl Lexer {
             match self.peek() {
                 Some('"') => break,
                 Some(_) => { self.advance(); },
-                None => return Token::err(String::from("unexpected EOF in string")),
+                None => return self.err_token(String::from("unexpected EOF in string")),
             }
         }
         self.advance();
         let str_content = &self.src[self.token_start + 1 .. self.pos - 1];
-        return Token::str(TokenKind::Str, str_content);
+        return self.str_token(TokenKind::Str, str_content);
     }
 
     pub fn next_token(&mut self) -> Token {
@@ -143,11 +174,15 @@ impl Lexer {
 
          let c = match self.advance() {
             Some(c) => c,
-            None => return Token::simple(TokenKind::EOF),
+            None => return self.simple_token(TokenKind::EOF),
         };
 
         if c.is_ascii_alphabetic() {
             return self.identifier();
+        }
+
+        if c.is_ascii_digit() {
+            return self.number();
         }
 
         if c == '"' {
@@ -155,20 +190,24 @@ impl Lexer {
         }
 
         match c {
-            '$' => return Token::simple(TokenKind::Dollar),
-            '.' => return Token::simple(TokenKind::Dot),
-            '{' => return Token::simple(TokenKind::LCurly),
-            '}' => return Token::simple(TokenKind::RCurly),
-            ';' => return Token::simple(TokenKind::Semicolon),
+            '$' => return self.simple_token(TokenKind::Dollar),
+            '.' => return self.simple_token(TokenKind::Dot),
+            '{' => return self.simple_token(TokenKind::LCurly),
+            '}' => return self.simple_token(TokenKind::RCurly),
+            '[' => return self.simple_token(TokenKind::LSquare),
+            ']' => return self.simple_token(TokenKind::RSquare),
+            '<' => return self.simple_token(TokenKind::LAngle),
+            '>' => return self.simple_token(TokenKind::RAngle),
+            ';' => return self.simple_token(TokenKind::Semicolon),
             '=' => {
                 if self.peek() == Some('=') {
                     self.advance();
-                    return Token::simple(TokenKind::EqualEqual);
+                    return self.simple_token(TokenKind::EqualEqual);
                 }
             }
             _ => (),
         }
 
-        return Token::err(format!("unexpected character '{}'", c));
+        return self.err_token(format!("unexpected character '{}'", c));
     }
 }

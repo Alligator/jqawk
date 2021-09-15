@@ -14,13 +14,13 @@ pub struct JqaRule {
   pub body: Vec<OpCode>,
 }
 
-
 #[derive(PartialOrd, PartialEq)]
 enum Precedence {
   None = 0,
   Assignment,
-  Func,
   Equal,
+  Comparison,
+  Func,
 }
 
 struct ParseRule {
@@ -33,8 +33,8 @@ struct ParseRule {
 impl Compiler {
   pub fn new(lexer: Lexer) -> Compiler {
     Compiler {
-      current: Token::simple(TokenKind::EOF),
-      prev: Token::simple(TokenKind::EOF),
+      current: Token::new(TokenKind::EOF, 0),
+      prev: Token::new(TokenKind::EOF, 0),
       lexer: lexer,
       output: Vec::new(),
     }
@@ -52,6 +52,11 @@ impl Compiler {
         prefix: Some(|comp: &mut Compiler| { comp.string() }),
         infix: None,
       },
+      TokenKind::Num => ParseRule {
+        prec: Precedence::None,
+        prefix: Some(|comp: &mut Compiler| { comp.number() }),
+        infix: None,
+      },
       TokenKind::Dot => ParseRule {
         prec: Precedence::Func,
         prefix: None,
@@ -59,6 +64,16 @@ impl Compiler {
       },
       TokenKind::EqualEqual => ParseRule {
         prec: Precedence::Equal,
+        prefix: None,
+        infix: Some(|comp: &mut Compiler| { comp.binary() }),
+      },
+      TokenKind::LSquare => ParseRule {
+        prec: Precedence::Func,
+        prefix: None,
+        infix: Some(|comp: &mut Compiler| { comp.computed_member() }),
+      },
+      TokenKind::RAngle => ParseRule {
+        prec: Precedence::Comparison,
         prefix: None,
         infix: Some(|comp: &mut Compiler| { comp.binary() }),
       },
@@ -125,7 +140,7 @@ impl Compiler {
         self.emit(OpCode::Print);
       },
       _ => {
-        self.fatal(format!("unexpected token {} expected a statement", self.current.kind));
+        self.fatal(format!("unexpected token '{}' expected a statement", self.current));
       },
     }
 
@@ -139,13 +154,13 @@ impl Compiler {
   }
 
   fn binary(&mut self) {
-    match self.current.kind {
-      TokenKind::EqualEqual => {
-        self.consume(TokenKind::EqualEqual);
-        self.expression(Precedence::Assignment);
-        self.emit(OpCode::Equal);
-      },
-      _ => self.fatal(format!("unknown operator {}", self.current.kind)),
+    let token = self.current.clone();
+    self.advance();
+    self.expression(Precedence::Assignment);
+    match token.kind {
+      TokenKind::EqualEqual => self.emit(OpCode::Equal),
+      TokenKind::RAngle => self.emit(OpCode::Greater),
+      _ => self.fatal(format!("unknown operator {}", token.kind)),
     }
   }
 
@@ -157,10 +172,23 @@ impl Compiler {
     self.emit(OpCode::GetMember);
   }
 
+  fn computed_member(&mut self) {
+    self.consume(TokenKind::LSquare);
+    self.expression(Precedence::Assignment);
+    self.consume(TokenKind::RSquare);
+    self.emit(OpCode::GetMember);
+  }
+
   fn string(&mut self) {
     self.consume(TokenKind::Str);
     let token = self.prev.clone();
     self.emit(OpCode::PushImmediate(Value::Str(token.str.unwrap())));
+  }
+
+  fn number(&mut self) {
+    self.consume(TokenKind::Num);
+    let num: f64 = self.prev.clone().str.unwrap().parse().unwrap();
+    self.emit(OpCode::PushImmediate(Value::Num(num)));
   }
 
   fn compile_rule(&mut self) -> JqaRule {
@@ -180,6 +208,12 @@ impl Compiler {
     self.output.clear();
 
     JqaRule { pattern, body }
+  }
+
+  pub fn compile_expression(&mut self) -> Vec<OpCode> {
+    self.advance();
+    self.expression(Precedence::Assignment);
+    return self.output.clone();
   }
 
   pub fn compile_rules(&mut self) -> Vec<JqaRule> {
