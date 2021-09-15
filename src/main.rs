@@ -54,7 +54,7 @@ fn main() {
         .expect("error opening input file");
     let reader = BufReader::new(file);
 
-    let selector = matches.value_of("selector").unwrap();
+    let selector = matches.value_of("root").unwrap();
     
     if matches.is_present("program_file") {
         run_program_file(matches.value_of("program_file").unwrap(), reader, selector);

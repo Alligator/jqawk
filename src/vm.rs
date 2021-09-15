@@ -2,14 +2,17 @@ use std::fmt;
 use std::collections::HashMap;
 use std::io;
 use serde_json;
-use crate::compiler::JqaRule;
+use crate::compiler::{JqaRule, JqaRuleKind};
 
 #[derive(Clone, Debug)]
 pub enum OpCode {
   GetField(String),
   PushImmediate(Value),
   GetMember,
+  GetGlobal(String),
+  SetGlobal(String),
   Equal,
+  Add,
   Greater,
   Print,
 }
@@ -58,6 +61,13 @@ impl Value {
     match (self, other) {
       (Value::Num(a), Value::Num(b)) => a > b,
       _ => false,
+    }
+  }
+
+  fn add(self, other: Value) -> Value {
+    match (self, other) {
+      (Value::Num(a), Value::Num(b)) => Value::Num(a + b),
+      _ => Value::Num(0.0),
     }
   }
 
@@ -113,6 +123,7 @@ fn for_each_in<F: FnMut(Value)>(v: Value, mut func: F) {
 
 pub struct Vm {
   fields: HashMap<String, Value>,
+  variables: HashMap<String, Value>,
   stack: Vec<Value>,
   dbg: bool,
 }
@@ -122,6 +133,7 @@ impl Vm {
   pub fn new(dbg: bool) -> Vm {
     Vm {
       fields: HashMap::new(),
+      variables: HashMap::new(),
       stack: Vec::new(),
       dbg,
     }
@@ -201,6 +213,12 @@ impl Vm {
           let result = left.compare(right);
           self.push(Value::Num(if result { 1.0 } else { 0.0 }));
         },
+        OpCode::Add => {
+          let right = self.pop();
+          let left = self.pop();
+          let result = left.add(right);
+          self.push(result);
+        },
         OpCode::Greater => {
           let right = self.pop();
           let left = self.pop();
@@ -211,14 +229,29 @@ impl Vm {
           let val = self.pop();
           println!("{}", val);
         },
+        OpCode::GetGlobal(name) => {
+          if !self.variables.contains_key(name) {
+            self.push(Value::Num(0.0));
+          } else {
+            self.push(self.variables.get(name)
+                .expect(format!("unknown variable {}", name).as_str())
+                .clone());
+          }
+        },
+        OpCode::SetGlobal(name) => {
+          let val = self.pop();
+          self.variables.insert(name.clone(), val);
+        },
+        #[allow(unreachable_patterns)]
+        _ => panic!("unknown opcode {:?}", op_code),
       }
       self.dbg_stack();
     }
   }
 
-  fn eval_rules(&mut self, rules: &Vec<JqaRule>, root: Value) {
+  fn eval_rules(&mut self, rules: &Vec<JqaRule>, kind: JqaRuleKind, root: Value) {
     self.fields.insert(String::from("root"), root);
-    for rule in rules.iter() {
+    for rule in rules.iter().filter(|&rule| rule.kind == kind) {
       if rule.pattern.len() == 0 {
         self.eval(rule.body.clone());
         continue;
@@ -245,9 +278,12 @@ impl Vm {
 
     match self.stack.pop() {
       Some(v) => {
+        self.eval_rules(&rules, JqaRuleKind::Begin, v.clone());
+        let v_clone = v.clone();
         for_each_in(v, |val| {
-          self.eval_rules(&rules, val);
+          self.eval_rules(&rules, JqaRuleKind::Match, val);
         });
+        self.eval_rules(&rules, JqaRuleKind::End, v_clone);
       },
       _ => panic!("expected a value on the stack after the selector"),
     }

@@ -4,6 +4,8 @@ use std::fmt;
 pub enum TokenKind {
     Dollar,
     Dot,
+    Plus,
+    Equal,
     EqualEqual,
     LCurly,
     RCurly,
@@ -16,6 +18,8 @@ pub enum TokenKind {
     Num,
     Identifier,
     Print,
+    Begin,
+    End,
     Error, 
     EOF,
 }
@@ -25,6 +29,8 @@ impl fmt::Display for TokenKind {
       write!(f, "{}", match self {
         TokenKind::Dollar => "$",
         TokenKind::Dot => ".",
+        TokenKind::Plus => "+",
+        TokenKind::Equal => "=",
         TokenKind::EqualEqual => "==",
         TokenKind::LCurly => "{",
         TokenKind::RCurly => "}",
@@ -37,6 +43,8 @@ impl fmt::Display for TokenKind {
         TokenKind::Str => "<string>",
         TokenKind::Num => "<num>",
         TokenKind::Identifier => "<identifier>",
+        TokenKind::Begin => "BEGIN",
+        TokenKind::End => "END",
         TokenKind::Error => "<error>",
         TokenKind::EOF => "<eof>",
       })
@@ -125,7 +133,7 @@ impl Lexer {
     fn skip_whitespace(&mut self) {
         loop {
             match self.peek() {
-                Some(' ') => self.pos += 1,
+                Some(' ') | Some('\r') => self.pos += 1,
                 Some('\n') => {
                     self.pos += 1;
                     self.line += 1;
@@ -143,6 +151,8 @@ impl Lexer {
 
         match ident {
           "print" => self.simple_token(TokenKind::Print),
+          "BEGIN" => self.simple_token(TokenKind::Begin),
+          "END" => self.simple_token(TokenKind::End),
           _ => self.str_token(TokenKind::Identifier, ident),
         }
     }
@@ -192,6 +202,7 @@ impl Lexer {
         match c {
             '$' => return self.simple_token(TokenKind::Dollar),
             '.' => return self.simple_token(TokenKind::Dot),
+            '+' => return self.simple_token(TokenKind::Plus),
             '{' => return self.simple_token(TokenKind::LCurly),
             '}' => return self.simple_token(TokenKind::RCurly),
             '[' => return self.simple_token(TokenKind::LSquare),
@@ -204,6 +215,7 @@ impl Lexer {
                     self.advance();
                     return self.simple_token(TokenKind::EqualEqual);
                 }
+                return self.simple_token(TokenKind::Equal);
             }
             _ => (),
         }
