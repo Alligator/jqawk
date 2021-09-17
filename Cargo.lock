@@ -62,6 +62,7 @@ checksum = "b71991ff56294aa922b450139ee08b3bfc70982c6b2c7562771375cf73542dd4"
 name = "jqawk"
 version = "0.1.0"
 dependencies = [
+ "atty",
  "clap",
  "serde",
  "serde_json",

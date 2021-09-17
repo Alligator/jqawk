@@ -166,7 +166,9 @@ impl Compiler {
       },
     }
 
-    self.consume(TokenKind::Semicolon);
+    if self.current.kind == TokenKind::Semicolon {
+      self.consume(TokenKind::Semicolon);
+    }
   }
 
   fn field(&mut self) {
