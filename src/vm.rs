@@ -116,7 +116,7 @@ fn for_each_in<F: FnMut(Value)>(v: Value, mut func: F) {
         func(val);
       }
     },
-    _ => panic!("JSON must be an object or an array"),
+    _ => panic!("JSON must be an object or an array, got {:?}", v),
   }
 }
 

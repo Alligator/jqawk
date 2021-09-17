@@ -40,3 +40,15 @@ fn members() {
 ";
   assert_eq!(output, expected.to_string());
 }
+
+#[test]
+fn root_param() {
+  let program = "{ print $; }";
+  let output = run(&["-r", "$[0]", program, "test.json"]);
+  
+  let expected = "\
+10
+tiny tony
+";
+  assert_eq!(output, expected.to_string());
+}

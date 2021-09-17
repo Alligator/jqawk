@@ -6,7 +6,7 @@ use lexer::Lexer;
 use compiler::Compiler;
 use vm::Vm;
 
-use clap::{App, AppSettings, Arg};
+use clap::{App, Arg};
 use std::fs;
 use std::fs::File;
 use std::io::BufReader;
@@ -30,13 +30,12 @@ fn run_program_file<T>(path: &str, rdr: T, selector: &str)
 
 fn main() {
     let matches = App::new("jqawk")
-        .setting(AppSettings::AllowMissingPositional)
         .about("JSON and awk together at last")
         .version("v1")
         .arg(Arg::with_name("root")
+            .help("an expression evaluated to find the root value")
             .short("r")
             .long("root")
-            .help("an expression evaluated to find the root value")
             .takes_value(true)
             .default_value("$")
             .hide_default_value(true))
@@ -45,7 +44,8 @@ fn main() {
             .help("a script file to run")
             .takes_value(true))
         .arg(Arg::with_name("PROGRAM")
-            .help("the jawk program to run"))
+            .help("the jawk program to run")
+            .conflicts_with("program_file"))
         .arg(Arg::with_name("INPUT")
             .help("the input file"))
         .get_matches();
