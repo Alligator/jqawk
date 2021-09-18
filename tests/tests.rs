@@ -16,6 +16,10 @@ fn run(args: &[&str]) -> String {
     .output()
     .expect("Failed to execute jqawk");
 
+  if !output.status.success() {
+    panic!("jqawk failed: {}", String::from_utf8_lossy(&output.stderr));
+  }
+
   return String::from_utf8_lossy(&output.stdout).to_string();
 }
 
@@ -24,6 +28,7 @@ fn run_stdin(args: &[&str], stdin: &str) -> String {
     .args(args)
     .stdin(Stdio::piped())
     .stdout(Stdio::piped())
+    .stderr(Stdio::piped())
     .spawn()
     .expect("error spawning jqawk");
 
@@ -31,6 +36,11 @@ fn run_stdin(args: &[&str], stdin: &str) -> String {
     .expect("could not write to child stdin");
 
   let output = child.wait_with_output().expect("error reading child stdout");
+
+  if !output.status.success() {
+    panic!("jqawk failed: {}", String::from_utf8_lossy(&output.stderr));
+  }
+
   return String::from_utf8_lossy(&output.stdout).to_string();
 }
 
@@ -79,4 +89,15 @@ fn stdin_input() {
 3
 ";
   assert_eq!(output, expected.to_string());
+}
+
+#[test]
+fn variables() {
+  let program = "\
+BEGIN { total = 0 }
+{ total = total + $ }
+END { print total }";
+  let input = "[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]";
+  let output = run_stdin(&[program], input);
+  assert_eq!(output, "55\n");
 }
