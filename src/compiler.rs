@@ -29,6 +29,7 @@ enum Precedence {
   Equal,
   Comparison,
   Addition,
+  Multiplication,
   Func,
 }
 
@@ -93,6 +94,21 @@ impl Compiler {
       },
       TokenKind::Plus => ParseRule {
         prec: Precedence::Addition,
+        prefix: None,
+        infix: Some(|comp: &mut Compiler| { comp.binary() }),
+      },
+      TokenKind::Minus => ParseRule {
+        prec: Precedence::Addition,
+        prefix: None,
+        infix: Some(|comp: &mut Compiler| { comp.binary() }),
+      },
+      TokenKind::Star => ParseRule {
+        prec: Precedence::Multiplication,
+        prefix: None,
+        infix: Some(|comp: &mut Compiler| { comp.binary() }),
+      },
+      TokenKind::Slash => ParseRule {
+        prec: Precedence::Multiplication,
         prefix: None,
         infix: Some(|comp: &mut Compiler| { comp.binary() }),
       },
@@ -165,10 +181,6 @@ impl Compiler {
         self.fatal(format!("unexpected token '{}' expected a statement", self.current));
       },
     }
-
-    if self.current.kind == TokenKind::Semicolon {
-      self.consume(TokenKind::Semicolon);
-    }
   }
 
   fn field(&mut self) {
@@ -185,6 +197,9 @@ impl Compiler {
       TokenKind::EqualEqual => self.emit(OpCode::Equal),
       TokenKind::RAngle => self.emit(OpCode::Greater),
       TokenKind::Plus => self.emit(OpCode::Add),
+      TokenKind::Minus => self.emit(OpCode::Subtract),
+      TokenKind::Star => self.emit(OpCode::Multiply),
+      TokenKind::Slash => self.emit(OpCode::Divide),
       _ => self.fatal(format!("unknown operator {}", token.kind)),
     }
   }
@@ -254,6 +269,9 @@ impl Compiler {
     self.consume(TokenKind::LCurly);
     while self.current.kind != TokenKind::RCurly {
       self.statement();
+      if self.current.kind != TokenKind::RCurly {
+        self.consume(TokenKind::Semicolon);
+      }
     }
     self.consume(TokenKind::RCurly);
     let body = self.output.clone();

@@ -13,6 +13,9 @@ pub enum OpCode {
   SetGlobal(String),
   Equal,
   Add,
+  Subtract,
+  Multiply,
+  Divide,
   Greater,
   Print,
 }
@@ -57,17 +60,11 @@ impl Value {
     }
   }
 
-  fn greater(self, other: Value) -> bool {
-    match (self, other) {
-      (Value::Num(a), Value::Num(b)) => a > b,
-      _ => false,
-    }
-  }
-
-  fn add(self, other: Value) -> Value {
-    match (self, other) {
-      (Value::Num(a), Value::Num(b)) => Value::Num(a + b),
-      _ => Value::Num(0.0),
+  fn as_f64(self) -> f64 {
+    match self {
+      Value::Num(n) => n,
+      Value::Str(s) => s.parse().unwrap_or(0.0),
+      _ => 0.0
     }
   }
 
@@ -214,16 +211,29 @@ impl Vm {
           self.push(Value::Num(if result { 1.0 } else { 0.0 }));
         },
         OpCode::Add => {
-          let right = self.pop();
-          let left = self.pop();
-          let result = left.add(right);
-          self.push(result);
+          let right = self.pop().as_f64();
+          let left = self.pop().as_f64();
+          self.push(Value::Num(left + right));
+        },
+        OpCode::Subtract => {
+          let right = self.pop().as_f64();
+          let left = self.pop().as_f64();
+          self.push(Value::Num(left - right));
+        },
+        OpCode::Multiply => {
+          let right = self.pop().as_f64();
+          let left = self.pop().as_f64();
+          self.push(Value::Num(left * right));
+        },
+        OpCode::Divide => {
+          let right = self.pop().as_f64();
+          let left = self.pop().as_f64();
+          self.push(Value::Num(left / right));
         },
         OpCode::Greater => {
-          let right = self.pop();
-          let left = self.pop();
-          let result = left.greater(right);
-          self.push(Value::Num(if result { 1.0 } else { 0.0 }));
+          let right = self.pop().as_f64();
+          let left = self.pop().as_f64();
+          self.push(Value::Num(if left > right { 1.0 } else { 0.0 }));
         },
         OpCode::Print => {
           let val = self.pop();

@@ -101,3 +101,17 @@ END { print total }";
   let output = run_stdin(&[program], input);
   assert_eq!(output, "55\n");
 }
+
+#[test]
+fn operators() {
+  let program = "\
+BEGIN {
+  print 2 + 4;
+  print 2 - 1;
+  print 2 * 4;
+  print 6 / 3;
+}
+";
+  let output = run_stdin(&[program], "[]");
+  assert_eq!(output, "6\n1\n8\n2\n");
+}
