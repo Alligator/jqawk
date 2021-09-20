@@ -16,6 +16,7 @@ pub enum TokenKind {
     RSquare,
     LAngle,
     RAngle,
+    Comma,
     Semicolon,
     Str,
     Num,
@@ -44,6 +45,7 @@ impl fmt::Display for TokenKind {
         TokenKind::RSquare => "]",
         TokenKind::LAngle => "<",
         TokenKind::RAngle => ">",
+        TokenKind::Comma => ",",
         TokenKind::Semicolon => ";",
         TokenKind::Print => "print",
         TokenKind::Str => "<string>",
@@ -218,6 +220,7 @@ impl Lexer {
             ']' => return self.simple_token(TokenKind::RSquare),
             '<' => return self.simple_token(TokenKind::LAngle),
             '>' => return self.simple_token(TokenKind::RAngle),
+            ',' => return self.simple_token(TokenKind::Comma),
             ';' => return self.simple_token(TokenKind::Semicolon),
             '=' => {
                 if self.peek() == Some('=') {

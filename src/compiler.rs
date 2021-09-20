@@ -171,8 +171,17 @@ impl Compiler {
     match self.current.kind {
       TokenKind::Print => {
         self.consume(TokenKind::Print);
-        self.expression(Precedence::Assignment);
-        self.emit(OpCode::Print);
+        let mut arg_count = 0;
+        while !self.at_statement_end() {
+          self.expression(Precedence::Assignment);
+          arg_count += 1;
+          if self.current.kind == TokenKind::Comma {
+            self.consume(TokenKind::Comma);
+          } else {
+            break;
+          }
+        }
+        self.emit(OpCode::Print(arg_count));
       },
       TokenKind::Identifier => {
         self.variable();
@@ -180,6 +189,13 @@ impl Compiler {
       _ => {
         self.fatal(format!("unexpected token '{}' expected a statement", self.current));
       },
+    }
+  }
+
+  fn at_statement_end(&self) -> bool {
+    match self.current.kind {
+      TokenKind::Semicolon | TokenKind::RCurly => true,
+      _ => false,
     }
   }
 

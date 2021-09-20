@@ -115,3 +115,16 @@ BEGIN {
   let output = run_stdin(&[program], "[]");
   assert_eq!(output, "6\n1\n8\n2\n");
 }
+
+// one true awk inspired tests
+macro_rules! jqawk_test {
+  ($name:ident, $program:expr, $input:expr, $expected:expr) => {
+    #[test]
+    fn $name() {
+      assert_eq!(run_stdin(&[$program], $input), $expected);
+    }
+  }
+}
+
+jqawk_test!(p1, "{ print }", "[1, 2, 3]", "1\n2\n3\n");
+jqawk_test!(p2, "{ print $[0], $[2] }", "[[1, 2, 3], [10, 20, 30]]", "1 3\n10 30\n");

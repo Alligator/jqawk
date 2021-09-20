@@ -17,7 +17,7 @@ pub enum OpCode {
   Multiply,
   Divide,
   Greater,
-  Print,
+  Print(usize),
 }
 
 #[derive(PartialEq, Clone, Debug)]
@@ -235,9 +235,17 @@ impl Vm {
           let left = self.pop().as_f64();
           self.push(Value::Num(if left > right { 1.0 } else { 0.0 }));
         },
-        OpCode::Print => {
-          let val = self.pop();
-          println!("{}", val);
+        OpCode::Print(argc) => {
+          if *argc == 0 {
+            println!("{}", self.fields.get("root").unwrap().clone());
+            break;
+          }
+
+          let mut args = Vec::with_capacity(*argc);
+          for _ in 0..*argc {
+            args.insert(0, format!("{}", self.pop()));
+          }
+          println!("{}", args.join(" "));
         },
         OpCode::GetGlobal(name) => {
           if !self.variables.contains_key(name) {
