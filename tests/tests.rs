@@ -128,3 +128,207 @@ macro_rules! jqawk_test {
 
 jqawk_test!(p1, "{ print }", "[1, 2, 3]", "1\n2\n3\n");
 jqawk_test!(p2, "{ print $[0], $[2] }", "[[1, 2, 3], [10, 20, 30]]", "1 3\n10 30\n");
+// p3 omitted until printf
+jqawk_test!(p4, "{ print NR, $ }", "[2, 4, 6, 8]", "1 2\n2 4\n3 6\n4 8\n");
+// p5 ommitted until printf
+jqawk_test!(p6, "END { print NR }", "[1, 2, 3, 4]", "4\n");
+jqawk_test!(p7, "$[1] > 100", "[[10, 20], [100, 200], [1000, 2000]]", "[100,200]\n[1000,2000]\n");
+jqawk_test!(p8,
+  "$.continent == \"Asia\" { print $.country }",
+  "[{ \"continent\": \"Asia\", \"country\": \"Japan\" },
+    { \"continent\": \"Europe\", \"country\": \"Sweden\" }]",
+  "Japan\n");
+jqawk_test!(p9, "$ > \"S\"", "[\"Clive\", \"Tony\"]", "Tony\n");
+jqawk_test!(p10, "$[0] == $[1]", "[[1, 2], [3, 3], [4, 5]]", "[3,3]\n");
+// p11-19 omitted until I know what's happening with regexes
+jqawk_test!(p20,
+  "$.name == \"alligator\" && $.age > 30 { print $.id }",
+  "[{ \"id\": 1, \"name\": \"alligator\", \"age\": 25 },
+    { \"id\": 2, \"name\": \"alligator\", \"age\": 35 },
+    { \"id\": 3, \"name\": \"clive\", \"age\": 35 }]",
+  "2\n");
+
+/*
+p.21
+$4 == "Asia" || $4 == "Europe"
+
+p.21a
+/Asia/ || /Africa/
+
+p.22
+$4 ~ /^(Asia|Europe)$/
+
+p.23
+/Canada/, /Brazil/
+
+p.24
+FNR == 1, FNR == 5 { print FILENAME, $0 }
+
+p.25
+{ printf "%10s %6.1f\n", $1, 1000 * $3 / $2 }
+
+p.26
+/Asia/	{ pop = pop + $3; n = n + 1 }
+END	{ print "population of", n,\
+		"Asian countries in millions is", pop }
+
+p.26a
+/Asia/	{ pop += $3; ++n }
+END	{ print "population of", n,\
+		"Asian countries in millions is", pop }
+
+p.27
+maxpop < $3	{ maxpop = $3; country = $1 }
+END		{ print country, maxpop }
+
+p.28
+{ print NR ":" $0 }
+
+p.29
+	{ gsub(/USA/, "United States"); print }
+
+p.30
+{ print length, $0 }
+
+p.31
+length($1) > max	{ max = length($1); name = $1 }
+END			{ print name }
+
+p.32
+{ $1 = substr($1, 1, 3); print }
+
+p.33
+	{ s = s " " substr($1, 1, 3) }
+END	{ print s }
+
+p.34
+{ $2 /= 1000; print }
+
+p.35
+BEGIN			{ FS = OFS = "\t" }
+$4 ~ /^North America$/	{ $4 = "NA" }
+$4 ~ /^South America$/	{ $4 = "SA" }
+			{ print }
+
+p.36
+BEGIN	{ FS = OFS = "\t" }
+	{ $5 = 1000 * $3 / $2 ; print $1, $2, $3, $4, $5 }
+
+p.37
+$1 "" == $2 ""
+
+p.38
+{	if (maxpop < $3) {
+		maxpop = $3
+		country = $1
+	}
+}
+END	{ print country, maxpop }
+
+p.39
+{	i = 1
+	while (i <= NF) {
+		print $i
+		i++
+	}
+}
+
+p.40
+{	for (i = 1; i <= NF; i++)
+		print $i
+}
+
+p.41
+NR >= 10	{ exit }
+END		{ if (NR < 10)
+			print FILENAME " has only " NR " lines" }
+
+p.42
+/Asia/		{ pop["Asia"] += $3 }
+/Africa/	{ pop["Africa"] += $3 }
+END		{ print "Asian population in millions is", pop["Asia"]
+		  print "African population in millions is", pop["Africa"] }
+
+p.43
+BEGIN	{ FS = "\t" }
+	{ area[$4] += $2 }
+END	{ for (name in area)
+		print name ":" area[name] }
+
+p.44
+function fact(n) {
+	if (n <= 1)
+		return 1
+	else
+		return n * fact(n-1)
+}
+{ print $1 "! is " fact($1) }
+
+p.45
+BEGIN	{ OFS = ":" ; ORS = "\n\n" }
+	{ print $1, $2 }
+
+p.46
+	{ print $1 $2 }
+
+p.47
+$3 > 100	{ print >"tempbig" }
+$3 <= 100	{ print >"tempsmall" }
+
+p.48
+BEGIN	{ FS = "\t" }
+	{ pop[$4] += $3 }
+END	{ for (c in pop)
+		print c ":" pop[c] | "sort" }
+
+p.48a
+BEGIN {
+	for (i = 1; i < ARGC; i++)
+		printf "%s ", ARGV[i]
+	printf "\n"
+	exit
+}
+
+p.48b
+BEGIN	{ k = 3; n = 10 }
+{	if (n <= 0) exit
+	if (rand() <= k/n) { print; k-- }
+	n--
+}
+
+p.49
+$1 == "include" { system("cat " $2) }
+
+p.50
+BEGIN	{ FS = "\t" }
+	{ pop[$4 ":" $1] += $3 }
+END	{ for (cc in pop)
+		print cc ":" pop[cc] | "sort -t: -k 1,1 -k 3nr" }
+
+p.51
+BEGIN	{ FS = ":" }
+{	if ($1 != prev) {
+		print "\n" $1 ":"
+		prev = $1
+	}
+	printf "\t%-10s %6d\n", $2, $3
+}
+
+p.52
+BEGIN	{ FS = ":" }
+{
+	if ($1 != prev) {
+		if (prev) {
+			printf "\t%-10s\t %6d\n", "total", subtotal
+			subtotal = 0
+		}
+		print "\n" $1 ":"
+		prev = $1
+	}
+	printf "\t%-10s %6d\n", $2, $3
+	wtotal += $3
+	subtotal += $3
+}
+END	{ printf "\t%-10s\t %6d\n", "total", subtotal
+	  printf "\n%-10s\t\t %6d\n", "World Total", wtotal }
+*/

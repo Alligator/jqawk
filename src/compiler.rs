@@ -26,6 +26,7 @@ pub struct JqaRule {
 enum Precedence {
   None = 0,
   Assignment,
+  Logical,
   Equal,
   Comparison,
   Addition,
@@ -79,6 +80,11 @@ impl Compiler {
       },
       TokenKind::EqualEqual => ParseRule {
         prec: Precedence::Equal,
+        prefix: None,
+        infix: Some(|comp: &mut Compiler| { comp.binary() }),
+      },
+      TokenKind::AmpersandAmpersand => ParseRule {
+        prec: Precedence::Logical,
         prefix: None,
         infix: Some(|comp: &mut Compiler| { comp.binary() }),
       },
@@ -207,10 +213,12 @@ impl Compiler {
 
   fn binary(&mut self) {
     let token = self.current.clone();
+    let prec = self.get_rule(token.kind).prec;
     self.advance();
-    self.expression(Precedence::Assignment);
+    self.expression(prec);
     match token.kind {
       TokenKind::EqualEqual => self.emit(OpCode::Equal),
+      TokenKind::AmpersandAmpersand => self.emit(OpCode::And),
       TokenKind::RAngle => self.emit(OpCode::Greater),
       TokenKind::Plus => self.emit(OpCode::Add),
       TokenKind::Minus => self.emit(OpCode::Subtract),
@@ -282,14 +290,18 @@ impl Compiler {
     let pattern = self.output.clone();
     self.output.clear();
 
-    self.consume(TokenKind::LCurly);
-    while self.current.kind != TokenKind::RCurly {
-      self.statement();
-      if self.current.kind != TokenKind::RCurly {
-        self.consume(TokenKind::Semicolon);
+    if self.current.kind != TokenKind::LCurly {
+      self.emit(OpCode::Print(0));
+    } else {
+      self.consume(TokenKind::LCurly);
+      while self.current.kind != TokenKind::RCurly {
+        self.statement();
+        if self.current.kind != TokenKind::RCurly {
+          self.consume(TokenKind::Semicolon);
+        }
       }
+      self.consume(TokenKind::RCurly);
     }
-    self.consume(TokenKind::RCurly);
     let body = self.output.clone();
     self.output.clear();
 

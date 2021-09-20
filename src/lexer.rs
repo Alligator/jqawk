@@ -10,6 +10,7 @@ pub enum TokenKind {
     Slash,
     Equal,
     EqualEqual,
+    AmpersandAmpersand,
     LCurly,
     RCurly,
     LSquare,
@@ -39,6 +40,7 @@ impl fmt::Display for TokenKind {
         TokenKind::Slash => "/",
         TokenKind::Equal => "=",
         TokenKind::EqualEqual => "==",
+        TokenKind::AmpersandAmpersand => "&&",
         TokenKind::LCurly => "{",
         TokenKind::RCurly => "}",
         TokenKind::LSquare => "[",
@@ -222,6 +224,12 @@ impl Lexer {
             '>' => return self.simple_token(TokenKind::RAngle),
             ',' => return self.simple_token(TokenKind::Comma),
             ';' => return self.simple_token(TokenKind::Semicolon),
+            '&' => {
+                if self.peek() == Some('&') {
+                    self.advance();
+                    return self.simple_token(TokenKind::AmpersandAmpersand);
+                }
+            },
             '=' => {
                 if self.peek() == Some('=') {
                     self.advance();

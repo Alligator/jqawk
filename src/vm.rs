@@ -1,6 +1,7 @@
 use std::fmt;
 use std::collections::HashMap;
 use std::io;
+use std::cell::RefCell;
 use serde_json;
 use crate::compiler::{JqaRule, JqaRuleKind};
 
@@ -12,6 +13,7 @@ pub enum OpCode {
   GetGlobal(String),
   SetGlobal(String),
   Equal,
+  And,
   Add,
   Subtract,
   Multiply,
@@ -56,13 +58,14 @@ impl Value {
   fn compare(&self, other: Value) -> bool {
     match (self, other) {
       (Value::Str(a), Value::Str(b)) => a.eq(&b),
+      (Value::Num(a), Value::Num(b)) => a.eq(&b),
       _ => false,
     }
   }
 
-  fn as_f64(self) -> f64 {
+  fn as_f64(&self) -> f64 {
     match self {
-      Value::Num(n) => n,
+      Value::Num(n) => *n,
       Value::Str(s) => s.parse().unwrap_or(0.0),
       _ => 0.0
     }
@@ -91,7 +94,7 @@ impl fmt::Display for Value {
     write!(f, "{}", match self {
       Value::Str(s) => String::from(s),
       Value::Num(n) => format!("{}", n),
-      Value::Array(v) | Value::Object(v) => format!("{:#}", v),
+      Value::Array(v) | Value::Object(v) => format!("{}", v),
     })
   }
 }
@@ -120,7 +123,7 @@ fn for_each_in<F: FnMut(Value)>(v: Value, mut func: F) {
 
 pub struct Vm {
   fields: HashMap<String, Value>,
-  variables: HashMap<String, Value>,
+  variables: RefCell<HashMap<String, Value>>,
   stack: Vec<Value>,
   dbg: bool,
 }
@@ -128,9 +131,11 @@ pub struct Vm {
 
 impl Vm {
   pub fn new(dbg: bool) -> Vm {
+    let mut variables = HashMap::new();
+    variables.insert(String::from("NR"), Value::Num(0.0));
     Vm {
       fields: HashMap::new(),
-      variables: HashMap::new(),
+      variables: RefCell::new(variables),
       stack: Vec::new(),
       dbg,
     }
@@ -210,6 +215,15 @@ impl Vm {
           let result = left.compare(right);
           self.push(Value::Num(if result { 1.0 } else { 0.0 }));
         },
+        OpCode::And => {
+          let right = self.pop();
+          let left = self.pop();
+          if left.truthy() && right.truthy() {
+            self.push(Value::Num(1.0));
+          } else {
+            self.push(Value::Num(0.0));
+          }
+        },
         OpCode::Add => {
           let right = self.pop().as_f64();
           let left = self.pop().as_f64();
@@ -231,9 +245,17 @@ impl Vm {
           self.push(Value::Num(left / right));
         },
         OpCode::Greater => {
-          let right = self.pop().as_f64();
-          let left = self.pop().as_f64();
-          self.push(Value::Num(if left > right { 1.0 } else { 0.0 }));
+          let right = self.pop();
+          let left = self.pop();
+
+          match (left, right) {
+            (Value::Str(l), Value::Str(r)) => {
+              self.push(Value::Num(if l > r { 1.0 } else { 0.0 }));
+            },
+            (l, r) => {
+              self.push(Value::Num(if l.as_f64() > r.as_f64() { 1.0 } else { 0.0 }));
+            }
+          }
         },
         OpCode::Print(argc) => {
           if *argc == 0 {
@@ -248,17 +270,26 @@ impl Vm {
           println!("{}", args.join(" "));
         },
         OpCode::GetGlobal(name) => {
-          if !self.variables.contains_key(name) {
+          let val: Option<Value>;
+          {
+            let variables = self.variables.borrow();
+            if variables.contains_key(name) {
+              val = Some(variables.get(name).unwrap().clone());
+            } else {
+              val = None;
+            }
+          }
+
+          if val.is_none() {
             self.push(Value::Num(0.0));
           } else {
-            self.push(self.variables.get(name)
-                .expect(format!("unknown variable {}", name).as_str())
-                .clone());
+            self.push(val.unwrap());
           }
         },
         OpCode::SetGlobal(name) => {
           let val = self.pop();
-          self.variables.insert(name.clone(), val);
+          let mut variables = self.variables.borrow_mut();
+          variables.insert(name.clone(), val);
         },
         #[allow(unreachable_patterns)]
         _ => panic!("unknown opcode {:?}", op_code),
@@ -299,6 +330,13 @@ impl Vm {
         self.eval_rules(&rules, JqaRuleKind::Begin, v.clone());
         let v_clone = v.clone();
         for_each_in(v, |val| {
+          {
+            let mut variables = self.variables.borrow_mut();
+            let nr = variables.get("NR").unwrap().as_f64();
+
+            variables.insert(String::from("NR"), Value::Num(nr + 1.0));
+          }
+
           self.eval_rules(&rules, JqaRuleKind::Match, val);
         });
         self.eval_rules(&rules, JqaRuleKind::End, v_clone);
