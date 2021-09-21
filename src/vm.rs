@@ -14,6 +14,7 @@ pub enum OpCode {
   SetGlobal(String),
   Equal,
   And,
+  Or,
   Add,
   Subtract,
   Multiply,
@@ -219,6 +220,15 @@ impl Vm {
           let right = self.pop();
           let left = self.pop();
           if left.truthy() && right.truthy() {
+            self.push(Value::Num(1.0));
+          } else {
+            self.push(Value::Num(0.0));
+          }
+        },
+        OpCode::Or => {
+          let right = self.pop();
+          let left = self.pop();
+          if left.truthy() || right.truthy() {
             self.push(Value::Num(1.0));
           } else {
             self.push(Value::Num(0.0));

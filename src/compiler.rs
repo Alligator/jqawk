@@ -83,7 +83,12 @@ impl Compiler {
         prefix: None,
         infix: Some(|comp: &mut Compiler| { comp.binary() }),
       },
-      TokenKind::AmpersandAmpersand => ParseRule {
+      TokenKind::And => ParseRule {
+        prec: Precedence::Logical,
+        prefix: None,
+        infix: Some(|comp: &mut Compiler| { comp.binary() }),
+      },
+      TokenKind::Or => ParseRule {
         prec: Precedence::Logical,
         prefix: None,
         infix: Some(|comp: &mut Compiler| { comp.binary() }),
@@ -218,7 +223,8 @@ impl Compiler {
     self.expression(prec);
     match token.kind {
       TokenKind::EqualEqual => self.emit(OpCode::Equal),
-      TokenKind::AmpersandAmpersand => self.emit(OpCode::And),
+      TokenKind::And => self.emit(OpCode::And),
+      TokenKind::Or => self.emit(OpCode::Or),
       TokenKind::RAngle => self.emit(OpCode::Greater),
       TokenKind::Plus => self.emit(OpCode::Add),
       TokenKind::Minus => self.emit(OpCode::Subtract),

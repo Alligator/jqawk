@@ -147,11 +147,14 @@ jqawk_test!(p20,
     { \"id\": 2, \"name\": \"alligator\", \"age\": 35 },
     { \"id\": 3, \"name\": \"clive\", \"age\": 35 }]",
   "2\n");
+jqawk_test!(p21,
+  "$.name == \"alligator\" || $.age > 30 { print $.id }",
+  "[{ \"id\": 1, \"name\": \"not alligator\", \"age\": 25 },
+    { \"id\": 2, \"name\": \"alligator\", \"age\": 35 },
+    { \"id\": 3, \"name\": \"clive\", \"age\": 35 }]",
+  "2\n3\n");
 
 /*
-p.21
-$4 == "Asia" || $4 == "Europe"
-
 p.21a
 /Asia/ || /Africa/
 
