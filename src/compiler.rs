@@ -88,6 +88,16 @@ impl Compiler {
         prefix: None,
         infix: Some(|comp: &mut Compiler| { comp.binary() }),
       },
+      TokenKind::Tilde => ParseRule {
+        prec: Precedence::Equal,
+        prefix: None,
+        infix: Some(|comp: &mut Compiler| { comp.binary() }),
+      },
+      TokenKind::BangTilde => ParseRule {
+        prec: Precedence::Equal,
+        prefix: None,
+        infix: Some(|comp: &mut Compiler| { comp.binary() }),
+      },
       TokenKind::LSquare => ParseRule {
         prec: Precedence::Func,
         prefix: None,
@@ -115,7 +125,7 @@ impl Compiler {
       },
       TokenKind::Slash => ParseRule {
         prec: Precedence::Multiplication,
-        prefix: None,
+        prefix: Some(|comp: &mut Compiler| { comp.regex() }),
         infix: Some(|comp: &mut Compiler| { comp.binary() }),
       },
       _ => ParseRule {
@@ -224,6 +234,11 @@ impl Compiler {
       TokenKind::Minus => self.emit(OpCode::Subtract),
       TokenKind::Star => self.emit(OpCode::Multiply),
       TokenKind::Slash => self.emit(OpCode::Divide),
+      TokenKind::Tilde => self.emit(OpCode::Match),
+      TokenKind::BangTilde => {
+        self.emit(OpCode::Match);
+        self.emit(OpCode::Negate);
+      }
       _ => self.fatal(format!("unknown operator {}", token.kind)),
     }
   }
@@ -260,6 +275,21 @@ impl Compiler {
     self.consume(TokenKind::Str);
     let token = self.prev.clone();
     self.emit(OpCode::PushImmediate(Value::Str(token.str.unwrap())));
+  }
+
+  fn regex(&mut self) {
+    let t = self.lexer.read_regex();
+
+    match t.kind {
+      TokenKind::Error => self.fatal(format!("error on line {}: {}", t.line, t.str.unwrap())),
+      _ => {
+        self.prev = self.current.clone();
+        self.current = t;
+      }
+    }
+    self.advance();
+    let token = self.prev.clone();
+    self.emit(OpCode::PushImmediate(Value::Regex(token.str.unwrap())));
   }
 
   fn number(&mut self) {

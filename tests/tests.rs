@@ -140,7 +140,34 @@ jqawk_test!(p8,
   "Japan\n");
 jqawk_test!(p9, "$ > \"S\"", "[\"Clive\", \"Tony\"]", "Tony\n");
 jqawk_test!(p10, "$[0] == $[1]", "[[1, 2], [3, 3], [4, 5]]", "[3,3]\n");
-// p11-19 omitted until I know what's happening with regexes
+
+jqawk_test!(p11, "$ ~ /Asia/", "[\"Asia\", \"Europe\"]", "Asia\n");
+jqawk_test!(p12,
+  "$.continent ~ /Europe/ { print $.country }",
+  "[{ \"continent\": \"Asia\", \"country\": \"Japan\" },
+    { \"continent\": \"Europe\", \"country\": \"Sweden\" }]",
+  "Sweden\n");
+jqawk_test!(p13,
+  "$.continent !~ /Europe/ { print $.country }",
+  "[{ \"continent\": \"Asia\", \"country\": \"Japan\" },
+    { \"continent\": \"Europe\", \"country\": \"Sweden\" }]",
+  "Japan\n");
+jqawk_test!(p14, "$ ~ /\\$/", "[\"£gbp\", \"$usd\"]", "$usd\n");
+jqawk_test!(p15, "$ ~ /\\\\/", "[\"C:\\\\\"]", "C:\\\n");
+jqawk_test!(p16, "$ ~ /^.$/", "[\"a\", \"abc\"]", "a\n");
+
+/*
+==> p.17 <==
+$2 !~ /^[0-9]+$/
+
+==> p.18 <==
+/(apple|cherry) (pie|tart)/
+
+==> p.19 <==
+BEGIN	{ digits = "^[0-9]+$" }
+$2 !~ digits
+*/
+
 jqawk_test!(p20,
   "$.name == \"alligator\" && $.age > 30 { print $.id }",
   "[{ \"id\": 1, \"name\": \"alligator\", \"age\": 25 },
