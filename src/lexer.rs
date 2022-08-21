@@ -12,6 +12,8 @@ pub enum TokenKind {
     EqualEqual,
     And,
     Or,
+    Tilde,
+    BangTilde,
     LCurly,
     RCurly,
     LSquare,
@@ -21,6 +23,7 @@ pub enum TokenKind {
     Comma,
     Semicolon,
     Str,
+    Regex,
     Num,
     Identifier,
     Print,
@@ -43,6 +46,8 @@ impl fmt::Display for TokenKind {
         TokenKind::EqualEqual => "==",
         TokenKind::And => "&&",
         TokenKind::Or => "||",
+        TokenKind::Tilde => "~",
+        TokenKind::BangTilde => "!~",
         TokenKind::LCurly => "{",
         TokenKind::RCurly => "}",
         TokenKind::LSquare => "[",
@@ -53,6 +58,7 @@ impl fmt::Display for TokenKind {
         TokenKind::Semicolon => ";",
         TokenKind::Print => "print",
         TokenKind::Str => "<string>",
+        TokenKind::Regex => "<regex>",
         TokenKind::Num => "<num>",
         TokenKind::Identifier => "<identifier>",
         TokenKind::Begin => "BEGIN",
@@ -190,6 +196,21 @@ impl Lexer {
         return self.str_token(TokenKind::Str, str_content);
     }
 
+    /// this must only be called after reading a Slash token
+    pub fn read_regex(&mut self) -> Token {
+        self.token_start = self.pos;
+        loop {
+            match self.peek() {
+                Some('/') => break,
+                Some(_) => { self.advance(); },
+                None => return self.err_token(String::from("unexpected EOF in regex")),
+            }
+        }
+        self.advance();
+        let regex_content = &self.src[self.token_start .. self.pos - 1];
+        return self.str_token(TokenKind::Regex, regex_content)
+    }
+
     pub fn next_token(&mut self) -> Token {
         self.skip_whitespace();
         self.token_start = self.pos;
@@ -224,6 +245,7 @@ impl Lexer {
             ']' => return self.simple_token(TokenKind::RSquare),
             '<' => return self.simple_token(TokenKind::LAngle),
             '>' => return self.simple_token(TokenKind::RAngle),
+            '~' => return self.simple_token(TokenKind::Tilde),
             ',' => return self.simple_token(TokenKind::Comma),
             ';' => return self.simple_token(TokenKind::Semicolon),
             '&' => {
@@ -244,6 +266,12 @@ impl Lexer {
                     return self.simple_token(TokenKind::EqualEqual);
                 }
                 return self.simple_token(TokenKind::Equal);
+            }
+            '!' => {
+                if self.peek() == Some('~') {
+                    self.advance();
+                    return self.simple_token(TokenKind::BangTilde);
+                }
             }
             _ => (),
         }

@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use std::io;
 use std::cell::RefCell;
 use serde_json;
+use regex::Regex;
 use crate::compiler::{JqaRule, JqaRuleKind};
 
 #[derive(Clone, Debug)]
@@ -20,12 +21,15 @@ pub enum OpCode {
   Multiply,
   Divide,
   Greater,
+  Match,
+  Negate,
   Print(usize),
 }
 
 #[derive(PartialEq, Clone, Debug)]
 pub enum Value {
   Str(String),
+  Regex(String),
   Num(f64),
   Object(serde_json::Value),
   Array(serde_json::Value),
@@ -86,6 +90,7 @@ impl Value {
       Value::Num(_) => "number",
       Value::Array(_) => "array",
       Value::Object(_) => "object",
+      Value::Regex(_) => "regex",
     }
   }
 }
@@ -94,6 +99,7 @@ impl fmt::Display for Value {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     write!(f, "{}", match self {
       Value::Str(s) => String::from(s),
+      Value::Regex(r) => format!("/{}/", r),
       Value::Num(n) => format!("{}", n),
       Value::Array(v) | Value::Object(v) => format!("{}", v),
     })
@@ -265,6 +271,30 @@ impl Vm {
             (l, r) => {
               self.push(Value::Num(if l.as_f64() > r.as_f64() { 1.0 } else { 0.0 }));
             }
+          }
+        },
+        OpCode::Match => {
+          let right = self.pop();
+          let left = self.pop();
+          match (left, right) {
+            (Value::Str(s), Value::Regex(r)) => {
+              let re = Regex::new(r.as_str());
+              if re.is_err() {
+                let e = re.unwrap_err();
+                panic!("invalid regex: {}", e);
+              }
+              self.push(Value::Num(if re.unwrap().is_match(s.as_str()) { 1.0 } else { 0.0 }));
+            },
+            _ => panic!("can only match a string against a regex"),
+          }
+        },
+        OpCode::Negate => {
+          let arg = self.pop();
+          match arg {
+            Value::Num(n) => {
+              self.push(Value::Num(if n == 0.0 { 1.0 } else { 0.0 }));
+            }
+            _ => panic!("can only negate a number"),
           }
         },
         OpCode::Print(argc) => {
