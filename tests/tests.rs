@@ -48,7 +48,7 @@ fn run_stdin(args: &[&str], stdin: &str) -> String {
 fn begin_and_end() {
   let program = "\
 END { print \"end\" }
-BEGIN { print \"begin\" }";
+BEGIN { print 'begin' }";
   let output = run(&[program, "test.json"]);
   
   assert_eq!(output, "begin\nend\n".to_string());

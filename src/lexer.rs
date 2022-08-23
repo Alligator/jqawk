@@ -183,10 +183,10 @@ impl Lexer {
         return self.str_token(TokenKind::Num, num);
     }
 
-    fn string(&mut self) -> Token {
+    fn string(&mut self, quote_char: char) -> Token {
         loop {
             match self.peek() {
-                Some('"') => break,
+                Some(c) if c == quote_char => break,
                 Some(_) => { self.advance(); },
                 None => return self.err_token(String::from("unexpected EOF in string")),
             }
@@ -228,8 +228,8 @@ impl Lexer {
             return self.number();
         }
 
-        if c == '"' {
-            return self.string();
+        if c == '"'  || c == '\''{
+            return self.string(c);
         }
 
         match c {
