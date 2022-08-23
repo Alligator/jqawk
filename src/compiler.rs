@@ -36,10 +36,15 @@ enum Precedence {
 
 struct ParseRule {
   prec: Precedence,
-  infix: Option<fn(&mut Compiler)>,
-  prefix: Option<fn(&mut Compiler)>,
+  infix: Option<fn(&mut Compiler) -> Result<(), SyntaxError>>,
+  prefix: Option<fn(&mut Compiler) -> Result<(), SyntaxError>>,
 }
 
+#[derive(Debug)]
+pub struct SyntaxError {
+  pub msg: String,
+  pub line: usize,
+}
 
 impl Compiler {
   pub fn new(lexer: Lexer) -> Compiler {
@@ -142,28 +147,40 @@ impl Compiler {
   }
 
   // parsing utils
-  fn advance(&mut self) {
+  fn advance(&mut self) -> Result<(), SyntaxError> {
     let t = self.lexer.next_token();
 
     match t.kind {
-      TokenKind::Error => self.fatal(format!("error on line {}: {}", t.line, t.str.unwrap())),
+      TokenKind::Error => {
+        return Err(SyntaxError {
+          msg: t.str.unwrap(),
+          line: t.line,
+        });
+      },
       _ => {
         self.prev = self.current.clone();
         self.current = t;
+        return Ok(());
       }
     }
 
   }
 
-  fn consume(&mut self, kind: TokenKind) {
+  fn consume(&mut self, kind: TokenKind) -> Result<(), SyntaxError> {
     if self.current.kind != kind {
-      self.fatal(format!("unexpected token {} expected {}", self.current, kind));
+      return Err(SyntaxError {
+        msg: format!("unexpected token {} expected {}", self.current, kind),
+        line: self.current.line,
+      });
     }
-    self.advance();
+    return self.advance();
   }
 
-  fn fatal(&self, message: String) {
-    panic!("{}", message);
+  fn error(&self, message: String, line: usize) -> Result<(), SyntaxError> {
+    return Err(SyntaxError {
+      msg: message,
+      line: line,
+    });
   }
 
   // opcodes
@@ -172,44 +189,44 @@ impl Compiler {
   }
 
   // grammar
-  fn expression(&mut self, prec: Precedence) {
+  fn expression(&mut self, prec: Precedence) -> Result<(), SyntaxError> {
     let prefix_rule = self.get_rule(self.current.kind);
     if prefix_rule.prefix.is_none() {
-      self.fatal(format!("unexpected prefix {}", self.current));
+      return self.error(format!("unexpected prefix {}", self.current), self.current.line);
     }
-    prefix_rule.prefix.unwrap()(self);
+    prefix_rule.prefix.unwrap()(self)?;
 
     while prec <= self.get_rule(self.current.kind).prec {
       let infix_rule = self.get_rule(self.current.kind);
       if infix_rule.infix.is_none() {
-        self.fatal(format!("unexpected infix {}", self.current));
+        return self.error(format!("unexpected infix {}", self.current), self.current.line);
       }
-      infix_rule.infix.unwrap()(self);
+      infix_rule.infix.unwrap()(self)?;
     }
+    return Ok(());
   }
 
-  fn statement(&mut self) {
+  fn statement(&mut self) -> Result<(), SyntaxError> {
     match self.current.kind {
       TokenKind::Print => {
-        self.consume(TokenKind::Print);
+        self.consume(TokenKind::Print)?;
         let mut arg_count = 0;
         while !self.at_statement_end() {
-          self.expression(Precedence::Assignment);
+          self.expression(Precedence::Assignment)?;
           arg_count += 1;
           if self.current.kind == TokenKind::Comma {
-            self.consume(TokenKind::Comma);
+            self.consume(TokenKind::Comma)?;
           } else {
             break;
           }
         }
         self.emit(OpCode::Print(arg_count));
+        return Ok(());
       },
       TokenKind::Identifier => {
-        self.variable();
+        return self.variable();
       },
-      _ => {
-        self.fatal(format!("unexpected token '{}' expected a statement", self.current));
-      },
+      _ => self.error(format!("unexpected token '{}' expected a statement", self.current),self.current.line),
     }
   }
 
@@ -220,17 +237,18 @@ impl Compiler {
     }
   }
 
-  fn field(&mut self) {
-    self.consume(TokenKind::Dollar);
+  fn field(&mut self) -> Result<(), SyntaxError> {
+    self.consume(TokenKind::Dollar)?;
     // TODO $name etc
     self.emit(OpCode::GetField(String::from("")));
+    return Ok(());
   }
 
-  fn binary(&mut self) {
+  fn binary(&mut self) -> Result<(), SyntaxError> {
     let token = self.current.clone();
     let prec = self.get_rule(token.kind).prec;
-    self.advance();
-    self.expression(prec);
+    self.advance()?;
+    self.expression(prec)?;
     match token.kind {
       TokenKind::EqualEqual => self.emit(OpCode::Equal),
       TokenKind::And => self.emit(OpCode::And),
@@ -245,66 +263,80 @@ impl Compiler {
         self.emit(OpCode::Match);
         self.emit(OpCode::Negate);
       }
-      _ => self.fatal(format!("unknown operator {}", token.kind)),
+      _ => {
+        return Err(SyntaxError {
+          msg: format!("unknown operator {}", token.kind),
+          line: token.line,
+        });
+      }
     }
+    return Ok(());
   }
 
-  fn variable(&mut self) {
-    self.consume(TokenKind::Identifier);
+  fn variable(&mut self) -> Result<(), SyntaxError> {
+    self.consume(TokenKind::Identifier)?;
     let token = self.prev.clone();
     if self.current.kind == TokenKind::Equal {
       // assignment
-      self.consume(TokenKind::Equal);
-      self.expression(Precedence::Assignment);
+      self.consume(TokenKind::Equal)?;
+      self.expression(Precedence::Assignment)?;
       self.emit(OpCode::SetGlobal(token.str.unwrap()));
     } else {
       self.emit(OpCode::GetGlobal(token.str.unwrap()));
     }
+    return Ok(());
   }
 
-  fn member(&mut self) {
-    self.consume(TokenKind::Dot);
-    self.consume(TokenKind::Identifier);
+  fn member(&mut self) -> Result<(), SyntaxError> {
+    self.consume(TokenKind::Dot)?;
+    self.consume(TokenKind::Identifier)?;
     let token = self.prev.clone();
     self.emit(OpCode::PushImmediate(Value::Str(token.str.unwrap())));
     self.emit(OpCode::GetMember);
+    return Ok(());
   }
 
-  fn computed_member(&mut self) {
-    self.consume(TokenKind::LSquare);
-    self.expression(Precedence::Assignment);
-    self.consume(TokenKind::RSquare);
+  fn computed_member(&mut self) -> Result<(), SyntaxError> {
+    self.consume(TokenKind::LSquare)?;
+    self.expression(Precedence::Assignment)?;
+    self.consume(TokenKind::RSquare)?;
     self.emit(OpCode::GetMember);
+    return Ok(());
   }
 
-  fn string(&mut self) {
-    self.consume(TokenKind::Str);
+  fn string(&mut self) -> Result<(), SyntaxError> {
+    self.consume(TokenKind::Str)?;
     let token = self.prev.clone();
     self.emit(OpCode::PushImmediate(Value::Str(token.str.unwrap())));
+    return Ok(());
   }
 
-  fn regex(&mut self) {
+  fn regex(&mut self) -> Result<(), SyntaxError> {
     let t = self.lexer.read_regex();
 
     match t.kind {
-      TokenKind::Error => self.fatal(format!("error on line {}: {}", t.line, t.str.unwrap())),
+      TokenKind::Error => {
+        return self.error(format!("error on line {}: {}", t.line, t.str.unwrap()), t.line);
+      },
       _ => {
         self.prev = self.current.clone();
         self.current = t;
       }
     }
-    self.advance();
+    self.advance()?;
     let token = self.prev.clone();
     self.emit(OpCode::PushImmediate(Value::Regex(token.str.unwrap())));
+    return Ok(());
   }
 
-  fn number(&mut self) {
-    self.consume(TokenKind::Num);
+  fn number(&mut self) -> Result<(), SyntaxError> {
+    self.consume(TokenKind::Num)?;
     let num: f64 = self.prev.clone().str.unwrap().parse().unwrap();
     self.emit(OpCode::PushImmediate(Value::Num(num)));
+    return Ok(());
   }
 
-  fn compile_rule(&mut self) -> JqaRule {
+  fn compile_rule(&mut self) -> Result<JqaRule, SyntaxError> {
     let mut rule_kind = JqaRuleKind::Match;
 
     match self.current.kind {
@@ -313,14 +345,16 @@ impl Compiler {
       // begin/end
       TokenKind::Begin => {
         rule_kind = JqaRuleKind::Begin;
-        self.consume(TokenKind::Begin);
+        self.consume(TokenKind::Begin)?;
       },
       TokenKind::End => {
         rule_kind = JqaRuleKind::End;
-        self.consume(TokenKind::End);
+        self.consume(TokenKind::End)?;
       },
       // pattern
-      _ => self.expression(Precedence::Assignment),
+      _ => {
+        self.expression(Precedence::Assignment)?;
+      },
     }
 
     let pattern = self.output.clone();
@@ -329,37 +363,37 @@ impl Compiler {
     if self.current.kind != TokenKind::LCurly {
       self.emit(OpCode::Print(0));
     } else {
-      self.consume(TokenKind::LCurly);
+      self.consume(TokenKind::LCurly)?;
       while self.current.kind != TokenKind::RCurly {
-        self.statement();
+        self.statement()?;
         if self.current.kind != TokenKind::RCurly {
-          self.consume(TokenKind::Semicolon);
+          self.consume(TokenKind::Semicolon)?;
         }
       }
-      self.consume(TokenKind::RCurly);
+      self.consume(TokenKind::RCurly)?;
     }
     let body = self.output.clone();
     self.output.clear();
 
-    JqaRule { pattern, body, kind: rule_kind }
+    return Ok(JqaRule { pattern, body, kind: rule_kind });
   }
 
-  pub fn compile_expression(&mut self) -> Vec<OpCode> {
-    self.advance();
-    self.expression(Precedence::Assignment);
-    return self.output.clone();
+  pub fn compile_expression(&mut self) -> Result<Vec<OpCode>, SyntaxError> {
+    self.advance()?;
+    self.expression(Precedence::Assignment)?;
+    return Ok(self.output.clone());
   }
 
-  pub fn compile_rules(&mut self) -> Vec<JqaRule> {
+  pub fn compile_rules(&mut self) -> Result<Vec<JqaRule>, SyntaxError> {
     // prime the lexer
-    self.advance();
+    self.advance()?;
     let mut rules = Vec::new();
 
     while self.current.kind != TokenKind::EOF {
-      let rule = self.compile_rule();
+      let rule = self.compile_rule()?;
       rules.push(rule);
     }
 
-    return rules;
+    return Ok(rules);
   }
 }

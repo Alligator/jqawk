@@ -19,11 +19,11 @@ fn run_program_file<T>(path: &str, rdr: T, selector: &str)
 
     let lexer = Lexer::new(content.as_str());
     let mut compiler = Compiler::new(lexer);
-    let rules = compiler.compile_rules();
+    let rules = compiler.compile_rules().unwrap();
 
     let s_lexer = Lexer::new(selector);
     let mut s_compiler = Compiler::new(s_lexer);
-    let selector_program = s_compiler.compile_expression();
+    let selector_program = s_compiler.compile_expression().unwrap();
 
     let mut vm = Vm::new(false);
     vm.run(rdr, selector_program, rules);
@@ -74,12 +74,22 @@ fn main() {
         let lexer = Lexer::new(matches.value_of("PROGRAM").unwrap());
         let mut compiler = Compiler::new(lexer);
         let rules = compiler.compile_rules();
+        if !rules.is_ok() {
+            let err = rules.unwrap_err();
+            eprintln!("error on line {}: {}", err.line, err.msg);
+            return;
+        }
 
         let s_lexer = Lexer::new(selector);
         let mut s_compiler = Compiler::new(s_lexer);
         let selector_program = s_compiler.compile_expression();
+        if !selector_program.is_ok() {
+            let err = selector_program.unwrap_err();
+            eprintln!("error on line {}: {}", err.line, err.msg);
+            return;
+        }
 
         let mut vm = Vm::new(false);
-        vm.run(reader, selector_program, rules);
+        vm.run(reader, selector_program.unwrap(), rules.unwrap());
     }
 }
