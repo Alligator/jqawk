@@ -26,7 +26,11 @@ fn run_program_file<T>(path: &str, rdr: T, selector: &str)
     let selector_program = s_compiler.compile_expression().unwrap();
 
     let mut vm = Vm::new(false);
-    vm.run(rdr, selector_program, rules);
+    let result = vm.run(rdr, selector_program, rules);
+    if result.is_err() {
+        let err = result.unwrap_err();
+        eprintln!("runtime error: {}", err.msg);
+    }
 }
 
 fn get_input(matches: &ArgMatches) -> Box<dyn io::Read> {
@@ -90,6 +94,10 @@ fn main() {
         }
 
         let mut vm = Vm::new(false);
-        vm.run(reader, selector_program.unwrap(), rules.unwrap());
+        let result = vm.run(reader, selector_program.unwrap(), rules.unwrap());
+        if result.is_err() {
+            let err = result.unwrap_err();
+            eprintln!("runtime error: {}", err.msg);
+        }
     }
 }
