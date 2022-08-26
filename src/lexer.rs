@@ -162,8 +162,12 @@ impl Lexer {
     }
 
     fn identifier(&mut self) -> Token {
-        while self.peek().unwrap_or_default().is_ascii_alphabetic() {
-            self.advance();
+        loop {
+            match self.peek() {
+                Some(c) if c.is_ascii_alphabetic() => self.advance(),
+                Some('_') => self.advance(),
+                _ => break,
+            };
         }
         let ident = &self.src[self.token_start..self.pos];
 
@@ -189,7 +193,7 @@ impl Lexer {
                 Some(c) if c == quote_char => break,
                 Some(_) => { self.advance(); },
                 None => return self.err_token(String::from("unexpected EOF in string")),
-            }
+            };
         }
         self.advance();
         let str_content = &self.src[self.token_start + 1 .. self.pos - 1];
