@@ -1,7 +1,9 @@
 mod lexer;
 mod compiler;
 mod vm;
+mod debug;
 
+use crate::debug::print_rules;
 use lexer::Lexer;
 use compiler::Compiler;
 use vm::Vm;
@@ -58,6 +60,8 @@ fn main() {
             .takes_value(true)
             .default_value("$")
             .hide_default_value(true))
+        .arg(Arg::with_name("debug")
+            .long("debug"))
         .arg(Arg::with_name("program_file")
             .short("f")
             .help("a script file to run")
@@ -93,8 +97,13 @@ fn main() {
             return;
         }
 
+        let unwrapped_rules = rules.unwrap();
+        if matches.is_present("debug") {
+            print_rules(&unwrapped_rules);
+        }
+
         let mut vm = Vm::new(false);
-        let result = vm.run(reader, selector_program.unwrap(), rules.unwrap());
+        let result = vm.run(reader, selector_program.unwrap(), unwrapped_rules);
         if result.is_err() {
             let err = result.unwrap_err();
             eprintln!("runtime error: {}", err.msg);
