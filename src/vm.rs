@@ -33,6 +33,8 @@ pub enum Value {
   Num(f64),
   Object(serde_json::Value),
   Array(serde_json::Value),
+  Indeterminate,
+  Nil,
 }
 
 impl Value {
@@ -60,7 +62,7 @@ impl Value {
   fn from_opt(v: Option<&serde_json::Value>) -> Value {
     match v {
       Some(v) => Value::from(v.clone()),
-      None => Value::Num(0.0),
+      None => Value::Nil,
     }
   }
 
@@ -95,6 +97,8 @@ impl Value {
       Value::Array(_) => "array",
       Value::Object(_) => "object",
       Value::Regex(_) => "regex",
+      Value::Indeterminate => "indeterminate",
+      Value::Nil => "nil",
     }
   }
 }
@@ -106,6 +110,8 @@ impl fmt::Display for Value {
       Value::Regex(r) => format!("/{}/", r),
       Value::Num(n) => format!("{}", n),
       Value::Array(v) | Value::Object(v) => format!("{}", v),
+      Value::Indeterminate => String::default(),
+      Value::Nil => String::default(),
     })
   }
 }
@@ -205,7 +211,18 @@ impl Vm {
         },
         OpCode::GetMember => {
           let member = self.pop()?;
-          let obj = self.pop()?;
+          let mut obj = self.pop()?;
+
+          if obj == Value::Indeterminate {
+            // set obj's type based on the member expression's type
+            obj = match member {
+              Value::Num(_) => {
+                let arr = serde_json::Value::Array(Vec::new());
+                Value::Array(arr)
+              },
+              _ => Value::Indeterminate, // will fail below
+            }
+          }
 
           match obj {
             Value::Array(a) => {
@@ -337,7 +354,7 @@ impl Vm {
           }
 
           if val.is_none() {
-            self.push(Value::Num(0.0));
+            self.push(Value::Indeterminate);
           } else {
             self.push(val.unwrap());
           }

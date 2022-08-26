@@ -116,6 +116,13 @@ BEGIN {
   assert_eq!(output, "6\n1\n8\n2\n");
 }
 
+#[test]
+fn variable_inference() {
+  let program = "BEGIN { print a[0]; print a[0] + 1 }";
+  let output = run_stdin(&[program], "[]");
+  assert_eq!(output, "\n1\n");
+}
+
 // one true awk inspired tests
 macro_rules! jqawk_test {
   ($name:ident, $program:expr, $input:expr, $expected:expr) => {
