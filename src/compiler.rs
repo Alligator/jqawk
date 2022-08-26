@@ -83,6 +83,11 @@ impl Compiler {
         prefix: None,
         infix: Some(|comp: &mut Compiler| { comp.member() }),
       },
+      TokenKind::Equal => ParseRule {
+        prec: Precedence::Assignment,
+        prefix: None,
+        infix: Some(|comp: &mut Compiler| { comp.assign() }),
+      },
       TokenKind::EqualEqual => ParseRule {
         prec: Precedence::Equal,
         prefix: None,
@@ -223,10 +228,7 @@ impl Compiler {
         self.emit(OpCode::Print(arg_count));
         return Ok(());
       },
-      TokenKind::Identifier => {
-        return self.variable();
-      },
-      _ => self.error(format!("unexpected token '{}' expected a statement", self.current),self.current.line),
+      _ => return self.expression(Precedence::Assignment)
     }
   }
 
@@ -276,14 +278,7 @@ impl Compiler {
   fn variable(&mut self) -> Result<(), SyntaxError> {
     self.consume(TokenKind::Identifier)?;
     let token = self.prev.clone();
-    if self.current.kind == TokenKind::Equal {
-      // assignment
-      self.consume(TokenKind::Equal)?;
-      self.expression(Precedence::Assignment)?;
-      self.emit(OpCode::SetGlobal(token.str.unwrap()));
-    } else {
-      self.emit(OpCode::GetGlobal(token.str.unwrap()));
-    }
+    self.emit(OpCode::GetGlobal(token.str.unwrap()));
     return Ok(());
   }
 
@@ -301,6 +296,27 @@ impl Compiler {
     self.expression(Precedence::Assignment)?;
     self.consume(TokenKind::RSquare)?;
     self.emit(OpCode::GetMember);
+    return Ok(());
+  }
+
+  fn assign(&mut self) -> Result<(), SyntaxError> {
+    self.consume(TokenKind::Equal)?;
+
+    // crazy assignment handling
+    // this is a one pass compiler, when we get here, the lhs of this assignment
+    // has already been compiled to a Get* opcode. we need it to be a set.  to
+    // do this, we stash the get opcode, compile the rhs, then flip the get to a
+    // set.
+    let last_opcode = self.output.pop().unwrap();
+
+    self.expression(Precedence::Assignment)?;
+
+    let new_opcode = match last_opcode {
+      OpCode::GetGlobal(s) => OpCode::SetGlobal(s.clone()),
+      _ => panic!("expected a Get opcode before assign"),
+    };
+    self.emit(new_opcode);
+
     return Ok(());
   }
 
