@@ -49,6 +49,10 @@ impl Value {
     if v.is_number() {
       return Value::Num(v.as_f64().unwrap());
     }
+    if v.is_boolean() {
+      let b = v.as_bool().unwrap();
+      return Value::Num(if b { 1.0 } else { 0.0 });
+    }
 
     return Value::Num(0.0);
   }
