@@ -22,11 +22,12 @@ func _() {
 	_ = x[RSquare-11]
 	_ = x[Dollar-12]
 	_ = x[Comma-13]
+	_ = x[Dot-14]
 }
 
-const _TokenTag_name = "EOFErrorIdentStrNumBeginEndPrint{}[]$,"
+const _TokenTag_name = "EOFErrorIdentStrNumBeginEndPrint{}[]$,."
 
-var _TokenTag_index = [...]uint8{0, 3, 8, 13, 16, 19, 24, 27, 32, 33, 34, 35, 36, 37, 38}
+var _TokenTag_index = [...]uint8{0, 3, 8, 13, 16, 19, 24, 27, 32, 33, 34, 35, 36, 37, 38, 39}
 
 func (i TokenTag) String() string {
 	if i >= TokenTag(len(_TokenTag_index)-1) {

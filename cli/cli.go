@@ -3,6 +3,7 @@ package cli
 import (
 	"flag"
 	"fmt"
+	"go/ast"
 	"io"
 	"os"
 
@@ -10,6 +11,7 @@ import (
 )
 
 func Run() (exitCode int) {
+	dbgAst := flag.Bool("dbg-ast", false, "print the AST")
 	flag.Parse()
 	prog := flag.Arg(0)
 
@@ -33,6 +35,10 @@ func Run() (exitCode int) {
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
+	}
+
+	if *dbgAst {
+		ast.Print(nil, rules)
 	}
 
 	ev := lang.NewEvaluator(rules, &lex, os.Stdout, input)

@@ -33,6 +33,7 @@ func NewParser(l *Lexer) Parser {
 		Dollar:  {PrecNone, identifier, nil},
 		Ident:   {PrecNone, identifier, nil},
 		LSquare: {PrecCall, nil, computedMember},
+		Dot:     {PrecCall, nil, member},
 	}
 	return p
 }
@@ -136,7 +137,7 @@ func (p *Parser) expression() (Expr, error) {
 func (p *Parser) expressionWithPrec(prec Precedence) (Expr, error) {
 	prefixRule := p.rule(p.current.Tag)
 	if prefixRule.prefix == nil {
-		return nil, fmt.Errorf("unexpected %s", p.current.Tag)
+		return nil, fmt.Errorf("unexpected token %s", p.current.Tag)
 	}
 
 	lhs, err := prefixRule.prefix(p)
@@ -201,6 +202,24 @@ func computedMember(p *Parser, left Expr) (Expr, error) {
 	return &ExprBinary{
 		Left:    left,
 		Right:   expr,
+		OpToken: *opToken,
+	}, nil
+}
+
+func member(p *Parser, left Expr) (Expr, error) {
+	if err := p.consume(Dot); err != nil {
+		return nil, err
+	}
+	opToken := p.previous
+
+	if err := p.consume(Ident); err != nil {
+		return nil, err
+	}
+	ident := p.previous
+
+	return &ExprBinary{
+		Left:    left,
+		Right:   &ExprString{*ident},
 		OpToken: *opToken,
 	}, nil
 }

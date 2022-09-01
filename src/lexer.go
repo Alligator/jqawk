@@ -23,6 +23,7 @@ const (
 	RSquare // ]
 	Dollar  // $
 	Comma   // ,
+	Dot     // .
 )
 
 type Token struct {
@@ -173,6 +174,8 @@ func (l *Lexer) Next() (Token, error) {
 		return l.simpleToken(RSquare), nil
 	case ',':
 		return l.simpleToken(Comma), nil
+	case '.':
+		return l.simpleToken(Dot), nil
 	case '\'', '"':
 		return l.string(c)
 	}

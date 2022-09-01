@@ -75,7 +75,7 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (Value, error) {
 	}
 
 	switch expr.OpToken.Tag {
-	case LSquare:
+	case LSquare, Dot:
 		member, err := left.GetMember(right)
 		if err != nil {
 			return Value{}, err

@@ -48,6 +48,27 @@ func TestJqawk(t *testing.T) {
 	})
 
 	test(t, testCase{
+		name:     "dot",
+		prog:     "{ print $.name }",
+		json:     `[{ "name": "gate" }, { "name": "sponge" }]`,
+		expected: "gate\nsponge\n",
+	})
+
+	test(t, testCase{
+		name:     "subscript",
+		prog:     "{ print $['name'] }",
+		json:     `[{ "name": "gate" }, { "name": "sponge" }]`,
+		expected: "gate\nsponge\n",
+	})
+
+	test(t, testCase{
+		name:     "subscript array",
+		prog:     "{ print $[0] }",
+		json:     `[[1, 2], [10, 20], [100, 200]]`,
+		expected: "1\n10\n100\n",
+	})
+
+	test(t, testCase{
 		name:     "p1",
 		prog:     "{ print }",
 		json:     "[1, 2, 3]",
