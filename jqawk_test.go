@@ -59,6 +59,35 @@ func TestJqawk(t *testing.T) {
 	})
 
 	test(t, testCase{
+		name: "compound operators",
+		prog: `
+		BEGIN {
+			prod = 1;
+			div = 8;
+			sub = 16;
+		}
+
+		{
+			sum += $;
+			prod *= $;
+		}
+
+		$ > 3 {
+			div /= $;
+			sub -= $;
+		}
+
+		END {
+			print sum;
+			print prod;
+			print div;
+			print sub;
+		}`,
+		json:     "[2, 3, 4]",
+		expected: "9\n24\n2\n12\n",
+	})
+
+	test(t, testCase{
 		name:     "dot",
 		prog:     "{ print $.name }",
 		json:     `[{ "name": "gate" }, { "name": "sponge" }]`,

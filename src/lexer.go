@@ -17,22 +17,26 @@ const (
 	Begin
 	End
 	Print
-	LCurly      // {
-	RCurly      // }
-	LSquare     // [
-	RSquare     // ]
-	LessThan    // <
-	GreaterThan // >
-	Dollar      // $
-	Comma       // ,
-	Dot         // .
-	Equal       // =
-	EqualEqual  // ==
-	SemiColon   // ;
-	Plus        // +
-	Minus       // -
-	Multiply    // *
-	Divide      // /
+	LCurly        // {
+	RCurly        // }
+	LSquare       // [
+	RSquare       // ]
+	LessThan      // <
+	GreaterThan   // >
+	Dollar        // $
+	Comma         // ,
+	Dot           // .
+	Equal         // =
+	EqualEqual    // ==
+	SemiColon     // ;
+	Plus          // +
+	Minus         // -
+	Multiply      // *
+	Divide        // /
+	PlusEqual     // +=
+	MinusEqual    // -=
+	MultiplyEqual // *=
+	DivideEqual   // /=
 )
 
 type Token struct {
@@ -192,12 +196,28 @@ func (l *Lexer) Next() (Token, error) {
 	case ';':
 		return l.simpleToken(SemiColon), nil
 	case '+':
+		if l.peek() == '=' {
+			l.advance()
+			return l.simpleToken(PlusEqual), nil
+		}
 		return l.simpleToken(Plus), nil
 	case '-':
+		if l.peek() == '=' {
+			l.advance()
+			return l.simpleToken(MinusEqual), nil
+		}
 		return l.simpleToken(Minus), nil
 	case '*':
+		if l.peek() == '=' {
+			l.advance()
+			return l.simpleToken(MultiplyEqual), nil
+		}
 		return l.simpleToken(Multiply), nil
 	case '/':
+		if l.peek() == '=' {
+			l.advance()
+			return l.simpleToken(DivideEqual), nil
+		}
 		return l.simpleToken(Divide), nil
 	case '=':
 		if l.peek() == '=' {

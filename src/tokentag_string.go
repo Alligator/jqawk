@@ -32,11 +32,15 @@ func _() {
 	_ = x[Minus-21]
 	_ = x[Multiply-22]
 	_ = x[Divide-23]
+	_ = x[PlusEqual-24]
+	_ = x[MinusEqual-25]
+	_ = x[MultiplyEqual-26]
+	_ = x[DivideEqual-27]
 }
 
-const _TokenTag_name = "EOFErrorIdentStrNumBeginEndPrint{}[]<>$,.===;+-*/"
+const _TokenTag_name = "EOFErrorIdentStrNumBeginEndPrint{}[]<>$,.===;+-*/+=-=*=/="
 
-var _TokenTag_index = [...]uint8{0, 3, 8, 13, 16, 19, 24, 27, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 44, 45, 46, 47, 48, 49}
+var _TokenTag_index = [...]uint8{0, 3, 8, 13, 16, 19, 24, 27, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 44, 45, 46, 47, 48, 49, 51, 53, 55, 57}
 
 func (i TokenTag) String() string {
 	if i >= TokenTag(len(_TokenTag_index)-1) {

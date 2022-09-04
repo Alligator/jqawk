@@ -33,20 +33,24 @@ func NewParser(l *Lexer) Parser {
 		lexer: l,
 	}
 	p.rules = map[TokenTag]parseRule{
-		Str:         {PrecNone, str, nil},
-		Num:         {PrecNone, num, nil},
-		Dollar:      {PrecNone, identifier, nil},
-		Ident:       {PrecNone, identifier, nil},
-		LSquare:     {PrecCall, nil, computedMember},
-		Dot:         {PrecCall, nil, member},
-		LessThan:    {PrecComparison, nil, binary},
-		GreaterThan: {PrecComparison, nil, binary},
-		EqualEqual:  {PrecComparison, nil, binary},
-		Equal:       {PrecAssign, nil, binary},
-		Plus:        {PrecAddition, nil, binary},
-		Minus:       {PrecAddition, nil, binary},
-		Multiply:    {PrecMultiplication, nil, binary},
-		Divide:      {PrecMultiplication, nil, binary},
+		Str:           {PrecNone, str, nil},
+		Num:           {PrecNone, num, nil},
+		Dollar:        {PrecNone, identifier, nil},
+		Ident:         {PrecNone, identifier, nil},
+		LSquare:       {PrecCall, nil, computedMember},
+		Dot:           {PrecCall, nil, member},
+		LessThan:      {PrecComparison, nil, binary},
+		GreaterThan:   {PrecComparison, nil, binary},
+		EqualEqual:    {PrecComparison, nil, binary},
+		Equal:         {PrecAssign, nil, binary},
+		Plus:          {PrecAddition, nil, binary},
+		Minus:         {PrecAddition, nil, binary},
+		Multiply:      {PrecMultiplication, nil, binary},
+		Divide:        {PrecMultiplication, nil, binary},
+		PlusEqual:     {PrecAssign, nil, binary},
+		MinusEqual:    {PrecAssign, nil, binary},
+		MultiplyEqual: {PrecAssign, nil, binary},
+		DivideEqual:   {PrecAssign, nil, binary},
 	}
 	return p
 }
@@ -260,10 +264,52 @@ func binary(p *Parser, left Expr) (Expr, error) {
 		return nil, err
 	}
 
+	switch opToken.Tag {
+	case PlusEqual, MinusEqual, MultiplyEqual, DivideEqual:
+		return p.rewriteCompundAssingment(left, expr, opToken)
+	default:
+		return &ExprBinary{
+			Left:    left,
+			Right:   expr,
+			OpToken: opToken,
+		}, nil
+	}
+}
+
+func (p *Parser) rewriteCompundAssingment(left Expr, right Expr, opToken Token) (Expr, error) {
+	// a += b -> a = a + b
+	var opTag TokenTag
+	switch opToken.Tag {
+	case PlusEqual:
+		opTag = Plus
+	case MinusEqual:
+		opTag = Minus
+	case MultiplyEqual:
+		opTag = Multiply
+	case DivideEqual:
+		opTag = Divide
+	default:
+		panic(fmt.Errorf("attempt compound assignment with %s", opToken.Tag))
+	}
+
+	equalOp := Token{
+		Tag: Equal,
+		Pos: opToken.Pos,
+	}
+	op := Token{
+		Tag: opTag,
+		Pos: opToken.Pos,
+		Len: opToken.Len,
+	}
+
 	return &ExprBinary{
-		Left:    left,
-		Right:   expr,
-		OpToken: opToken,
+		Left: left,
+		Right: &ExprBinary{
+			Left:    left,
+			Right:   right,
+			OpToken: op,
+		},
+		OpToken: equalOp,
 	}, nil
 }
 
