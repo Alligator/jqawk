@@ -298,7 +298,9 @@ func (p *Parser) parseRule() (Rule, error) {
 		}
 		rule.Body = &body
 	} else {
-		panic("TODO: rule without body")
+		// rule with no body
+		// becomes { print }
+		rule.Body = &StatementPrint{}
 	}
 
 	return rule, nil

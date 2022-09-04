@@ -114,4 +114,11 @@ func TestJqawk(t *testing.T) {
 		json:     "[2, 4, 6, 8]",
 		expected: "0 2\n1 4\n2 6\n3 8\n",
 	})
+
+	test(t, testCase{
+		name:     "p7",
+		prog:     "$ > 100",
+		json:     "[1, 2, 300, 400, 5]",
+		expected: "300\n400\n",
+	})
 }
