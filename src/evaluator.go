@@ -204,7 +204,7 @@ func (e *Evaluator) evalStatement(stmt Statement) error {
 		}
 
 		if len(args) == 0 {
-			fmt.Fprintln(e.stdout, e.ruleRoot.Value.String())
+			fmt.Fprintln(e.stdout, e.ruleRoot.Value.PrettyString(false))
 			return nil
 		}
 
@@ -212,7 +212,7 @@ func (e *Evaluator) evalStatement(stmt Statement) error {
 			if i > 0 {
 				fmt.Fprint(e.stdout, " ")
 			}
-			fmt.Fprintf(e.stdout, "%s", cell.Value.String())
+			fmt.Fprintf(e.stdout, "%s", cell.Value.PrettyString(false))
 		}
 		fmt.Fprint(e.stdout, "\n")
 	case *StatementExpr:

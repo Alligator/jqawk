@@ -93,6 +93,13 @@ func TestJqawk(t *testing.T) {
 		expected: "a\nb\n",
 	})
 
+	test(t, testCase{
+		name:     "pretty print",
+		prog:     "{ print }",
+		json:     `[[1, 2], { "name": "alligator" }]`,
+		expected: "[1, 2]\n{\"name\": \"alligator\"}\n",
+	})
+
 	// onetrueawk tests
 	test(t, testCase{
 		name:     "p1",

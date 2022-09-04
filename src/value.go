@@ -102,6 +102,53 @@ func (v *Value) String() string {
 	}
 }
 
+func (v *Value) PrettyString(quote bool) string {
+	switch v.Tag {
+	case ValueStr:
+		if quote {
+			return "\"" + *v.Str + "\""
+		}
+		return *v.Str
+	case ValueNum:
+		return strconv.FormatFloat(*v.Num, 'f', -1, 64)
+	case ValueBool:
+		if *v.Bool {
+			return "true"
+		}
+		return "false"
+	case ValueNil:
+		return "nil"
+	case ValueArray:
+		var sb strings.Builder
+		sb.WriteByte('[')
+		for index, cell := range *v.Array {
+			if index > 0 {
+				sb.WriteString(", ")
+			}
+			sb.WriteString(cell.Value.PrettyString(true))
+		}
+		sb.WriteByte(']')
+		return sb.String()
+	case ValueObj:
+		var sb strings.Builder
+		sb.WriteByte('{')
+		index := 0
+		for key, value := range *v.Obj {
+			if index > 0 {
+				sb.WriteString(", ")
+			}
+			sb.WriteString("\"" + key + "\"")
+			sb.WriteString(": ")
+			sb.WriteString(value.Value.PrettyString(true))
+			index++
+		}
+		sb.WriteByte('}')
+		return sb.String()
+	default:
+		return fmt.Sprintf("<%s>", v.Tag.String())
+	}
+}
+
 func (v *Value) GetMember(member Value) (*Cell, error) {
 	switch v.Tag {
 	case ValueArray:
