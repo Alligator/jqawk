@@ -75,6 +75,13 @@ func TestJqawk(t *testing.T) {
 		expected: "1 4\n",
 	})
 
+	test(t, testCase{
+		name:     "semicolon statement separator",
+		prog:     "{ print 'a'; print 'b' }",
+		json:     `[1]`,
+		expected: "a\nb\n",
+	})
+
 	// onetrueawk tests
 	test(t, testCase{
 		name:     "p1",

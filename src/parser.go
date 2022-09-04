@@ -89,6 +89,9 @@ func (p *Parser) block() (StatementBlock, error) {
 			return StatementBlock{}, err
 		}
 		block = append(block, statement)
+		if !p.atStatementEnd() {
+			return StatementBlock{}, fmt.Errorf("expected a statement terminator")
+		}
 	}
 	if err := p.consume(RCurly); err != nil {
 		return StatementBlock{}, err
@@ -138,6 +141,9 @@ func (p *Parser) printStatement() (StatementPrint, error) {
 func (p *Parser) atStatementEnd() bool {
 	switch p.current.Tag {
 	case RCurly:
+		return true
+	case SemiColon:
+		p.consume(SemiColon)
 		return true
 	default:
 		return false

@@ -27,11 +27,12 @@ func _() {
 	_ = x[Dot-16]
 	_ = x[Equal-17]
 	_ = x[EqualEqual-18]
+	_ = x[SemiColon-19]
 }
 
-const _TokenTag_name = "EOFErrorIdentStrNumBeginEndPrint{}[]<>$,.==="
+const _TokenTag_name = "EOFErrorIdentStrNumBeginEndPrint{}[]<>$,.===;"
 
-var _TokenTag_index = [...]uint8{0, 3, 8, 13, 16, 19, 24, 27, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 44}
+var _TokenTag_index = [...]uint8{0, 3, 8, 13, 16, 19, 24, 27, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 44, 45}
 
 func (i TokenTag) String() string {
 	if i >= TokenTag(len(_TokenTag_index)-1) {

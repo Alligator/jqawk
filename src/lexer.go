@@ -28,6 +28,7 @@ const (
 	Dot         // .
 	Equal       // =
 	EqualEqual  // ==
+	SemiColon   // ;
 )
 
 type Token struct {
@@ -184,6 +185,8 @@ func (l *Lexer) Next() (Token, error) {
 		return l.simpleToken(Comma), nil
 	case '.':
 		return l.simpleToken(Dot), nil
+	case ';':
+		return l.simpleToken(SemiColon), nil
 	case '=':
 		if l.peek() == '=' {
 			l.advance()
