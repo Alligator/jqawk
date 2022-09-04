@@ -17,13 +17,17 @@ const (
 	Begin
 	End
 	Print
-	LCurly  // {
-	RCurly  // }
-	LSquare // [
-	RSquare // ]
-	Dollar  // $
-	Comma   // ,
-	Dot     // .
+	LCurly      // {
+	RCurly      // }
+	LSquare     // [
+	RSquare     // ]
+	LessThan    // <
+	GreaterThan // >
+	Dollar      // $
+	Comma       // ,
+	Dot         // .
+	Equal       // =
+	EqualEqual  // ==
 )
 
 type Token struct {
@@ -89,7 +93,7 @@ func (l *Lexer) skipWhitespace() {
 func (l *Lexer) identifier() Token {
 	for !l.atEnd() {
 		r := rune(l.peek())
-		if unicode.IsLetter(r) || unicode.IsDigit(r) {
+		if r == '_' || unicode.IsLetter(r) || unicode.IsDigit(r) {
 			l.advance()
 		} else {
 			break
@@ -172,10 +176,20 @@ func (l *Lexer) Next() (Token, error) {
 		return l.simpleToken(LSquare), nil
 	case ']':
 		return l.simpleToken(RSquare), nil
+	case '<':
+		return l.simpleToken(LessThan), nil
+	case '>':
+		return l.simpleToken(GreaterThan), nil
 	case ',':
 		return l.simpleToken(Comma), nil
 	case '.':
 		return l.simpleToken(Dot), nil
+	case '=':
+		if l.peek() == '=' {
+			l.advance()
+			return l.simpleToken(EqualEqual), nil
+		}
+		return l.simpleToken(Equal), nil
 	case '\'', '"':
 		return l.string(c)
 	}

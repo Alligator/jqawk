@@ -20,14 +20,18 @@ func _() {
 	_ = x[RCurly-9]
 	_ = x[LSquare-10]
 	_ = x[RSquare-11]
-	_ = x[Dollar-12]
-	_ = x[Comma-13]
-	_ = x[Dot-14]
+	_ = x[LessThan-12]
+	_ = x[GreaterThan-13]
+	_ = x[Dollar-14]
+	_ = x[Comma-15]
+	_ = x[Dot-16]
+	_ = x[Equal-17]
+	_ = x[EqualEqual-18]
 }
 
-const _TokenTag_name = "EOFErrorIdentStrNumBeginEndPrint{}[]$,."
+const _TokenTag_name = "EOFErrorIdentStrNumBeginEndPrint{}[]<>$,.==="
 
-var _TokenTag_index = [...]uint8{0, 3, 8, 13, 16, 19, 24, 27, 32, 33, 34, 35, 36, 37, 38, 39}
+var _TokenTag_index = [...]uint8{0, 3, 8, 13, 16, 19, 24, 27, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 44}
 
 func (i TokenTag) String() string {
 	if i >= TokenTag(len(_TokenTag_index)-1) {

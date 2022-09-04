@@ -21,6 +21,19 @@ const (
 	PatternRule
 )
 
+func (k RuleKind) String() string {
+	switch k {
+	case BeginRule:
+		return "BeginRule"
+	case EndRule:
+		return "EndRule"
+	case PatternRule:
+		return "PatternRule"
+	default:
+		return "???"
+	}
+}
+
 type Rule struct {
 	Kind    RuleKind
 	Pattern Expr
@@ -58,5 +71,10 @@ type StatementPrint struct {
 	Args []Expr
 }
 
+type StatementExpr struct {
+	Expr Expr
+}
+
 func (*StatementBlock) statementNode() {}
 func (*StatementPrint) statementNode() {}
+func (*StatementExpr) statementNode()  {}

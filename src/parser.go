@@ -1,6 +1,8 @@
 package lang
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type Parser struct {
 	lexer    *Lexer
@@ -20,6 +22,9 @@ type Precedence uint8
 const (
 	PrecNone Precedence = iota
 	PrecAssign
+	PrecComparison
+	PrecAddition
+	PrecMultiplication
 	PrecCall
 )
 
@@ -28,12 +33,16 @@ func NewParser(l *Lexer) Parser {
 		lexer: l,
 	}
 	p.rules = map[TokenTag]parseRule{
-		Str:     {PrecNone, str, nil},
-		Num:     {PrecNone, num, nil},
-		Dollar:  {PrecNone, identifier, nil},
-		Ident:   {PrecNone, identifier, nil},
-		LSquare: {PrecCall, nil, computedMember},
-		Dot:     {PrecCall, nil, member},
+		Str:         {PrecNone, str, nil},
+		Num:         {PrecNone, num, nil},
+		Dollar:      {PrecNone, identifier, nil},
+		Ident:       {PrecNone, identifier, nil},
+		LSquare:     {PrecCall, nil, computedMember},
+		Dot:         {PrecCall, nil, member},
+		LessThan:    {PrecComparison, nil, binary},
+		GreaterThan: {PrecComparison, nil, binary},
+		EqualEqual:  {PrecComparison, nil, binary},
+		Equal:       {PrecAssign, nil, binary},
 	}
 	return p
 }
@@ -95,8 +104,13 @@ func (p *Parser) statement() (Statement, error) {
 			return nil, err
 		}
 		return &statement, nil
+	default:
+		expr, err := p.expression()
+		if err != nil {
+			return nil, err
+		}
+		return &StatementExpr{expr}, nil
 	}
-	return nil, fmt.Errorf("expected a statement, found %s", p.current.Tag)
 }
 
 func (p *Parser) printStatement() (StatementPrint, error) {
@@ -224,6 +238,25 @@ func member(p *Parser, left Expr) (Expr, error) {
 	}, nil
 }
 
+func binary(p *Parser, left Expr) (Expr, error) {
+	_, err := p.advance()
+	if err != nil {
+		return nil, err
+	}
+	opToken := *p.previous
+
+	expr, err := p.expression()
+	if err != nil {
+		return nil, err
+	}
+
+	return &ExprBinary{
+		Left:    left,
+		Right:   expr,
+		OpToken: opToken,
+	}, nil
+}
+
 func (p *Parser) parseRule() (Rule, error) {
 	rule := Rule{}
 	switch p.current.Tag {
@@ -237,13 +270,15 @@ func (p *Parser) parseRule() (Rule, error) {
 		if err := p.consume(End); err != nil {
 			return rule, err
 		}
+	case LCurly:
+		rule.Kind = PatternRule
 	default:
 		rule.Kind = PatternRule
-		// pat, err := p.expression()
-		// if err != nil {
-		// 	return rule, err
-		// }
-		// rule.Pattern = &pat
+		pat, err := p.expression()
+		if err != nil {
+			return rule, err
+		}
+		rule.Pattern = pat
 	}
 
 	if p.current.Tag == LCurly {
@@ -252,7 +287,10 @@ func (p *Parser) parseRule() (Rule, error) {
 			return rule, err
 		}
 		rule.Body = &body
+	} else {
+		panic("TODO: rule without body")
 	}
+
 	return rule, nil
 }
 

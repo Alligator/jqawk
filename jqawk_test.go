@@ -69,6 +69,14 @@ func TestJqawk(t *testing.T) {
 	})
 
 	test(t, testCase{
+		name:     "unknown variable comparison",
+		prog:     "$ > max { max = $ } $ < min { min = $ } END { print min, max }",
+		json:     `[1, 2, 3, 4, 3, 2, 1]`,
+		expected: "1 4\n",
+	})
+
+	// onetrueawk tests
+	test(t, testCase{
 		name:     "p1",
 		prog:     "{ print }",
 		json:     "[1, 2, 3]",

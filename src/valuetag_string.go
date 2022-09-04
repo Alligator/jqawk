@@ -14,11 +14,12 @@ func _() {
 	_ = x[ValueArray-3]
 	_ = x[ValueObj-4]
 	_ = x[ValueNil-5]
+	_ = x[ValueUnknown-6]
 }
 
-const _ValueTag_name = "stringboolnumberarrayobjectnil"
+const _ValueTag_name = "stringboolnumberarrayobjectnilunknown"
 
-var _ValueTag_index = [...]uint8{0, 6, 10, 16, 21, 27, 30}
+var _ValueTag_index = [...]uint8{0, 6, 10, 16, 21, 27, 30, 37}
 
 func (i ValueTag) String() string {
 	if i >= ValueTag(len(_ValueTag_index)-1) {
