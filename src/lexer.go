@@ -29,6 +29,10 @@ const (
 	Equal       // =
 	EqualEqual  // ==
 	SemiColon   // ;
+	Plus        // +
+	Minus       // -
+	Multiply    // *
+	Divide      // /
 )
 
 type Token struct {
@@ -83,7 +87,7 @@ func (l *Lexer) peek() byte {
 func (l *Lexer) skipWhitespace() {
 	for !l.atEnd() {
 		switch l.peek() {
-		case ' ', '\n', '\r':
+		case ' ', '\n', '\r', '\t':
 			l.advance()
 		default:
 			return
@@ -187,6 +191,14 @@ func (l *Lexer) Next() (Token, error) {
 		return l.simpleToken(Dot), nil
 	case ';':
 		return l.simpleToken(SemiColon), nil
+	case '+':
+		return l.simpleToken(Plus), nil
+	case '-':
+		return l.simpleToken(Minus), nil
+	case '*':
+		return l.simpleToken(Multiply), nil
+	case '/':
+		return l.simpleToken(Divide), nil
 	case '=':
 		if l.peek() == '=' {
 			l.advance()
@@ -196,5 +208,5 @@ func (l *Lexer) Next() (Token, error) {
 	case '\'', '"':
 		return l.string(c)
 	}
-	return l.errorToken(), fmt.Errorf("unexpected character '%c'", c)
+	return l.errorToken(), fmt.Errorf("unexpected character %q", c)
 }

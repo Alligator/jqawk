@@ -43,6 +43,10 @@ func NewParser(l *Lexer) Parser {
 		GreaterThan: {PrecComparison, nil, binary},
 		EqualEqual:  {PrecComparison, nil, binary},
 		Equal:       {PrecAssign, nil, binary},
+		Plus:        {PrecAddition, nil, binary},
+		Minus:       {PrecAddition, nil, binary},
+		Multiply:    {PrecMultiplication, nil, binary},
+		Divide:      {PrecMultiplication, nil, binary},
 	}
 	return p
 }
@@ -90,7 +94,7 @@ func (p *Parser) block() (StatementBlock, error) {
 		}
 		block = append(block, statement)
 		if !p.atStatementEnd() {
-			return StatementBlock{}, fmt.Errorf("expected a statement terminator")
+			return StatementBlock{}, fmt.Errorf("expected a statement terminator, got %s", p.current.Tag)
 		}
 	}
 	if err := p.consume(RCurly); err != nil {

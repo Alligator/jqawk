@@ -121,6 +121,21 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (*Cell, error) {
 		default:
 			panic("unhandled comparison operator")
 		}
+	case Plus, Minus, Multiply, Divide:
+		leftNum := left.Value.asFloat64()
+		rightNum := right.Value.asFloat64()
+		switch expr.OpToken.Tag {
+		case Plus:
+			return NewCell(NewValue(leftNum + rightNum)), nil
+		case Minus:
+			return NewCell(NewValue(leftNum - rightNum)), nil
+		case Multiply:
+			return NewCell(NewValue(leftNum * rightNum)), nil
+		case Divide:
+			return NewCell(NewValue(leftNum / rightNum)), nil
+		default:
+			panic("unhandled operator")
+		}
 	case Equal:
 		return e.evalAssignment(left, right)
 	default:
