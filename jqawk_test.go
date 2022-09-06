@@ -18,10 +18,12 @@ func test(t *testing.T, tc testCase) {
 	t.Run(tc.name, func(t *testing.T) {
 		lex := lang.NewLexer(tc.prog)
 		parser := lang.NewParser(&lex)
+
 		rules, err := parser.Parse()
 		if err != nil {
 			panic(err)
 		}
+
 		var sb strings.Builder
 		var ev lang.Evaluator
 		if tc.json == "" {
@@ -29,6 +31,7 @@ func test(t *testing.T, tc testCase) {
 		} else {
 			ev = lang.NewEvaluator(rules, &lex, &sb, strings.NewReader(tc.json))
 		}
+
 		err = ev.Eval()
 		if err != nil {
 			panic(err)
@@ -137,6 +140,19 @@ func TestJqawk(t *testing.T) {
 	})
 
 	// onetrueawk tests
+	countries := `[
+		["Russia", 8650, 262, "Asia"],
+		["Canada", 3852, 24, "North America"],
+		["China", 3692, 866, "Asia"],
+		["USA", 3615, 219, "North America"],
+		["Brazil", 3286, 116, "South America"],
+		["Australia", 2968, 14, "Australia"],
+		["India", 1269, 637, "Asia"],
+		["Argentina", 1072, 26, "South America"],
+		["Sudan", 968, 19, "Africa"],
+		["Algeria", 920, 18, "Africa"]
+	]`
+
 	test(t, testCase{
 		name:     "p1",
 		prog:     "{ print }",
@@ -163,5 +179,12 @@ func TestJqawk(t *testing.T) {
 		prog:     "$ > 100",
 		json:     "[1, 2, 300, 400, 5]",
 		expected: "300\n400\n",
+	})
+
+	test(t, testCase{
+		name:     "p8",
+		prog:     "$[3] == 'Asia' { print $[0] }",
+		json:     countries,
+		expected: "Russia\nChina\nIndia\n",
 	})
 }
