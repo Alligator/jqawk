@@ -12,11 +12,25 @@ import (
 
 func Run() (exitCode int) {
 	dbgAst := flag.Bool("dbg-ast", false, "print the AST")
+	progFile := flag.String("f", "", "the program file to run")
 	flag.Parse()
-	prog := flag.Arg(0)
+
+	var prog string
+	var filePath string
+	if len(*progFile) > 0 {
+		filePath = flag.Arg(0)
+		file, err := os.ReadFile(*progFile)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return 1
+		}
+		prog = string(file)
+	} else {
+		prog = flag.Arg(0)
+		filePath = flag.Arg(1)
+	}
 
 	var input io.Reader
-	filePath := flag.Arg(1)
 	if filePath == "" {
 		input = os.Stdin
 	} else {
