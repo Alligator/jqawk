@@ -91,6 +91,8 @@ func NewValue(srcVal interface{}) Value {
 	}
 }
 
+// convert a value to a string suitable for string concatentation, object
+// indexing, etc
 func (v *Value) String() string {
 	switch v.Tag {
 	case ValueStr:
@@ -98,10 +100,11 @@ func (v *Value) String() string {
 	case ValueNum:
 		return strconv.FormatFloat(*v.Num, 'f', -1, 64)
 	default:
-		return fmt.Sprintf("<%s>", v.Tag.String())
+		return ""
 	}
 }
 
+// convert a value to prettified string
 func (v *Value) PrettyString(quote bool) string {
 	switch v.Tag {
 	case ValueStr:

@@ -129,6 +129,13 @@ func TestJqawk(t *testing.T) {
 		expected: "[1, 2]\n{\"name\": \"alligator\"}\n",
 	})
 
+	test(t, testCase{
+		name:     "string concatenation",
+		prog:     "{ print 'name: ' + $.name, 'age: ' + $.age }",
+		json:     `[{ "name": "gate", "age": 1 }, { "name": "sponge", "age": 2 }]`,
+		expected: "name: gate age: 1\nname: sponge age: 2\n",
+	})
+
 	// onetrueawk tests
 	test(t, testCase{
 		name:     "p1",

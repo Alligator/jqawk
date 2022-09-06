@@ -122,6 +122,13 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (*Cell, error) {
 			panic("unhandled comparison operator")
 		}
 	case Plus, Minus, Multiply, Divide:
+		if expr.OpToken.Tag == Plus && (left.Value.Tag == ValueStr || right.Value.Tag == ValueStr) {
+			// string concat
+			leftStr := left.Value.String()
+			rightStr := right.Value.String()
+			return NewCell(NewValue(leftStr + rightStr)), nil
+		}
+
 		leftNum := left.Value.asFloat64()
 		rightNum := right.Value.asFloat64()
 		switch expr.OpToken.Tag {
