@@ -51,6 +51,12 @@ func TestJqawk(t *testing.T) {
 	})
 
 	test(t, testCase{
+		name:     "comments",
+		prog:     "BEGIN { print 'hello' } # prints hello\n# goodbye",
+		expected: "hello\n",
+	})
+
+	test(t, testCase{
 		name: "operators",
 		prog: `BEGIN {
 			print 2 + 3;

@@ -56,7 +56,6 @@ Total 337.5
 
 ## TODO
 
-- comments
 - good syntax/runtime errors
 - printf
 - regex matching
