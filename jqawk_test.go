@@ -265,4 +265,18 @@ func TestJqawk(t *testing.T) {
 		json:     countries,
 		expected: "",
 	})
+
+	test(t, testCase{
+		name:     "p20",
+		prog:     "$[3] == 'Asia' && $[2] > 500 { print $[0] }",
+		json:     countries,
+		expected: "China\nIndia\n",
+	})
+
+	test(t, testCase{
+		name:     "p21",
+		prog:     "$[3] == 'Asia' || $[3] == 'Europe' { print $[0] }",
+		json:     countries,
+		expected: "Russia\nChina\nIndia\n",
+	})
 }

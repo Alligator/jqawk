@@ -45,6 +45,8 @@ const (
 	DivideEqual   // /=
 	Tilde         // ~
 	BangTilde     // !~
+	AmpAmp        // &&
+	PipePipe      // ||
 )
 
 type Token struct {
@@ -272,6 +274,16 @@ func (l *Lexer) Next() (Token, error) {
 		case '~':
 			l.advance()
 			return l.simpleToken(BangTilde), nil
+		}
+	case '&':
+		if l.peek() == '&' {
+			l.advance()
+			return l.simpleToken(AmpAmp), nil
+		}
+	case '|':
+		if l.peek() == '|' {
+			l.advance()
+			return l.simpleToken(PipePipe), nil
 		}
 	case '\'', '"':
 		return l.string(c)

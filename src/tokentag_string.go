@@ -44,11 +44,13 @@ func _() {
 	_ = x[DivideEqual-33]
 	_ = x[Tilde-34]
 	_ = x[BangTilde-35]
+	_ = x[AmpAmp-36]
+	_ = x[PipePipe-37]
 }
 
-const _TokenTag_name = "EOFErrorIdentStrRegexNumBeginEndPrint{}[]()<>$,.===!=<=>=;+-*/+=-=*=/=~!~"
+const _TokenTag_name = "EOFErrorIdentStrRegexNumBeginEndPrint{}[]()<>$,.===!=<=>=;+-*/+=-=*=/=~!~&&||"
 
-var _TokenTag_index = [...]uint8{0, 3, 8, 13, 16, 21, 24, 29, 32, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 51, 53, 55, 57, 58, 59, 60, 61, 62, 64, 66, 68, 70, 71, 73}
+var _TokenTag_index = [...]uint8{0, 3, 8, 13, 16, 21, 24, 29, 32, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 51, 53, 55, 57, 58, 59, 60, 61, 62, 64, 66, 68, 70, 71, 73, 75, 77}
 
 func (i TokenTag) String() string {
 	if i >= TokenTag(len(_TokenTag_index)-1) {

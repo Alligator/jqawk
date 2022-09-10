@@ -243,6 +243,16 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (*Cell, error) {
 			return NewCell(*v.Not()), nil
 		}
 		return NewCell(v), nil
+	case AmpAmp:
+		if left.Value.isTruthy() && right.Value.isTruthy() {
+			return NewCell(NewValue(true)), nil
+		}
+		return NewCell(NewValue(false)), nil
+	case PipePipe:
+		if left.Value.isTruthy() || right.Value.isTruthy() {
+			return NewCell(NewValue(true)), nil
+		}
+		return NewCell(NewValue(false)), nil
 	case Equal:
 		return e.evalAssignment(left, right)
 	default:

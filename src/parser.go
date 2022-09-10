@@ -22,6 +22,7 @@ type Precedence uint8
 const (
 	PrecNone Precedence = iota
 	PrecAssign
+	PrecLogical
 	PrecComparison
 	PrecAddition
 	PrecMultiplication
@@ -57,6 +58,8 @@ func NewParser(l *Lexer) Parser {
 		MinusEqual:    {PrecAssign, nil, binary},
 		MultiplyEqual: {PrecAssign, nil, binary},
 		DivideEqual:   {PrecAssign, nil, binary},
+		AmpAmp:        {PrecLogical, nil, binary},
+		PipePipe:      {PrecLogical, nil, binary},
 	}
 	return p
 }
