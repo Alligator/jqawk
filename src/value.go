@@ -29,6 +29,7 @@ const (
 	ValueArray                   // array
 	ValueObj                     // object
 	ValueNil                     // nil
+	ValueFn                      // function
 	ValueUnknown                 // unknown
 )
 
@@ -39,6 +40,7 @@ type Value struct {
 	Bool  *bool
 	Array *[]*Cell
 	Obj   *map[string]*Cell
+	Fn    func(*Evaluator, []*Value) (*Value, error)
 }
 
 func NewValue(srcVal interface{}) Value {
@@ -87,7 +89,7 @@ func NewValue(srcVal interface{}) Value {
 			Tag: ValueNil,
 		}
 	default:
-		panic(fmt.Errorf("unhandled json value type %T", val))
+		panic(fmt.Errorf("unhandled value constructor %T", val))
 	}
 }
 

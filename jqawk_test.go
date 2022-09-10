@@ -145,6 +145,13 @@ func TestJqawk(t *testing.T) {
 		expected: "name: gate age: 1\nname: sponge age: 2\n",
 	})
 
+	test(t, testCase{
+		name:     "printf",
+		prog:     "{ printf('name: %s\\nage: %f\\n', $.name, $.age) }",
+		json:     `[{ "name": "gate", "age": 1 }, { "name": "sponge", "age": 2.300 }]`,
+		expected: "name: gate\nage: 1\nname: sponge\nage: 2.3\n",
+	})
+
 	// onetrueawk tests
 	countries := `[
 		["Russia", 8650, 262, "Asia"],

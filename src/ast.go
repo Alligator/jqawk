@@ -58,10 +58,16 @@ type ExprBinary struct {
 	OpToken Token
 }
 
+type ExprCall struct {
+	Func Expr
+	Args []Expr
+}
+
 func (*ExprString) exprNode()     {}
 func (*ExprNum) exprNode()        {}
 func (*ExprIdentifier) exprNode() {}
 func (*ExprBinary) exprNode()     {}
+func (*ExprCall) exprNode()       {}
 
 type StatementBlock struct {
 	Body []Statement

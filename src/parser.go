@@ -39,6 +39,7 @@ func NewParser(l *Lexer) Parser {
 		Ident:         {PrecNone, identifier, nil},
 		LSquare:       {PrecCall, nil, computedMember},
 		Dot:           {PrecCall, nil, member},
+		LParen:        {PrecCall, nil, call},
 		LessThan:      {PrecComparison, nil, binary},
 		GreaterThan:   {PrecComparison, nil, binary},
 		EqualEqual:    {PrecComparison, nil, binary},
@@ -249,6 +250,30 @@ func member(p *Parser, left Expr) (Expr, error) {
 		Left:    left,
 		Right:   &ExprString{*ident},
 		OpToken: *opToken,
+	}, nil
+}
+
+func call(p *Parser, left Expr) (Expr, error) {
+	if err := p.consume(LParen); err != nil {
+		return nil, err
+	}
+	args := make([]Expr, 0)
+	for !p.atEnd() && p.current.Tag != RParen {
+		expr, err := p.expression()
+		if err != nil {
+			return nil, err
+		}
+		args = append(args, expr)
+		if p.current.Tag == Comma {
+			p.consume(Comma)
+		} else {
+			break
+		}
+	}
+	p.consume(RParen)
+	return &ExprCall{
+		Func: left,
+		Args: args,
 	}, nil
 }
 

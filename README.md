@@ -57,7 +57,6 @@ Total 337.5
 ## TODO
 
 - good syntax/runtime errors
-- printf
 - regex matching
 - if statements
 - for loops

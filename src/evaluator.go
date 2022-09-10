@@ -19,13 +19,19 @@ type Evaluator struct {
 }
 
 func NewEvaluator(rules []Rule, lexer *Lexer, stdout io.Writer, stdin io.Reader) Evaluator {
-	return Evaluator{
+	e := Evaluator{
 		rules:  rules,
 		lexer:  lexer,
 		stdout: stdout,
 		stdin:  stdin,
 		locals: make(map[string]*Cell),
 	}
+	addRuntimeFunctions(&e)
+	return e
+}
+
+func (e *Evaluator) print(str string) {
+	fmt.Fprint(e.stdout, str)
 }
 
 func (e *Evaluator) getVariable(name string) (*Cell, error) {
@@ -42,14 +48,41 @@ func (e *Evaluator) getVariable(name string) (*Cell, error) {
 	return cell, nil
 }
 
+func (e *Evaluator) evalString(str string) (*Cell, error) {
+	buf := make([]byte, 0, len(str))
+	for i := 0; i < len(str); i++ {
+		b := str[i]
+		if b != '\\' {
+			buf = append(buf, b)
+			continue
+		}
+		if i == len(str)-1 {
+			return nil, fmt.Errorf("unexpected '\\' at end of string")
+		}
+		i++
+		switch str[i] {
+		case 'n':
+			buf = append(buf, '\n')
+		case '\\':
+			buf = append(buf, '\\')
+		case '\t':
+			buf = append(buf, '\t')
+		default:
+			return nil, fmt.Errorf("unknown escape char %q", str[i])
+		}
+	}
+	s := string(buf)
+	return NewCell(Value{
+		Tag: ValueStr,
+		Str: &s,
+	}), nil
+}
+
 func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 	switch exp := expr.(type) {
 	case *ExprString:
 		str := e.lexer.GetString(&exp.Token)
-		return NewCell(Value{
-			Tag: ValueStr,
-			Str: &str,
-		}), nil
+		return e.evalString(str)
 	case *ExprNum:
 		numStr := e.lexer.GetString(&exp.Token)
 		num, err := strconv.ParseInt(numStr, 10, 64)
@@ -74,6 +107,30 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 			}
 			return local, nil
 		}
+	case *ExprCall:
+		fn, err := e.evalExpr(exp.Func)
+		if err != nil {
+			return nil, err
+		}
+		if fn.Value.Tag != ValueFn {
+			return nil, fmt.Errorf("attempted to call a %s", fn.Value.Tag)
+		}
+		args, err := e.evalExprList(exp.Args)
+		if err != nil {
+			return nil, err
+		}
+		argVals := make([]*Value, 0, len(args))
+		for _, argCell := range args {
+			argVals = append(argVals, &argCell.Value)
+		}
+		result, err := fn.Value.Fn(e, argVals)
+		if err != nil {
+			return nil, err
+		}
+		if result != nil {
+			return NewCell(*result), nil
+		}
+		return NewCell(NewValue(nil)), nil
 	default:
 		return nil, fmt.Errorf("expected an expression but found %T", exp)
 	}

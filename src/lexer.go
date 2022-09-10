@@ -21,6 +21,8 @@ const (
 	RCurly        // }
 	LSquare       // [
 	RSquare       // ]
+	LParen        // (
+	RParen        // )
 	LessThan      // <
 	GreaterThan   // >
 	Dollar        // $
@@ -189,6 +191,10 @@ func (l *Lexer) Next() (Token, error) {
 		return l.simpleToken(LSquare), nil
 	case ']':
 		return l.simpleToken(RSquare), nil
+	case '(':
+		return l.simpleToken(LParen), nil
+	case ')':
+		return l.simpleToken(RParen), nil
 	case '<':
 		return l.simpleToken(LessThan), nil
 	case '>':
