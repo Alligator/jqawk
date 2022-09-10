@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -83,6 +84,13 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 	case *ExprString:
 		str := e.lexer.GetString(&exp.Token)
 		return e.evalString(str)
+	case *ExprRegex:
+		str := e.lexer.GetString(&exp.Token)
+		val := Value{
+			Tag: ValueRegex,
+			Str: &str,
+		}
+		return NewCell(val), nil
 	case *ExprNum:
 		numStr := e.lexer.GetString(&exp.Token)
 		num, err := strconv.ParseInt(numStr, 10, 64)
@@ -153,7 +161,7 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (*Cell, error) {
 			return nil, err
 		}
 		return member, nil
-	case LessThan, GreaterThan, EqualEqual:
+	case LessThan, GreaterThan, EqualEqual, LessEqual, GreaterEqual:
 		if left.Value.Tag == ValueUnknown || right.Value.Tag == ValueUnknown {
 			// for unknown values, > and < are always true, == is always false
 			switch expr.OpToken.Tag {
@@ -175,6 +183,10 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (*Cell, error) {
 			return NewCell(NewValue(cmp > 0)), nil
 		case EqualEqual:
 			return NewCell(NewValue(cmp == 0)), nil
+		case LessEqual:
+			return NewCell(NewValue(cmp <= 0)), nil
+		case GreaterEqual:
+			return NewCell(NewValue(cmp >= 0)), nil
 		default:
 			panic("unhandled comparison operator")
 		}
@@ -199,6 +211,19 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (*Cell, error) {
 			return NewCell(NewValue(leftNum / rightNum)), nil
 		default:
 			panic("unhandled operator")
+		}
+	case Tilde:
+		if left.Value.Tag != ValueStr && right.Value.Tag != ValueRegex {
+			return nil, fmt.Errorf("can only match string with regex")
+		}
+		re, err := regexp.Compile(*right.Value.Str)
+		if err != nil {
+			return nil, err
+		}
+		if re.MatchString(*left.Value.Str) {
+			return NewCell(NewValue(1)), nil
+		} else {
+			return NewCell(NewValue(0)), nil
 		}
 	case Equal:
 		return e.evalAssignment(left, right)

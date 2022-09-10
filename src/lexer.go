@@ -13,6 +13,7 @@ const (
 	Error
 	Ident
 	Str
+	Regex
 	Num
 	Begin
 	End
@@ -30,6 +31,8 @@ const (
 	Dot           // .
 	Equal         // =
 	EqualEqual    // ==
+	LessEqual     // <=
+	GreaterEqual  // >=
 	SemiColon     // ;
 	Plus          // +
 	Minus         // -
@@ -39,6 +42,7 @@ const (
 	MinusEqual    // -=
 	MultiplyEqual // *=
 	DivideEqual   // /=
+	Tilde         // ~
 )
 
 type Token struct {
@@ -153,6 +157,19 @@ func (l *Lexer) string(quoteChar byte) (Token, error) {
 	return l.stringToken(Str, l.pos-l.tokenStart-1), nil
 }
 
+// the parser calls this when it finds a '/' in prefix position
+func (l *Lexer) regex() (Token, error) {
+	for l.peek() != '/' {
+		if l.atEnd() {
+			return l.errorToken(), fmt.Errorf("unexpected EOF while reading regex")
+		}
+		l.advance()
+	}
+	l.advance()
+	l.tokenStart++
+	return l.stringToken(Regex, l.pos-l.tokenStart-1), nil
+}
+
 func (l *Lexer) GetString(token *Token) string {
 	return l.src[token.Pos : token.Pos+token.Len]
 }
@@ -195,16 +212,26 @@ func (l *Lexer) Next() (Token, error) {
 		return l.simpleToken(LParen), nil
 	case ')':
 		return l.simpleToken(RParen), nil
-	case '<':
-		return l.simpleToken(LessThan), nil
-	case '>':
-		return l.simpleToken(GreaterThan), nil
 	case ',':
 		return l.simpleToken(Comma), nil
 	case '.':
 		return l.simpleToken(Dot), nil
 	case ';':
 		return l.simpleToken(SemiColon), nil
+	case '~':
+		return l.simpleToken(Tilde), nil
+	case '<':
+		if l.peek() == '=' {
+			l.advance()
+			return l.simpleToken(LessEqual), nil
+		}
+		return l.simpleToken(LessThan), nil
+	case '>':
+		if l.peek() == '=' {
+			l.advance()
+			return l.simpleToken(GreaterEqual), nil
+		}
+		return l.simpleToken(GreaterThan), nil
 	case '+':
 		if l.peek() == '=' {
 			l.advance()

@@ -44,6 +44,10 @@ type ExprString struct {
 	Token Token
 }
 
+type ExprRegex struct {
+	Token Token
+}
+
 type ExprNum struct {
 	Token Token
 }
@@ -64,6 +68,7 @@ type ExprCall struct {
 }
 
 func (*ExprString) exprNode()     {}
+func (*ExprRegex) exprNode()      {}
 func (*ExprNum) exprNode()        {}
 func (*ExprIdentifier) exprNode() {}
 func (*ExprBinary) exprNode()     {}

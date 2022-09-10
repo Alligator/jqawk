@@ -30,12 +30,13 @@ const (
 	ValueObj                     // object
 	ValueNil                     // nil
 	ValueFn                      // function
+	ValueRegex                   // regex
 	ValueUnknown                 // unknown
 )
 
 type Value struct {
 	Tag   ValueTag
-	Str   *string
+	Str   *string // used by ValueStr and ValueRegex
 	Num   *float64
 	Bool  *bool
 	Array *[]*Cell

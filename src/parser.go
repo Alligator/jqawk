@@ -43,11 +43,14 @@ func NewParser(l *Lexer) Parser {
 		LessThan:      {PrecComparison, nil, binary},
 		GreaterThan:   {PrecComparison, nil, binary},
 		EqualEqual:    {PrecComparison, nil, binary},
+		LessEqual:     {PrecComparison, nil, binary},
+		GreaterEqual:  {PrecComparison, nil, binary},
+		Tilde:         {PrecComparison, nil, binary},
 		Equal:         {PrecAssign, nil, binary},
 		Plus:          {PrecAddition, nil, binary},
 		Minus:         {PrecAddition, nil, binary},
 		Multiply:      {PrecMultiplication, nil, binary},
-		Divide:        {PrecMultiplication, nil, binary},
+		Divide:        {PrecMultiplication, regex, binary},
 		PlusEqual:     {PrecAssign, nil, binary},
 		MinusEqual:    {PrecAssign, nil, binary},
 		MultiplyEqual: {PrecAssign, nil, binary},
@@ -193,6 +196,21 @@ func str(p *Parser) (Expr, error) {
 		return &ExprString{}, err
 	}
 	return &ExprString{*p.previous}, nil
+}
+
+func regex(p *Parser) (Expr, error) {
+	token, err := p.lexer.regex()
+	if err != nil {
+		return nil, err
+	}
+	if token.Tag != Regex {
+		panic(fmt.Errorf("expected a regex token but got %s", token.Tag))
+	}
+	p.current = &token
+	if _, err := p.advance(); err != nil {
+		return nil, err
+	}
+	return &ExprRegex{token}, nil
 }
 
 func num(p *Parser) (Expr, error) {
