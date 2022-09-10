@@ -152,6 +152,26 @@ func TestJqawk(t *testing.T) {
 		expected: "name: gate\nage: 1\nname: sponge\nage: 2.3\n",
 	})
 
+	test(t, testCase{
+		name: "equal, not equal",
+		prog: `
+			$.name == 'gate' { print 'eq', $.name }
+			$.name != 'gate' { print 'neq', $.name }
+		`,
+		json:     `[{ "name": "gate", "age": 1 }, { "name": "sponge", "age": 2.300 }]`,
+		expected: "eq gate\nneq sponge\n",
+	})
+
+	test(t, testCase{
+		name: "match, not match",
+		prog: `
+			$.name ~ 'gate' { print 'eq', $.name }
+			$.name !~ 'gate' { print 'neq', $.name }
+		`,
+		json:     `[{ "name": "gate", "age": 1 }, { "name": "sponge", "age": 2.300 }]`,
+		expected: "eq gate\nneq sponge\n",
+	})
+
 	// onetrueawk tests
 	countries := `[
 		["Russia", 8650, 262, "Asia"],
@@ -220,5 +240,12 @@ func TestJqawk(t *testing.T) {
 		prog:     "$[3] ~ /Asia/ { print $[0] }",
 		json:     countries,
 		expected: "Russia\nChina\nIndia\n",
+	})
+
+	test(t, testCase{
+		name:     "p13",
+		prog:     "$[3] !~ /Asia/ { print $[0] }",
+		json:     countries,
+		expected: "Canada\nUSA\nBrazil\nAustralia\nArgentina\nSudan\nAlgeria\n",
 	})
 }

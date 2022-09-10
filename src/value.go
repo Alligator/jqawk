@@ -228,3 +228,13 @@ func (v *Value) Compare(b *Value) (int, error) {
 		return 0, nil
 	}
 }
+
+func (v *Value) Not() *Value {
+	var notValue Value
+	if v.isTruthy() {
+		notValue = NewValue(false)
+	} else {
+		notValue = NewValue(true)
+	}
+	return &notValue
+}

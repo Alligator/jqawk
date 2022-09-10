@@ -161,7 +161,7 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (*Cell, error) {
 			return nil, err
 		}
 		return member, nil
-	case LessThan, GreaterThan, EqualEqual, LessEqual, GreaterEqual:
+	case LessThan, GreaterThan, EqualEqual, LessEqual, GreaterEqual, BangEqual:
 		if left.Value.Tag == ValueUnknown || right.Value.Tag == ValueUnknown {
 			// for unknown values, > and < are always true, == is always false
 			switch expr.OpToken.Tag {
@@ -183,6 +183,9 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (*Cell, error) {
 			return NewCell(NewValue(cmp > 0)), nil
 		case EqualEqual:
 			return NewCell(NewValue(cmp == 0)), nil
+		case BangEqual:
+			v := NewValue(cmp == 0)
+			return NewCell(*v.Not()), nil
 		case LessEqual:
 			return NewCell(NewValue(cmp <= 0)), nil
 		case GreaterEqual:
@@ -212,19 +215,27 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (*Cell, error) {
 		default:
 			panic("unhandled operator")
 		}
-	case Tilde:
+	case Tilde, BangTilde:
 		if left.Value.Tag != ValueStr && right.Value.Tag != ValueRegex {
 			return nil, fmt.Errorf("can only match string with regex")
 		}
+
 		re, err := regexp.Compile(*right.Value.Str)
 		if err != nil {
 			return nil, err
 		}
+
+		var v Value
 		if re.MatchString(*left.Value.Str) {
-			return NewCell(NewValue(1)), nil
+			v = NewValue(true)
 		} else {
-			return NewCell(NewValue(0)), nil
+			v = NewValue(false)
 		}
+
+		if expr.OpToken.Tag == BangTilde {
+			return NewCell(*v.Not()), nil
+		}
+		return NewCell(v), nil
 	case Equal:
 		return e.evalAssignment(left, right)
 	default:

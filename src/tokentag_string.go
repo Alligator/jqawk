@@ -30,23 +30,25 @@ func _() {
 	_ = x[Dot-19]
 	_ = x[Equal-20]
 	_ = x[EqualEqual-21]
-	_ = x[LessEqual-22]
-	_ = x[GreaterEqual-23]
-	_ = x[SemiColon-24]
-	_ = x[Plus-25]
-	_ = x[Minus-26]
-	_ = x[Multiply-27]
-	_ = x[Divide-28]
-	_ = x[PlusEqual-29]
-	_ = x[MinusEqual-30]
-	_ = x[MultiplyEqual-31]
-	_ = x[DivideEqual-32]
-	_ = x[Tilde-33]
+	_ = x[BangEqual-22]
+	_ = x[LessEqual-23]
+	_ = x[GreaterEqual-24]
+	_ = x[SemiColon-25]
+	_ = x[Plus-26]
+	_ = x[Minus-27]
+	_ = x[Multiply-28]
+	_ = x[Divide-29]
+	_ = x[PlusEqual-30]
+	_ = x[MinusEqual-31]
+	_ = x[MultiplyEqual-32]
+	_ = x[DivideEqual-33]
+	_ = x[Tilde-34]
+	_ = x[BangTilde-35]
 }
 
-const _TokenTag_name = "EOFErrorIdentStrRegexNumBeginEndPrint{}[]()<>$,.===<=>=;+-*/+=-=*=/=~"
+const _TokenTag_name = "EOFErrorIdentStrRegexNumBeginEndPrint{}[]()<>$,.===!=<=>=;+-*/+=-=*=/=~!~"
 
-var _TokenTag_index = [...]uint8{0, 3, 8, 13, 16, 21, 24, 29, 32, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 51, 53, 55, 56, 57, 58, 59, 60, 62, 64, 66, 68, 69}
+var _TokenTag_index = [...]uint8{0, 3, 8, 13, 16, 21, 24, 29, 32, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 51, 53, 55, 57, 58, 59, 60, 61, 62, 64, 66, 68, 70, 71, 73}
 
 func (i TokenTag) String() string {
 	if i >= TokenTag(len(_TokenTag_index)-1) {

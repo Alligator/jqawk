@@ -31,6 +31,7 @@ const (
 	Dot           // .
 	Equal         // =
 	EqualEqual    // ==
+	BangEqual     // !=
 	LessEqual     // <=
 	GreaterEqual  // >=
 	SemiColon     // ;
@@ -43,6 +44,7 @@ const (
 	MultiplyEqual // *=
 	DivideEqual   // /=
 	Tilde         // ~
+	BangTilde     // !~
 )
 
 type Token struct {
@@ -262,6 +264,15 @@ func (l *Lexer) Next() (Token, error) {
 			return l.simpleToken(EqualEqual), nil
 		}
 		return l.simpleToken(Equal), nil
+	case '!':
+		switch l.peek() {
+		case '=':
+			l.advance()
+			return l.simpleToken(BangEqual), nil
+		case '~':
+			l.advance()
+			return l.simpleToken(BangTilde), nil
+		}
 	case '\'', '"':
 		return l.string(c)
 	}
