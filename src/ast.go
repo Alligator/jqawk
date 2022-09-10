@@ -41,19 +41,19 @@ type Rule struct {
 }
 
 type ExprString struct {
-	Token Token
+	token Token
 }
 
 type ExprRegex struct {
-	Token Token
+	token Token
 }
 
 type ExprNum struct {
-	Token Token
+	token Token
 }
 
 type ExprIdentifier struct {
-	Token Token
+	token Token
 }
 
 type ExprBinary struct {

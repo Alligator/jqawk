@@ -82,17 +82,17 @@ func (e *Evaluator) evalString(str string) (*Cell, error) {
 func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 	switch exp := expr.(type) {
 	case *ExprString:
-		str := e.lexer.GetString(&exp.Token)
+		str := e.lexer.GetString(&exp.token)
 		return e.evalString(str)
 	case *ExprRegex:
-		str := e.lexer.GetString(&exp.Token)
+		str := e.lexer.GetString(&exp.token)
 		val := Value{
 			Tag: ValueRegex,
 			Str: &str,
 		}
 		return NewCell(val), nil
 	case *ExprNum:
-		numStr := e.lexer.GetString(&exp.Token)
+		numStr := e.lexer.GetString(&exp.token)
 		num, err := strconv.ParseInt(numStr, 10, 64)
 		if err != nil {
 			return nil, err
@@ -105,10 +105,10 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 	case *ExprBinary:
 		return e.evalBinaryExpr(exp)
 	case *ExprIdentifier:
-		if exp.Token.Tag == Dollar {
+		if exp.token.Tag == Dollar {
 			return e.ruleRoot, nil
 		} else {
-			ident := e.lexer.GetString(&exp.Token)
+			ident := e.lexer.GetString(&exp.token)
 			local, err := e.getVariable(ident)
 			if err != nil {
 				return nil, err
