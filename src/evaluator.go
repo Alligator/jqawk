@@ -216,17 +216,24 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (*Cell, error) {
 			panic("unhandled operator")
 		}
 	case Tilde, BangTilde:
-		if left.Value.Tag != ValueStr && right.Value.Tag != ValueRegex {
-			return nil, fmt.Errorf("can only match string with regex")
+		str := left.Value.String()
+		var regex string
+		switch right.Value.Tag {
+		case ValueStr:
+			regex = *right.Value.Str
+		case ValueRegex:
+			regex = *right.Value.Str
+		default:
+			return nil, fmt.Errorf("a regex or a string must appear on the right hand side of ~")
 		}
 
-		re, err := regexp.Compile(*right.Value.Str)
+		re, err := regexp.Compile(regex)
 		if err != nil {
 			return nil, err
 		}
 
 		var v Value
-		if re.MatchString(*left.Value.Str) {
+		if re.MatchString(str) {
 			v = NewValue(true)
 		} else {
 			v = NewValue(false)

@@ -248,4 +248,14 @@ func TestJqawk(t *testing.T) {
 		json:     countries,
 		expected: "Canada\nUSA\nBrazil\nAustralia\nArgentina\nSudan\nAlgeria\n",
 	})
+
+	test(t, testCase{
+		name: "p19",
+		prog: `
+			BEGIN { digits = "^[0-9]+$" }
+			$[1] !~ digits
+		`,
+		json:     countries,
+		expected: "",
+	})
 }
