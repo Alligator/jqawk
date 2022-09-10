@@ -304,7 +304,7 @@ func binary(p *Parser, left Expr) (Expr, error) {
 	}
 	opToken := *p.previous
 
-	expr, err := p.expression()
+	expr, err := p.expressionWithPrec(p.rule(opToken.Tag).prec)
 	if err != nil {
 		return nil, err
 	}
