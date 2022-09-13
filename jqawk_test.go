@@ -73,7 +73,7 @@ func TestJqawk(t *testing.T) {
 		BEGIN {
 			prod = 1;
 			div = 8;
-			sub = 16;
+			sub = 16
 		}
 
 		{
@@ -208,6 +208,20 @@ func TestJqawk(t *testing.T) {
 		`,
 		json:     `[2, 7, 3, 12, 87, -3, 0]`,
 		expected: "7\n12\n87\n",
+	})
+
+	test(t, testCase{
+		name: "bug: statement after block",
+		prog: `
+			{
+				if ($ > 10) {
+					print $;
+				}
+				print "after if";
+			}
+		`,
+		json:     `[2, 12, 87 ,0]`,
+		expected: "after if\n12\nafter if\n87\nafter if\nafter if\n",
 	})
 
 	// onetrueawk tests

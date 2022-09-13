@@ -5,10 +5,11 @@ import (
 )
 
 type Parser struct {
-	lexer    *Lexer
-	current  *Token
-	previous *Token
-	rules    map[TokenTag]parseRule
+	lexer           *Lexer
+	current         *Token
+	previous        *Token
+	rules           map[TokenTag]parseRule
+	didEndStatement bool
 }
 
 type parseRule struct {
@@ -31,7 +32,8 @@ const (
 
 func NewParser(l *Lexer) Parser {
 	p := Parser{
-		lexer: l,
+		lexer:           l,
+		didEndStatement: false,
 	}
 	p.rules = map[TokenTag]parseRule{
 		Str:           {PrecNone, str, nil},
@@ -83,6 +85,7 @@ func (p *Parser) advance() (Token, error) {
 	}
 	p.previous = p.current
 	p.current = &t
+	p.didEndStatement = false
 	return t, nil
 }
 
@@ -113,10 +116,12 @@ func (p *Parser) block() (StatementBlock, error) {
 	if err := p.consume(RCurly); err != nil {
 		return StatementBlock{}, err
 	}
+	p.didEndStatement = true
 	return StatementBlock{block}, nil
 }
 
 func (p *Parser) statement() (Statement, error) {
+	p.didEndStatement = false
 	switch p.current.Tag {
 	case Print:
 		statement, err := p.printStatement()
@@ -189,10 +194,17 @@ func (p *Parser) printStatement() (StatementPrint, error) {
 		}
 	}
 
+	if p.atStatementEnd() {
+		p.didEndStatement = true
+	}
 	return StatementPrint{args}, nil
 }
 
 func (p *Parser) atStatementEnd() bool {
+	if p.didEndStatement {
+		return true
+	}
+
 	switch p.current.Tag {
 	case RCurly:
 		return true
