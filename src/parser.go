@@ -124,6 +124,15 @@ func (p *Parser) statement() (Statement, error) {
 			return nil, err
 		}
 		return &statement, nil
+	case Return:
+		if err := p.consume(Return); err != nil {
+			return nil, err
+		}
+		expr, err := p.expression()
+		if err != nil {
+			return nil, err
+		}
+		return &StatementReturn{expr}, nil
 	default:
 		expr, err := p.expression()
 		if err != nil {
@@ -293,7 +302,9 @@ func call(p *Parser, left Expr) (Expr, error) {
 			break
 		}
 	}
-	p.consume(RParen)
+	if err := p.consume(RParen); err != nil {
+		return nil, err
+	}
 	return &ExprCall{
 		Func: left,
 		Args: args,
@@ -400,17 +411,72 @@ func (p *Parser) parseRule() (Rule, error) {
 	return rule, nil
 }
 
-func (p *Parser) Parse() ([]Rule, error) {
+func (p *Parser) parseFunction() (ExprFunction, error) {
+	if err := p.consume(Function); err != nil {
+		return ExprFunction{}, err
+	}
+
+	if err := p.consume(Ident); err != nil {
+		return ExprFunction{}, err
+	}
+
+	identToken := *p.previous
+
+	if err := p.consume(LParen); err != nil {
+		return ExprFunction{}, err
+	}
+
+	args := make([]string, 0)
+	for !p.atEnd() && p.current.Tag != RParen {
+		if err := p.consume(Ident); err != nil {
+			return ExprFunction{}, err
+		}
+		str := p.lexer.GetString(p.previous)
+		args = append(args, str)
+		if p.current.Tag == Comma {
+			p.consume(Comma)
+		}
+	}
+
+	if err := p.consume(RParen); err != nil {
+		return ExprFunction{}, err
+	}
+
+	block, err := p.block()
+	if err != nil {
+		return ExprFunction{}, err
+	}
+
+	return ExprFunction{
+		ident: identToken,
+		Args:  args,
+		Body:  &block,
+	}, nil
+}
+
+func (p *Parser) Parse() (Program, error) {
+	prog := Program{}
 	rules := make([]Rule, 0)
+	functions := make([]ExprFunction, 0)
 	if _, err := p.advance(); err != nil {
-		return rules, err
+		return prog, err
 	}
 	for !p.atEnd() {
+		if p.current.Tag == Function {
+			fn, err := p.parseFunction()
+			if err != nil {
+				return prog, err
+			}
+			functions = append(functions, fn)
+			continue
+		}
 		rule, err := p.parseRule()
 		if err != nil {
-			return rules, err
+			return prog, err
 		}
 		rules = append(rules, rule)
 	}
-	return rules, nil
+	prog.Rules = rules
+	prog.Functions = functions
+	return prog, nil
 }

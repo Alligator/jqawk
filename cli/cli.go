@@ -45,17 +45,17 @@ func Run() (exitCode int) {
 
 	lex := lang.NewLexer(prog)
 	parser := lang.NewParser(&lex)
-	rules, err := parser.Parse()
+	program, err := parser.Parse()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
 
 	if *dbgAst {
-		ast.Print(nil, rules)
+		ast.Print(nil, program)
 	}
 
-	ev := lang.NewEvaluator(rules, &lex, os.Stdout, input)
+	ev := lang.NewEvaluator(program, &lex, os.Stdout, input)
 	err = ev.Eval()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)

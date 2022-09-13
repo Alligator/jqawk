@@ -179,6 +179,24 @@ func TestJqawk(t *testing.T) {
 		expected: "sponge\n",
 	})
 
+	test(t, testCase{
+		name: "functions",
+		prog: `
+			function add(a, b) {
+				return a + b;
+			}
+
+			function log(a) { print a }
+
+			BEGIN {
+				print add(3, 4);
+				log("hello");
+			}
+		`,
+		json:     "[]",
+		expected: "7\nhello\n",
+	})
+
 	// onetrueawk tests
 	countries := `[
 		["Russia", 8650, 262, "Asia"],

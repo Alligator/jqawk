@@ -18,6 +18,8 @@ const (
 	Begin
 	End
 	Print
+	Function
+	Return
 	LCurly        // {
 	RCurly        // }
 	LSquare       // [
@@ -132,6 +134,10 @@ func (l *Lexer) identifier() Token {
 		return l.simpleToken(Print)
 	case "$":
 		return l.simpleToken(Dollar)
+	case "function":
+		return l.simpleToken(Function)
+	case "return":
+		return l.simpleToken(Return)
 	default:
 		return l.stringToken(Ident, l.pos-l.tokenStart)
 	}

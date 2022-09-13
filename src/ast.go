@@ -34,6 +34,11 @@ func (k RuleKind) String() string {
 	}
 }
 
+type Program struct {
+	Rules     []Rule
+	Functions []ExprFunction
+}
+
 type Rule struct {
 	Kind    RuleKind
 	Pattern Expr
@@ -67,12 +72,19 @@ type ExprCall struct {
 	Args []Expr
 }
 
+type ExprFunction struct {
+	ident Token
+	Args  []string
+	Body  Statement
+}
+
 func (*ExprString) exprNode()     {}
 func (*ExprRegex) exprNode()      {}
 func (*ExprNum) exprNode()        {}
 func (*ExprIdentifier) exprNode() {}
 func (*ExprBinary) exprNode()     {}
 func (*ExprCall) exprNode()       {}
+func (*ExprFunction) exprNode()   {}
 
 type StatementBlock struct {
 	Body []Statement
@@ -86,6 +98,11 @@ type StatementExpr struct {
 	Expr Expr
 }
 
-func (*StatementBlock) statementNode() {}
-func (*StatementPrint) statementNode() {}
-func (*StatementExpr) statementNode()  {}
+type StatementReturn struct {
+	Expr Expr
+}
+
+func (*StatementBlock) statementNode()  {}
+func (*StatementPrint) statementNode()  {}
+func (*StatementExpr) statementNode()   {}
+func (*StatementReturn) statementNode() {}

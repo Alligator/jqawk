@@ -23,25 +23,27 @@ type ValueTag uint8
 
 //go:generate stringer -type=ValueTag -linecomment
 const (
-	ValueStr     ValueTag = iota // string
-	ValueBool                    // bool
-	ValueNum                     // number
-	ValueArray                   // array
-	ValueObj                     // object
-	ValueNil                     // nil
-	ValueFn                      // function
-	ValueRegex                   // regex
-	ValueUnknown                 // unknown
+	ValueStr      ValueTag = iota // string
+	ValueBool                     // bool
+	ValueNum                      // number
+	ValueArray                    // array
+	ValueObj                      // object
+	ValueNil                      // nil
+	ValueNativeFn                 // nativefunction
+	ValueFn                       // function
+	ValueRegex                    // regex
+	ValueUnknown                  // unknown
 )
 
 type Value struct {
-	Tag   ValueTag
-	Str   *string // used by ValueStr and ValueRegex
-	Num   *float64
-	Bool  *bool
-	Array *[]*Cell
-	Obj   *map[string]*Cell
-	Fn    func(*Evaluator, []*Value) (*Value, error)
+	Tag      ValueTag
+	Str      *string // used by ValueStr and ValueRegex
+	Num      *float64
+	Bool     *bool
+	Array    *[]*Cell
+	Obj      *map[string]*Cell
+	NativeFn func(*Evaluator, []*Value) (*Value, error)
+	Fn       *ExprFunction
 }
 
 func NewValue(srcVal interface{}) Value {

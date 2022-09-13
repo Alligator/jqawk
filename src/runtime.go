@@ -70,8 +70,8 @@ func nativePrintf(e *Evaluator, args []*Value) (*Value, error) {
 }
 
 func addRuntimeFunctions(e *Evaluator) {
-	e.locals["printf"] = NewCell(Value{
-		Tag: ValueFn,
-		Fn:  nativePrintf,
+	e.stackTop.locals["printf"] = NewCell(Value{
+		Tag:      ValueNativeFn,
+		NativeFn: nativePrintf,
 	})
 }

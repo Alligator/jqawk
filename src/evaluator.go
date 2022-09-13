@@ -9,43 +9,95 @@ import (
 	"strings"
 )
 
+type stackFrame struct {
+	name        string
+	locals      map[string]*Cell
+	returnValue *Cell
+	parent      *stackFrame
+}
+
 type Evaluator struct {
-	rules    []Rule
+	prog     Program
 	lexer    *Lexer
 	stdout   io.Writer
 	stdin    io.Reader
 	root     *Cell
 	ruleRoot *Cell
-	locals   map[string]*Cell
+	stackTop *stackFrame
 }
 
-func NewEvaluator(rules []Rule, lexer *Lexer, stdout io.Writer, stdin io.Reader) Evaluator {
+type statementAction uint8
+
+const (
+	StmtActionNone statementAction = iota
+	StmtActionReturn
+)
+
+func NewEvaluator(prog Program, lexer *Lexer, stdout io.Writer, stdin io.Reader) Evaluator {
 	e := Evaluator{
-		rules:  rules,
+		prog:   prog,
 		lexer:  lexer,
 		stdout: stdout,
 		stdin:  stdin,
-		locals: make(map[string]*Cell),
 	}
+	e.pushFrame("<root>")
 	addRuntimeFunctions(&e)
+	e.addProgramFunctions()
 	return e
+}
+
+func (e *Evaluator) addProgramFunctions() {
+	for _, fn := range e.prog.Functions {
+		f := fn
+		val := Value{
+			Tag: ValueFn,
+			Fn:  &f,
+		}
+		name := e.lexer.GetString(&fn.ident)
+		e.stackTop.locals[name] = NewCell(val)
+	}
 }
 
 func (e *Evaluator) print(str string) {
 	fmt.Fprint(e.stdout, str)
 }
 
+func (e *Evaluator) pushFrame(name string) {
+	frame := stackFrame{
+		name:   "<root>",
+		locals: make(map[string]*Cell),
+		parent: e.stackTop,
+	}
+	e.stackTop = &frame
+}
+
+func (e *Evaluator) popFrame() error {
+	if e.stackTop.parent == nil {
+		return fmt.Errorf("attempt to pop root frame!")
+	}
+	e.stackTop = e.stackTop.parent
+	return nil
+}
+
 func (e *Evaluator) getVariable(name string) (*Cell, error) {
-	cell, present := e.locals[name]
-	if !present {
-		// $fields don't get inferred values
-		if strings.HasPrefix(name, "$") {
-			return nil, fmt.Errorf("unknown variable %s", name)
+	frame := e.stackTop
+	for frame != nil {
+		cell, present := frame.locals[name]
+		if !present {
+			frame = frame.parent
+			continue
 		}
-		cell = NewCell(Value{Tag: ValueUnknown})
-		e.locals[name] = cell
 		return cell, nil
 	}
+
+	// variable wasn't found
+	// $fields don't get inferred values
+	if strings.HasPrefix(name, "$") {
+		return nil, fmt.Errorf("unknown variable %s", name)
+	}
+	// other variables get created in the current scope
+	cell := NewCell(Value{Tag: ValueUnknown})
+	e.stackTop.locals[name] = cell
 	return cell, nil
 }
 
@@ -120,9 +172,7 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 		if err != nil {
 			return nil, err
 		}
-		if fn.Value.Tag != ValueFn {
-			return nil, fmt.Errorf("attempted to call a %s", fn.Value.Tag)
-		}
+
 		args, err := e.evalExprList(exp.Args)
 		if err != nil {
 			return nil, err
@@ -131,14 +181,45 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 		for _, argCell := range args {
 			argVals = append(argVals, &argCell.Value)
 		}
-		result, err := fn.Value.Fn(e, argVals)
-		if err != nil {
-			return nil, err
+
+		switch fn.Value.Tag {
+		case ValueNativeFn:
+			result, err := fn.Value.NativeFn(e, argVals)
+			if err != nil {
+				return nil, err
+			}
+			if result != nil {
+				return NewCell(*result), nil
+			}
+			return NewCell(NewValue(nil)), nil
+		case ValueFn:
+			f := fn.Value.Fn
+			name := e.lexer.GetString(&f.ident)
+			e.pushFrame(name)
+			for index, argName := range f.Args {
+				e.stackTop.locals[argName] = NewCell(*argVals[index])
+			}
+
+			action, err := e.evalStatement(f.Body)
+			if err != nil {
+				return nil, err
+			}
+
+			var retCell *Cell
+			if action == StmtActionReturn {
+				retCell = e.stackTop.returnValue
+			} else {
+				retCell = NewCell(NewValue(nil))
+			}
+
+			if err := e.popFrame(); err != nil {
+				return nil, err
+			}
+
+			return retCell, nil
+		default:
+			return nil, fmt.Errorf("attempted to call a %s", fn.Value.Tag)
 		}
-		if result != nil {
-			return NewCell(*result), nil
-		}
-		return NewCell(NewValue(nil)), nil
 	default:
 		return nil, fmt.Errorf("expected an expression but found %T", exp)
 	}
@@ -306,23 +387,27 @@ func (e *Evaluator) evalExprList(exprs []Expr) ([]*Cell, error) {
 	return evaledExprs, nil
 }
 
-func (e *Evaluator) evalStatement(stmt Statement) error {
+func (e *Evaluator) evalStatement(stmt Statement) (statementAction, error) {
 	switch st := stmt.(type) {
 	case *StatementBlock:
 		for _, s := range st.Body {
-			if err := e.evalStatement(s); err != nil {
-				return err
+			action, err := e.evalStatement(s)
+			if err != nil {
+				return 0, err
+			}
+			if action == StmtActionReturn {
+				return action, nil
 			}
 		}
 	case *StatementPrint:
 		args, err := e.evalExprList(st.Args)
 		if err != nil {
-			return err
+			return 0, err
 		}
 
 		if len(args) == 0 {
 			fmt.Fprintln(e.stdout, e.ruleRoot.Value.PrettyString(false))
-			return nil
+			return StmtActionNone, nil
 		}
 
 		for i, cell := range args {
@@ -335,16 +420,24 @@ func (e *Evaluator) evalStatement(stmt Statement) error {
 	case *StatementExpr:
 		_, err := e.evalExpr(st.Expr)
 		if err != nil {
-			return err
+			return 0, err
 		}
+	case *StatementReturn:
+		cell, err := e.evalExpr(st.Expr)
+		if err != nil {
+			return StmtActionReturn, err
+		}
+		e.stackTop.returnValue = cell
+		return StmtActionReturn, nil
 	default:
-		return fmt.Errorf("expected a statement but found %T", st)
+		return 0, fmt.Errorf("expected a statement but found %T", st)
 	}
-	return nil
+	return StmtActionNone, nil
 }
 
 func (e *Evaluator) evalRule(rule *Rule) error {
-	return e.evalStatement(rule.Body)
+	_, err := e.evalStatement(rule.Body)
+	return err
 }
 
 func (e *Evaluator) evalPatternRules(patternRules []*Rule) error {
@@ -356,7 +449,7 @@ func (e *Evaluator) evalPatternRules(patternRules []*Rule) error {
 	case ValueArray:
 		for i, item := range *e.root.Value.Array {
 			e.ruleRoot = item
-			e.locals["$index"] = NewCell(NewValue(i))
+			e.stackTop.locals["$index"] = NewCell(NewValue(i))
 			for _, rule := range patternRules {
 				match := true
 				if rule.Pattern != nil {
@@ -402,7 +495,7 @@ func (e *Evaluator) Eval() error {
 	endRules := make([]*Rule, 0)
 	patternRules := make([]*Rule, 0)
 
-	for _, rule := range e.rules {
+	for _, rule := range e.prog.Rules {
 		r := rule
 		switch rule.Kind {
 		case BeginRule:
