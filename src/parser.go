@@ -133,6 +133,34 @@ func (p *Parser) statement() (Statement, error) {
 			return nil, err
 		}
 		return &StatementReturn{expr}, nil
+	case If:
+		if err := p.consume(If); err != nil {
+			return nil, err
+		}
+		if err := p.consume(LParen); err != nil {
+			return nil, err
+		}
+
+		expr, err := p.expression()
+		if err != nil {
+			return nil, err
+		}
+
+		if err := p.consume(RParen); err != nil {
+			return nil, err
+		}
+
+		body, err := p.statement()
+		if err != nil {
+			return nil, err
+		}
+		return &StatementIf{expr, body}, nil
+	case LCurly:
+		block, err := p.block()
+		if err != nil {
+			return nil, err
+		}
+		return &block, nil
 	default:
 		expr, err := p.expression()
 		if err != nil {

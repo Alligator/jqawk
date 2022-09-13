@@ -429,6 +429,14 @@ func (e *Evaluator) evalStatement(stmt Statement) (statementAction, error) {
 		}
 		e.stackTop.returnValue = cell
 		return StmtActionReturn, nil
+	case *StatementIf:
+		cell, err := e.evalExpr(st.Expr)
+		if err != nil {
+			return 0, err
+		}
+		if cell.Value.isTruthy() {
+			return e.evalStatement(st.Body)
+		}
 	default:
 		return 0, fmt.Errorf("expected a statement but found %T", st)
 	}

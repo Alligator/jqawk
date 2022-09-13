@@ -102,7 +102,13 @@ type StatementReturn struct {
 	Expr Expr
 }
 
+type StatementIf struct {
+	Expr Expr
+	Body Statement
+}
+
 func (*StatementBlock) statementNode()  {}
 func (*StatementPrint) statementNode()  {}
 func (*StatementExpr) statementNode()   {}
 func (*StatementReturn) statementNode() {}
+func (*StatementIf) statementNode()     {}

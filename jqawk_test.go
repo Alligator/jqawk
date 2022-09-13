@@ -197,6 +197,19 @@ func TestJqawk(t *testing.T) {
 		expected: "7\nhello\n",
 	})
 
+	test(t, testCase{
+		name: "if",
+		prog: `
+			{
+				if ($ > 5) {
+					print $;
+				}
+			}
+		`,
+		json:     `[2, 7, 3, 12, 87, -3, 0]`,
+		expected: "7\n12\n87\n",
+	})
+
 	// onetrueawk tests
 	countries := `[
 		["Russia", 8650, 262, "Asia"],
