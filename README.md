@@ -57,8 +57,6 @@ Total 337.5
 ## TODO
 
 - good syntax/runtime errors
-- regex matching
-- if statements
 - for loops
 - match statements with pattern matching
 - in place modification à la `sed -i`
