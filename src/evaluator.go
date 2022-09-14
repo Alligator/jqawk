@@ -436,6 +436,8 @@ func (e *Evaluator) evalStatement(stmt Statement) (statementAction, error) {
 		}
 		if cell.Value.isTruthy() {
 			return e.evalStatement(st.Body)
+		} else if st.ElseBody != nil {
+			return e.evalStatement(st.ElseBody)
 		}
 	default:
 		return 0, fmt.Errorf("expected a statement but found %T", st)

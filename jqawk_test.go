@@ -211,6 +211,21 @@ func TestJqawk(t *testing.T) {
 	})
 
 	test(t, testCase{
+		name: "else",
+		prog: `
+			{
+				if ($ > 5) {
+					print $;
+				} else {
+					printf("%f <= 5\n", $);
+				}
+			}
+		`,
+		json:     `[2, 7, 3, 12, 87, -3, 0]`,
+		expected: "2 <= 5\n7\n3 <= 5\n12\n87\n-3 <= 5\n0 <= 5\n",
+	})
+
+	test(t, testCase{
 		name: "bug: statement after block",
 		prog: `
 			{

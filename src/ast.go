@@ -103,8 +103,9 @@ type StatementReturn struct {
 }
 
 type StatementIf struct {
-	Expr Expr
-	Body Statement
+	Expr     Expr
+	Body     Statement
+	ElseBody Statement
 }
 
 func (*StatementBlock) statementNode()  {}

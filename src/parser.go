@@ -159,7 +159,19 @@ func (p *Parser) statement() (Statement, error) {
 		if err != nil {
 			return nil, err
 		}
-		return &StatementIf{expr, body}, nil
+
+		var elseBody Statement
+		if p.current.Tag == Else {
+			if err := p.consume(Else); err != nil {
+				return nil, err
+			}
+			elseBody, err = p.statement()
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		return &StatementIf{expr, body, elseBody}, nil
 	case LCurly:
 		block, err := p.block()
 		if err != nil {

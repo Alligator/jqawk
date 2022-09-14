@@ -21,6 +21,7 @@ const (
 	Function
 	Return
 	If
+	Else
 	LCurly        // {
 	RCurly        // }
 	LSquare       // [
@@ -141,6 +142,8 @@ func (l *Lexer) identifier() Token {
 		return l.simpleToken(Return)
 	case "if":
 		return l.simpleToken(If)
+	case "else":
+		return l.simpleToken(Else)
 	default:
 		return l.stringToken(Ident, l.pos-l.tokenStart)
 	}
