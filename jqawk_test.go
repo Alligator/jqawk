@@ -8,20 +8,31 @@ import (
 )
 
 type testCase struct {
-	name     string
-	prog     string
-	json     string
-	expected string
+	name          string
+	prog          string
+	json          string
+	expected      string
+	expectedError string
 }
 
 func test(t *testing.T, tc testCase) {
 	t.Run(tc.name, func(t *testing.T) {
+		handleError := func(err error) {
+			if len(tc.expectedError) > 0 {
+				if err.Error() != tc.expectedError {
+					t.Fatalf("expected error %q\ngot %q\n", tc.expectedError, err.Error())
+				}
+			} else {
+				panic(err)
+			}
+		}
+
 		lex := lang.NewLexer(tc.prog)
 		parser := lang.NewParser(&lex)
 
 		rules, err := parser.Parse()
 		if err != nil {
-			panic(err)
+			handleError(err)
 		}
 
 		var sb strings.Builder
@@ -34,7 +45,7 @@ func test(t *testing.T, tc testCase) {
 
 		err = ev.Eval()
 		if err != nil {
-			panic(err)
+			handleError(err)
 		}
 
 		if sb.String() != tc.expected {
@@ -237,6 +248,20 @@ func TestJqawk(t *testing.T) {
 		`,
 		json:     `[2, 12, 87 ,0]`,
 		expected: "after if\n12\nafter if\n87\nafter if\nafter if\n",
+	})
+
+	test(t, testCase{
+		name:          "bug: unclosed regexes",
+		prog:          "$ ~ /abc",
+		json:          "[]",
+		expectedError: "unexpected EOF while reading regex",
+	})
+
+	test(t, testCase{
+		name:          "bug: unclosed strings",
+		prog:          "$ ~ 'abc",
+		json:          "[]",
+		expectedError: "unexpected EOF while reading string",
 	})
 
 	// onetrueawk tests

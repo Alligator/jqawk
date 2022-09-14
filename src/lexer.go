@@ -99,6 +99,9 @@ func (l *Lexer) advance() byte {
 }
 
 func (l *Lexer) peek() byte {
+	if l.atEnd() {
+		return 0
+	}
 	return l.src[l.pos]
 }
 
@@ -162,11 +165,11 @@ func (l *Lexer) number() Token {
 }
 
 func (l *Lexer) string(quoteChar byte) (Token, error) {
-	for l.peek() != quoteChar {
-		if l.atEnd() {
-			return l.errorToken(), fmt.Errorf("unexpected EOF while reading string")
-		}
+	for !l.atEnd() && l.peek() != quoteChar {
 		l.advance()
+	}
+	if l.atEnd() {
+		return l.errorToken(), fmt.Errorf("unexpected EOF while reading string")
 	}
 	l.advance()
 	l.tokenStart++ // skip over the opening quote
@@ -175,11 +178,11 @@ func (l *Lexer) string(quoteChar byte) (Token, error) {
 
 // the parser calls this when it finds a '/' in prefix position
 func (l *Lexer) regex() (Token, error) {
-	for l.peek() != '/' {
-		if l.atEnd() {
-			return l.errorToken(), fmt.Errorf("unexpected EOF while reading regex")
-		}
+	for !l.atEnd() && l.peek() != '/' {
 		l.advance()
+	}
+	if l.atEnd() {
+		return l.errorToken(), fmt.Errorf("unexpected EOF while reading regex")
 	}
 	l.advance()
 	l.tokenStart++
