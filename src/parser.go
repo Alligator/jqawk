@@ -506,6 +506,13 @@ func (p *Parser) parseFunction() (ExprFunction, error) {
 	}, nil
 }
 
+func (p *Parser) ParseExpression() (Expr, error) {
+	if _, err := p.advance(); err != nil {
+		return nil, err
+	}
+	return p.expression()
+}
+
 func (p *Parser) Parse() (Program, error) {
 	prog := Program{}
 	rules := make([]Rule, 0)

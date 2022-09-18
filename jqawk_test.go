@@ -1,6 +1,10 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
+	"os"
+	"os/exec"
 	"strings"
 	"testing"
 
@@ -13,6 +17,17 @@ type testCase struct {
 	json          string
 	expected      string
 	expectedError string
+	args          []string
+}
+
+func TestMain(m *testing.M) {
+	cmd := exec.Command("go", "build")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error building: %v\n%s\n", err, output)
+		os.Exit(1)
+	}
+	os.Exit(m.Run())
 }
 
 func test(t *testing.T, tc testCase) {
@@ -36,20 +51,40 @@ func test(t *testing.T, tc testCase) {
 		}
 
 		var sb strings.Builder
-		var ev lang.Evaluator
-		if tc.json == "" {
-			ev = lang.NewEvaluator(rules, &lex, &sb, nil)
-		} else {
-			ev = lang.NewEvaluator(rules, &lex, &sb, strings.NewReader(tc.json))
+		ev := lang.NewEvaluator(rules, &lex, &sb)
+
+		var j interface{}
+		rootValue := lang.NewValue([]interface{}{})
+		if len(tc.json) > 0 {
+			err = json.Unmarshal([]byte(tc.json), &j)
+			if err != nil {
+				panic(err)
+			}
+			rootValue = lang.NewValue(j)
 		}
 
-		err = ev.Eval()
+		err = ev.Eval(lang.NewCell(rootValue))
 		if err != nil {
 			handleError(err)
 		}
 
 		if sb.String() != tc.expected {
 			t.Fatalf("expected %q\ngot %q\n", tc.expected, sb.String())
+		}
+	})
+}
+
+func testExe(t *testing.T, tc testCase) {
+	t.Run(tc.name, func(t *testing.T) {
+		cmd := exec.Command("./jqawk", tc.args...)
+		rdr := strings.NewReader(tc.json)
+		cmd.Stdin = rdr
+		output, err := cmd.Output()
+		if err != nil {
+			panic(err)
+		}
+		if string(output) != tc.expected {
+			t.Fatalf("expected %q\ngot %q\n", tc.expected, string(output))
 		}
 	})
 }
@@ -263,8 +298,25 @@ func TestJqawk(t *testing.T) {
 		json:          "[]",
 		expectedError: "unexpected EOF while reading string",
 	})
+}
 
-	// onetrueawk tests
+func TestJqawkExe(t *testing.T) {
+	testExe(t, testCase{
+		name:     "root selector",
+		args:     []string{"-r", "$.items", "{ print }"},
+		json:     `{ "items": [1, 2, 3] }`,
+		expected: "1\n2\n3\n",
+	})
+
+	testExe(t, testCase{
+		name:     "root selector (array)",
+		args:     []string{"-r", "$[0]", "{ print }"},
+		json:     `[[2, 3], [0, 1]]`,
+		expected: "2\n3\n",
+	})
+}
+
+func TestJqawkOneTrueAwk(t *testing.T) {
 	countries := `[
 		["Russia", 8650, 262, "Asia"],
 		["Canada", 3852, 24, "North America"],

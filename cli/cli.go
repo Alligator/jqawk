@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"go/ast"
@@ -10,9 +11,31 @@ import (
 	lang "github.com/alligator/jqawk/src"
 )
 
+func DebugAst(prog string, rootSelector string) {
+	if len(rootSelector) > 0 {
+		fmt.Println("root selector ast")
+		rsLex := lang.NewLexer(rootSelector)
+		rsParser := lang.NewParser(&rsLex)
+		expr, err := rsParser.ParseExpression()
+		if err != nil {
+			panic(err)
+		}
+		ast.Print(nil, expr)
+	}
+	fmt.Println("program ast")
+	lex := lang.NewLexer(prog)
+	parser := lang.NewParser(&lex)
+	program, err := parser.Parse()
+	if err != nil {
+		panic(err)
+	}
+	ast.Print(nil, program)
+}
+
 func Run() (exitCode int) {
 	dbgAst := flag.Bool("dbg-ast", false, "print the AST")
 	progFile := flag.String("f", "", "the program file to run")
+	rootSelector := flag.String("r", "", "root selector")
 	flag.Parse()
 
 	var prog string
@@ -30,6 +53,11 @@ func Run() (exitCode int) {
 		filePath = flag.Arg(1)
 	}
 
+	if *dbgAst {
+		DebugAst(prog, *rootSelector)
+		os.Exit(0)
+	}
+
 	var input io.Reader
 	if filePath == "" {
 		input = os.Stdin
@@ -43,20 +71,34 @@ func Run() (exitCode int) {
 		input = file
 	}
 
-	lex := lang.NewLexer(prog)
-	parser := lang.NewParser(&lex)
-	program, err := parser.Parse()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return 1
+	var rootValue interface{}
+	if input != nil {
+		b, err := io.ReadAll(input)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return 1
+		}
+
+		err = json.Unmarshal(b, &rootValue)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return 1
+		}
 	}
 
-	if *dbgAst {
-		ast.Print(nil, program)
+	var rootCell *lang.Cell
+	if len(*rootSelector) > 0 {
+		cell, err := lang.EvalExpression(*rootSelector, rootValue, os.Stdout)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return 1
+		}
+		rootCell = cell
+	} else {
+		rootCell = lang.NewCell(lang.NewValue(rootValue))
 	}
 
-	ev := lang.NewEvaluator(program, &lex, os.Stdout, input)
-	err = ev.Eval()
+	err := lang.EvalProgram(prog, rootCell, os.Stdout)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1

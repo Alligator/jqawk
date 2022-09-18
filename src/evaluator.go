@@ -1,7 +1,6 @@
 package lang
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"regexp"
@@ -20,7 +19,6 @@ type Evaluator struct {
 	prog     Program
 	lexer    *Lexer
 	stdout   io.Writer
-	stdin    io.Reader
 	root     *Cell
 	ruleRoot *Cell
 	stackTop *stackFrame
@@ -33,12 +31,11 @@ const (
 	StmtActionReturn
 )
 
-func NewEvaluator(prog Program, lexer *Lexer, stdout io.Writer, stdin io.Reader) Evaluator {
+func NewEvaluator(prog Program, lexer *Lexer, stdout io.Writer) Evaluator {
 	e := Evaluator{
 		prog:   prog,
 		lexer:  lexer,
 		stdout: stdout,
-		stdin:  stdin,
 	}
 	e.pushFrame("<root>")
 	addRuntimeFunctions(&e)
@@ -486,20 +483,41 @@ func (e *Evaluator) evalPatternRules(patternRules []*Rule) error {
 	return nil
 }
 
-func (e *Evaluator) Eval() error {
-	if e.stdin != nil {
-		b, err := io.ReadAll(e.stdin)
-		if err != nil {
-			return err
-		}
-
-		var j interface{}
-		err = json.Unmarshal(b, &j)
-		if err != nil {
-			return err
-		}
-		e.root = NewCell(NewValue(j))
+func EvalExpression(exprSrc string, rootValue interface{}, stdout io.Writer) (*Cell, error) {
+	lex := NewLexer(exprSrc)
+	parser := NewParser(&lex)
+	expr, err := parser.ParseExpression()
+	if err != nil {
+		return nil, err
 	}
+	rootCell := NewCell(NewValue(rootValue))
+	ev := NewEvaluator(Program{}, &lex, stdout)
+	ev.root = rootCell
+	ev.ruleRoot = rootCell
+	cell, err := ev.evalExpr(expr)
+	if err != nil {
+		return nil, err
+	}
+	return cell, nil
+}
+
+func EvalProgram(progSrc string, rootCell *Cell, stdout io.Writer) error {
+	lex := NewLexer(progSrc)
+	parser := NewParser(&lex)
+	prog, err := parser.Parse()
+	if err != nil {
+		return err
+	}
+	ev := NewEvaluator(prog, &lex, stdout)
+	err = ev.Eval(rootCell)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (e *Evaluator) Eval(rootCell *Cell) error {
+	e.root = rootCell
 
 	beginRules := make([]*Rule, 0)
 	endRules := make([]*Rule, 0)
