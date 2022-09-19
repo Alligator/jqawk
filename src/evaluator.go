@@ -442,9 +442,27 @@ func (e *Evaluator) evalStatement(stmt Statement) (statementAction, error) {
 	return StmtActionNone, nil
 }
 
-func (e *Evaluator) evalRule(rule *Rule) error {
-	_, err := e.evalStatement(rule.Body)
-	return err
+func (e *Evaluator) evalRules(rules []*Rule) error {
+	for _, rule := range rules {
+		match := true
+		if rule.Pattern != nil {
+			cell, err := e.evalExpr(rule.Pattern)
+			if err != nil {
+				return err
+			}
+			match = cell.Value.isTruthy()
+		}
+
+		if !match {
+			continue
+		}
+
+		_, err := e.evalStatement(rule.Body)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (e *Evaluator) evalPatternRules(patternRules []*Rule) error {
@@ -457,27 +475,23 @@ func (e *Evaluator) evalPatternRules(patternRules []*Rule) error {
 		for i, item := range *e.root.Value.Array {
 			e.ruleRoot = item
 			e.stackTop.locals["$index"] = NewCell(NewValue(i))
-			for _, rule := range patternRules {
-				match := true
-				if rule.Pattern != nil {
-					cell, err := e.evalExpr(rule.Pattern)
-					if err != nil {
-						return err
-					}
-					match = cell.Value.isTruthy()
-				}
-
-				if !match {
-					continue
-				}
-
-				if err := e.evalRule(rule); err != nil {
-					return err
-				}
+			if err := e.evalRules(patternRules); err != nil {
+				return err
+			}
+		}
+	case ValueObj:
+		for key, value := range *e.root.Value.Obj {
+			e.ruleRoot = value
+			e.stackTop.locals["$key"] = NewCell(NewValue(key))
+			if err := e.evalRules(patternRules); err != nil {
+				return err
 			}
 		}
 	default:
-		return fmt.Errorf("unhandled root value type %v", e.root.Value.Tag)
+		e.ruleRoot = e.root
+		if err := e.evalRules(patternRules); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -536,7 +550,7 @@ func (e *Evaluator) Eval(rootCell *Cell) error {
 	}
 
 	for _, rule := range beginRules {
-		if err := e.evalRule(rule); err != nil {
+		if _, err := e.evalStatement(rule.Body); err != nil {
 			return err
 		}
 	}
@@ -546,7 +560,7 @@ func (e *Evaluator) Eval(rootCell *Cell) error {
 	}
 
 	for _, rule := range endRules {
-		if err := e.evalRule(rule); err != nil {
+		if _, err := e.evalStatement(rule.Body); err != nil {
 			return err
 		}
 	}
