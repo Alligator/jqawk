@@ -510,7 +510,14 @@ func (p *Parser) ParseExpression() (Expr, error) {
 	if _, err := p.advance(); err != nil {
 		return nil, err
 	}
-	return p.expression()
+	expr, err := p.expression()
+	if err != nil {
+		return nil, err
+	}
+	if err = p.consume(EOF); err != nil {
+		return nil, err
+	}
+	return expr, nil
 }
 
 func (p *Parser) Parse() (Program, error) {
