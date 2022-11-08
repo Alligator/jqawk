@@ -436,6 +436,19 @@ func (e *Evaluator) evalStatement(stmt Statement) (statementAction, error) {
 		} else if st.ElseBody != nil {
 			return e.evalStatement(st.ElseBody)
 		}
+	case *StatementWhile:
+		for {
+			cell, err := e.evalExpr(st.Expr)
+			if err != nil {
+				return 0, err
+			}
+			if cell.Value.isTruthy() {
+				e.evalStatement(st.Body)
+			} else {
+				break
+			}
+		}
+		return StmtActionNone, nil
 	default:
 		return 0, fmt.Errorf("expected a statement but found %T", st)
 	}

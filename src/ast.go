@@ -108,8 +108,14 @@ type StatementIf struct {
 	ElseBody Statement
 }
 
+type StatementWhile struct {
+	Expr Expr
+	Body Statement
+}
+
 func (*StatementBlock) statementNode()  {}
 func (*StatementPrint) statementNode()  {}
 func (*StatementExpr) statementNode()   {}
 func (*StatementReturn) statementNode() {}
 func (*StatementIf) statementNode()     {}
+func (*StatementWhile) statementNode()  {}

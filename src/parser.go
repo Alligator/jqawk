@@ -172,6 +172,29 @@ func (p *Parser) statement() (Statement, error) {
 		}
 
 		return &StatementIf{expr, body, elseBody}, nil
+	case While:
+		if err := p.consume(While); err != nil {
+			return nil, err
+		}
+		if err := p.consume(LParen); err != nil {
+			return nil, err
+		}
+
+		expr, err := p.expression()
+		if err != nil {
+			return nil, err
+		}
+
+		if err := p.consume(RParen); err != nil {
+			return nil, err
+		}
+
+		body, err := p.statement()
+		if err != nil {
+			return nil, err
+		}
+
+		return &StatementWhile{expr, body}, nil
 	case LCurly:
 		block, err := p.block()
 		if err != nil {
