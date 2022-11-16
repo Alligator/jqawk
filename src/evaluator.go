@@ -443,12 +443,42 @@ func (e *Evaluator) evalStatement(stmt Statement) (statementAction, error) {
 				return 0, err
 			}
 			if cell.Value.isTruthy() {
-				e.evalStatement(st.Body)
+				action, err := e.evalStatement(st.Body)
+				if err != nil {
+					return 0, err
+				}
+				if action == StmtActionReturn {
+					return action, nil
+				}
 			} else {
 				break
 			}
 		}
 		return StmtActionNone, nil
+	case *StatementFor:
+		e.evalExpr(st.PreExpr)
+		for {
+			cell, err := e.evalExpr(st.Expr)
+			if err != nil {
+				return 0, err
+			}
+			if cell.Value.isTruthy() {
+				action, err := e.evalStatement(st.Body)
+				if err != nil {
+					return 0, err
+				}
+				if action == StmtActionReturn {
+					return action, nil
+				}
+
+				_, err = e.evalExpr(st.PostExpr)
+				if err != nil {
+					return 0, err
+				}
+			} else {
+				break
+			}
+		}
 	default:
 		return 0, fmt.Errorf("expected a statement but found %T", st)
 	}

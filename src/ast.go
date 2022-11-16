@@ -113,9 +113,17 @@ type StatementWhile struct {
 	Body Statement
 }
 
+type StatementFor struct {
+	PreExpr  Expr
+	Expr     Expr
+	PostExpr Expr
+	Body     Statement
+}
+
 func (*StatementBlock) statementNode()  {}
 func (*StatementPrint) statementNode()  {}
 func (*StatementExpr) statementNode()   {}
 func (*StatementReturn) statementNode() {}
 func (*StatementIf) statementNode()     {}
 func (*StatementWhile) statementNode()  {}
+func (*StatementFor) statementNode()    {}

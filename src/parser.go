@@ -195,6 +195,45 @@ func (p *Parser) statement() (Statement, error) {
 		}
 
 		return &StatementWhile{expr, body}, nil
+	case For:
+		if err := p.consume(For); err != nil {
+			return nil, err
+		}
+		if err := p.consume(LParen); err != nil {
+			return nil, err
+		}
+
+		preExpr, err := p.expression()
+		if err != nil {
+			return nil, err
+		}
+		if err := p.consume(SemiColon); err != nil {
+			return nil, err
+		}
+
+		expr, err := p.expression()
+		if err != nil {
+			return nil, err
+		}
+		if err := p.consume(SemiColon); err != nil {
+			return nil, err
+		}
+
+		postExpr, err := p.expression()
+		if err != nil {
+			return nil, err
+		}
+
+		if err := p.consume(RParen); err != nil {
+			return nil, err
+		}
+
+		body, err := p.statement()
+		if err != nil {
+			return nil, err
+		}
+
+		return &StatementFor{preExpr, expr, postExpr, body}, nil
 	case LCurly:
 		block, err := p.block()
 		if err != nil {
