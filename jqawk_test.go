@@ -274,8 +274,8 @@ func TestJqawk(t *testing.T) {
 	test(t, testCase{
 		name:     "root object",
 		prog:     "{ printf('%s: %s\n', $key, $) }",
-		json:     `{ "name": "alligator", "country": "uk" }`,
-		expected: "name: alligator\ncountry: uk\n",
+		json:     `{ "name": "alligator" }`,
+		expected: "name: alligator\n",
 	})
 
 	test(t, testCase{
