@@ -353,6 +353,13 @@ func TestJqawk(t *testing.T) {
 		json:          "[]",
 		expectedError: "unexpected EOF while reading string",
 	})
+
+	test(t, testCase{
+		name:          "bug: $ in BEGIN",
+		prog:          "BEGIN { print $ }",
+		json:          "[]",
+		expectedError: "unknown variable $",
+	})
 }
 
 func TestJqawkExe(t *testing.T) {

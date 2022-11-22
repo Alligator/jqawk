@@ -155,7 +155,11 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 		return e.evalBinaryExpr(exp)
 	case *ExprIdentifier:
 		if exp.token.Tag == Dollar {
-			return e.ruleRoot, nil
+			if e.ruleRoot != nil {
+				return e.ruleRoot, nil
+			} else {
+				return nil, fmt.Errorf("unknown variable $")
+			}
 		} else {
 			ident := e.lexer.GetString(&exp.token)
 			local, err := e.getVariable(ident)
