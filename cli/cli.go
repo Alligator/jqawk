@@ -102,7 +102,7 @@ func Run() (exitCode int) {
 	if err != nil {
 		if syntaxErr, ok := err.(lang.SyntaxError); ok {
 			fmt.Fprintf(os.Stderr, "  %s\n", syntaxErr.SrcLine)
-			fmt.Fprintf(os.Stderr, "  %*s\n", syntaxErr.Col, "^")
+			fmt.Fprintf(os.Stderr, "  %*s\n", syntaxErr.Col+1, "^")
 			fmt.Fprintf(os.Stderr, "syntax error on line %d: %s\n", syntaxErr.Line, syntaxErr.Message)
 		} else {
 			fmt.Fprintln(os.Stderr, err)

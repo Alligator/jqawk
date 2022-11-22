@@ -78,6 +78,16 @@ func (p *Parser) atEnd() bool {
 	return p.current.Tag == EOF
 }
 
+func (p *Parser) error(pos int, msg string) SyntaxError {
+	srcLine, line, col := p.lexer.GetLineAndCol(pos)
+	return SyntaxError{
+		Message: msg,
+		Line:    line,
+		Col:     col,
+		SrcLine: srcLine,
+	}
+}
+
 func (p *Parser) advance() (Token, error) {
 	t, err := p.lexer.Next()
 	if err != nil {
@@ -91,7 +101,7 @@ func (p *Parser) advance() (Token, error) {
 
 func (p *Parser) consume(tag TokenTag) error {
 	if p.current.Tag != tag {
-		return fmt.Errorf("expected a %s but got a %s", tag, p.current.Tag)
+		return p.error(p.current.Pos, fmt.Sprintf("expected %s", tag))
 	}
 	_, err := p.advance()
 	return err
@@ -110,7 +120,7 @@ func (p *Parser) block() (StatementBlock, error) {
 		}
 		block = append(block, statement)
 		if !p.atStatementEnd() {
-			return StatementBlock{}, fmt.Errorf("expected a statement terminator, got %s", p.current.Tag)
+			return StatementBlock{}, p.error(p.current.Pos, "unexpected end of input")
 		}
 	}
 	if err := p.consume(RCurly); err != nil {
@@ -322,7 +332,7 @@ func (p *Parser) expression() (Expr, error) {
 func (p *Parser) expressionWithPrec(prec Precedence) (Expr, error) {
 	prefixRule := p.rule(p.current.Tag)
 	if prefixRule.prefix == nil {
-		return nil, fmt.Errorf("unexpected token %s", p.current.Tag)
+		return nil, p.error(p.current.Pos, fmt.Sprintf("unexpected token %s", p.current.Tag))
 	}
 
 	lhs, err := prefixRule.prefix(p)
@@ -333,7 +343,7 @@ func (p *Parser) expressionWithPrec(prec Precedence) (Expr, error) {
 	for prec <= p.rule(p.current.Tag).prec {
 		infixRule := p.rule(p.current.Tag)
 		if infixRule.infix == nil {
-			return nil, fmt.Errorf("unknown operator %s", p.current.Tag)
+			return nil, p.error(p.current.Pos, fmt.Sprintf("unknown operator %s", p.current.Tag))
 		}
 		lhs, err = infixRule.infix(p, lhs)
 		if err != nil {
@@ -381,7 +391,7 @@ func identifier(p *Parser) (Expr, error) {
 		}
 		return &ExprIdentifier{*p.previous}, nil
 	}
-	return nil, fmt.Errorf("expected an identifier, found %s", p.current.Tag)
+	return nil, p.error(p.current.Pos, "expected an identifier")
 }
 
 func computedMember(p *Parser, left Expr) (Expr, error) {
@@ -487,7 +497,7 @@ func (p *Parser) rewriteCompundAssingment(left Expr, right Expr, opToken Token) 
 	case DivideEqual:
 		opTag = Divide
 	default:
-		panic(fmt.Errorf("attempt compound assignment with %s", opToken.Tag))
+		panic(fmt.Errorf("attempted compound assignment with %s", opToken.Tag))
 	}
 
 	equalOp := Token{

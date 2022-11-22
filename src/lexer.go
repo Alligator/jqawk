@@ -210,7 +210,7 @@ func (l *Lexer) GetLineAndCol(pos int) (string, int, int) {
 	for i, r := range l.src {
 		if r == '\n' {
 			if inLine {
-				return l.src[lineStart : i-1], line, col
+				return l.src[lineStart:i], line, col
 			}
 			line++
 			lineStart = i + 1
@@ -343,5 +343,5 @@ func (l *Lexer) Next() (Token, error) {
 	case '\'', '"':
 		return l.string(c)
 	}
-	return l.errorToken(), l.error(l.pos, fmt.Sprintf("unexpected character %q", c))
+	return l.errorToken(), l.error(l.pos-1, fmt.Sprintf("unexpected character %q", c))
 }
