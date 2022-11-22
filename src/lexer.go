@@ -178,7 +178,7 @@ func (l *Lexer) string(quoteChar byte) (Token, error) {
 		l.advance()
 	}
 	if l.atEnd() {
-		return l.errorToken(), fmt.Errorf("unexpected EOF while reading string")
+		return l.errorToken(), l.error(l.tokenStart+1, "unexpected EOF while reading string")
 	}
 	l.advance()
 	l.tokenStart++ // skip over the opening quote
@@ -191,7 +191,7 @@ func (l *Lexer) regex() (Token, error) {
 		l.advance()
 	}
 	if l.atEnd() {
-		return l.errorToken(), fmt.Errorf("unexpected EOF while reading regex")
+		return l.errorToken(), l.error(l.tokenStart, "unexpected EOF while reading regex")
 	}
 	l.advance()
 	l.tokenStart++
@@ -200,6 +200,37 @@ func (l *Lexer) regex() (Token, error) {
 
 func (l *Lexer) GetString(token *Token) string {
 	return l.src[token.Pos : token.Pos+token.Len]
+}
+
+func (l *Lexer) GetLineAndCol(pos int) (string, int, int) {
+	line := 1
+	col := 1
+	lineStart := 0
+	inLine := false
+	for i, r := range l.src {
+		if r == '\n' {
+			if inLine {
+				return l.src[lineStart : i-1], line, col
+			}
+			line++
+			lineStart = i + 1
+		}
+		if i == pos {
+			inLine = true
+			col = i - lineStart
+		}
+	}
+	return l.src[lineStart:], line, col
+}
+
+func (l *Lexer) error(pos int, msg string) SyntaxError {
+	srcLine, line, col := l.GetLineAndCol(pos)
+	return SyntaxError{
+		Message: msg,
+		Line:    line,
+		Col:     col,
+		SrcLine: srcLine,
+	}
 }
 
 func (l *Lexer) Next() (Token, error) {
@@ -312,5 +343,5 @@ func (l *Lexer) Next() (Token, error) {
 	case '\'', '"':
 		return l.string(c)
 	}
-	return l.errorToken(), fmt.Errorf("unexpected character %q", c)
+	return l.errorToken(), l.error(l.pos, fmt.Sprintf("unexpected character %q", c))
 }
