@@ -196,6 +196,7 @@ func (p *Parser) statement() (Statement, error) {
 
 		return &StatementWhile{expr, body}, nil
 	case For:
+		// for (
 		if err := p.consume(For); err != nil {
 			return nil, err
 		}
@@ -207,6 +208,30 @@ func (p *Parser) statement() (Statement, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		// try to parse for (ident in expr)
+		if ident, ok := preExpr.(*ExprIdentifier); ok {
+			if p.current.Tag == In {
+				p.consume(In)
+				expr, err := p.expression()
+				if err != nil {
+					return nil, err
+				}
+
+				if err := p.consume(RParen); err != nil {
+					return nil, err
+				}
+
+				body, err := p.statement()
+				if err != nil {
+					return nil, err
+				}
+
+				return &StatementForIn{ident, expr, body}, nil
+			}
+		}
+
+		// try to parse for (expr; expr; expr)
 		if err := p.consume(SemiColon); err != nil {
 			return nil, err
 		}

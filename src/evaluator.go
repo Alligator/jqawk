@@ -479,6 +479,28 @@ func (e *Evaluator) evalStatement(stmt Statement) (statementAction, error) {
 				break
 			}
 		}
+	case *StatementForIn:
+		ident := e.lexer.GetString(&st.Ident.token)
+		local, err := e.getVariable(ident)
+		if err != nil {
+			return 0, err
+		}
+
+		iterable, err := e.evalExpr(st.Iterable)
+		if err != nil {
+			return 0, err
+		}
+
+		switch iterable.Value.Tag {
+		case ValueArray:
+			for _, item := range *iterable.Value.Array {
+				local.Value = item.Value
+				e.evalStatement(st.Body)
+			}
+		default:
+			return 0, fmt.Errorf("%s is not iterable", iterable.Value.Tag)
+		}
+
 	default:
 		return 0, fmt.Errorf("expected a statement but found %T", st)
 	}

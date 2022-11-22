@@ -24,6 +24,7 @@ const (
 	Else
 	For
 	While
+	In
 	LCurly        // {
 	RCurly        // }
 	LSquare       // [
@@ -153,6 +154,8 @@ func (l *Lexer) identifier() Token {
 		return l.simpleToken(For)
 	case "while":
 		return l.simpleToken(While)
+	case "in":
+		return l.simpleToken(In)
 	default:
 		return l.stringToken(Ident, l.pos-l.tokenStart)
 	}

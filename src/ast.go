@@ -120,6 +120,12 @@ type StatementFor struct {
 	Body     Statement
 }
 
+type StatementForIn struct {
+	Ident    *ExprIdentifier
+	Iterable Expr
+	Body     Statement
+}
+
 func (*StatementBlock) statementNode()  {}
 func (*StatementPrint) statementNode()  {}
 func (*StatementExpr) statementNode()   {}
@@ -127,3 +133,4 @@ func (*StatementReturn) statementNode() {}
 func (*StatementIf) statementNode()     {}
 func (*StatementWhile) statementNode()  {}
 func (*StatementFor) statementNode()    {}
+func (*StatementForIn) statementNode()  {}
