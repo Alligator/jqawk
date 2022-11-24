@@ -2,6 +2,7 @@ package lang
 
 type (
 	Node interface {
+		Token() Token
 	}
 	Expr interface {
 		Node
@@ -86,12 +87,22 @@ func (*ExprBinary) exprNode()     {}
 func (*ExprCall) exprNode()       {}
 func (*ExprFunction) exprNode()   {}
 
+func (expr *ExprString) Token() Token     { return expr.token }
+func (expr *ExprRegex) Token() Token      { return expr.token }
+func (expr *ExprNum) Token() Token        { return expr.token }
+func (expr *ExprIdentifier) Token() Token { return expr.token }
+func (expr *ExprBinary) Token() Token     { return expr.Left.Token() }
+func (expr *ExprCall) Token() Token       { return expr.Func.Token() }
+func (expr *ExprFunction) Token() Token   { return expr.ident }
+
 type StatementBlock struct {
-	Body []Statement
+	token Token
+	Body  []Statement
 }
 
 type StatementPrint struct {
-	Args []Expr
+	token Token
+	Args  []Expr
 }
 
 type StatementExpr struct {
@@ -134,3 +145,12 @@ func (*StatementIf) statementNode()     {}
 func (*StatementWhile) statementNode()  {}
 func (*StatementFor) statementNode()    {}
 func (*StatementForIn) statementNode()  {}
+
+func (stmt *StatementBlock) Token() Token  { return stmt.token }
+func (stmt *StatementPrint) Token() Token  { return stmt.token }
+func (stmt *StatementExpr) Token() Token   { return stmt.Expr.Token() }
+func (stmt *StatementReturn) Token() Token { return stmt.Expr.Token() }
+func (stmt *StatementIf) Token() Token     { return stmt.Expr.Token() }
+func (stmt *StatementWhile) Token() Token  { return stmt.Expr.Token() }
+func (stmt *StatementFor) Token() Token    { return stmt.Expr.Token() }
+func (stmt *StatementForIn) Token() Token  { return stmt.Ident.Token() }

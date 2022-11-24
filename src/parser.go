@@ -111,6 +111,7 @@ func (p *Parser) block() (StatementBlock, error) {
 	if err := p.consume(LCurly); err != nil {
 		return StatementBlock{}, err
 	}
+	startToken := *p.previous
 
 	block := make([]Statement, 0)
 	for !p.atEnd() && p.current.Tag != RCurly {
@@ -127,7 +128,7 @@ func (p *Parser) block() (StatementBlock, error) {
 		return StatementBlock{}, err
 	}
 	p.didEndStatement = true
-	return StatementBlock{block}, nil
+	return StatementBlock{startToken, block}, nil
 }
 
 func (p *Parser) statement() (Statement, error) {
@@ -289,6 +290,8 @@ func (p *Parser) printStatement() (StatementPrint, error) {
 		return StatementPrint{}, err
 	}
 
+	startToken := *p.previous
+
 	args := make([]Expr, 0)
 	for !p.atStatementEnd() {
 		expr, err := p.expression()
@@ -306,7 +309,7 @@ func (p *Parser) printStatement() (StatementPrint, error) {
 	if p.atStatementEnd() {
 		p.didEndStatement = true
 	}
-	return StatementPrint{args}, nil
+	return StatementPrint{startToken, args}, nil
 }
 
 func (p *Parser) atStatementEnd() bool {

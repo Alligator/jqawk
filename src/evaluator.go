@@ -59,6 +59,16 @@ func (e *Evaluator) print(str string) {
 	fmt.Fprint(e.stdout, str)
 }
 
+func (e *Evaluator) error(token Token, msg string) RuntimeError {
+	srcLine, line, col := e.lexer.GetLineAndCol(token.Pos)
+	return RuntimeError{
+		Message: msg,
+		Line:    line,
+		Col:     col,
+		SrcLine: srcLine,
+	}
+}
+
 func (e *Evaluator) pushFrame(name string) {
 	frame := stackFrame{
 		name:   "<root>",
@@ -70,7 +80,7 @@ func (e *Evaluator) pushFrame(name string) {
 
 func (e *Evaluator) popFrame() error {
 	if e.stackTop.parent == nil {
-		return fmt.Errorf("attempt to pop root frame!")
+		panic(fmt.Errorf("attempt to pop root frame"))
 	}
 	e.stackTop = e.stackTop.parent
 	return nil
@@ -158,13 +168,13 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 			if e.ruleRoot != nil {
 				return e.ruleRoot, nil
 			} else {
-				return nil, fmt.Errorf("unknown variable $")
+				return nil, e.error(exp.Token(), "unknown variable $")
 			}
 		} else {
 			ident := e.lexer.GetString(&exp.token)
 			local, err := e.getVariable(ident)
 			if err != nil {
-				return nil, err
+				return nil, e.error(exp.Token(), err.Error())
 			}
 			return local, nil
 		}
@@ -219,10 +229,10 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 
 			return retCell, nil
 		default:
-			return nil, fmt.Errorf("attempted to call a %s", fn.Value.Tag)
+			return nil, e.error(exp.Token(), fmt.Sprintf("attempted to call a %s", fn.Value.Tag))
 		}
 	default:
-		return nil, fmt.Errorf("expected an expression but found %T", exp)
+		return nil, e.error(exp.Token(), "expected an expression")
 	}
 }
 
@@ -306,7 +316,7 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (*Cell, error) {
 		case ValueRegex:
 			regex = *right.Value.Str
 		default:
-			return nil, fmt.Errorf("a regex or a string must appear on the right hand side of ~")
+			return nil, e.error(expr.Right.Token(), "a regex or a string must appear on the right hand side of ~")
 		}
 
 		re, err := regexp.Compile(regex)
@@ -338,7 +348,7 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (*Cell, error) {
 	case Equal:
 		return e.evalAssignment(left, right)
 	default:
-		return nil, fmt.Errorf("unknown operator %s", expr.OpToken.Tag)
+		return nil, e.error(expr.OpToken, fmt.Sprintf("unknown operator %s", expr.OpToken.Tag))
 	}
 }
 
@@ -502,11 +512,11 @@ func (e *Evaluator) evalStatement(stmt Statement) (statementAction, error) {
 				e.evalStatement(st.Body)
 			}
 		default:
-			return 0, fmt.Errorf("%s is not iterable", iterable.Value.Tag)
+			return 0, e.error(st.Iterable.Token(), fmt.Sprintf("%s is not iterable", iterable.Value.Tag))
 		}
 
 	default:
-		return 0, fmt.Errorf("expected a statement but found %T", st)
+		return 0, e.error(st.Token(), fmt.Sprintf("expected a statement but found %T", st))
 	}
 	return StmtActionNone, nil
 }

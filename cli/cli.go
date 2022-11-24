@@ -100,11 +100,16 @@ func Run() (exitCode int) {
 
 	err := lang.EvalProgram(prog, rootCell, os.Stdout)
 	if err != nil {
-		if syntaxErr, ok := err.(lang.SyntaxError); ok {
-			fmt.Fprintf(os.Stderr, "  %s\n", syntaxErr.SrcLine)
-			fmt.Fprintf(os.Stderr, "  %*s\n", syntaxErr.Col+1, "^")
-			fmt.Fprintf(os.Stderr, "syntax error on line %d: %s\n", syntaxErr.Line, syntaxErr.Message)
-		} else {
+		switch tErr := err.(type) {
+		case lang.SyntaxError:
+			fmt.Fprintf(os.Stderr, "  %s\n", tErr.SrcLine)
+			fmt.Fprintf(os.Stderr, "  %*s\n", tErr.Col+1, "^")
+			fmt.Fprintf(os.Stderr, "syntax error on line %d: %s\n", tErr.Line, tErr.Message)
+		case lang.RuntimeError:
+			fmt.Fprintf(os.Stderr, "  %s\n", tErr.SrcLine)
+			fmt.Fprintf(os.Stderr, "  %*s\n", tErr.Col+1, "^")
+			fmt.Fprintf(os.Stderr, "runtime error on line %d: %s\n", tErr.Line, tErr.Message)
+		default:
 			fmt.Fprintln(os.Stderr, err)
 		}
 		return 1
