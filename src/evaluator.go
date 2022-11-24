@@ -250,7 +250,7 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (*Cell, error) {
 	case LSquare, Dot:
 		member, err := left.Value.GetMember(right.Value)
 		if err != nil {
-			return nil, err
+			return nil, e.error(expr.Left.Token(), err.Error())
 		}
 		return member, nil
 	case LessThan, GreaterThan, EqualEqual, LessEqual, GreaterEqual, BangEqual:
@@ -266,7 +266,7 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (*Cell, error) {
 
 		cmp, err := left.Value.Compare(&right.Value)
 		if err != nil {
-			return nil, err
+			return nil, e.error(expr.Left.Token(), err.Error())
 		}
 		switch expr.OpToken.Tag {
 		case LessThan:
