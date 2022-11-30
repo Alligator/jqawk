@@ -193,46 +193,54 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 			argVals = append(argVals, &argCell.Value)
 		}
 
-		switch fn.Value.Tag {
-		case ValueNativeFn:
-			result, err := fn.Value.NativeFn(e, argVals)
-			if err != nil {
-				return nil, err
-			}
-			if result != nil {
-				return NewCell(*result), nil
-			}
-			return NewCell(NewValue(nil)), nil
-		case ValueFn:
-			f := fn.Value.Fn
-			name := e.lexer.GetString(&f.ident)
-			e.pushFrame(name)
-			for index, argName := range f.Args {
-				e.stackTop.locals[argName] = NewCell(*argVals[index])
-			}
-
-			action, err := e.evalStatement(f.Body)
-			if err != nil {
-				return nil, err
-			}
-
-			var retCell *Cell
-			if action == StmtActionReturn {
-				retCell = e.stackTop.returnValue
-			} else {
-				retCell = NewCell(NewValue(nil))
-			}
-
-			if err := e.popFrame(); err != nil {
-				return nil, err
-			}
-
-			return retCell, nil
-		default:
-			return nil, e.error(exp.Token(), fmt.Sprintf("attempted to call a %s", fn.Value.Tag))
+		result, err := e.callFunction(fn, argVals)
+		if err != nil {
+			return nil, e.error(exp.Token(), err.Error())
 		}
+		return result, nil
 	default:
 		return nil, e.error(exp.Token(), "expected an expression")
+	}
+}
+
+func (e *Evaluator) callFunction(fn *Cell, args []*Value) (*Cell, error) {
+	switch fn.Value.Tag {
+	case ValueNativeFn:
+		result, err := fn.Value.NativeFn(e, args, fn.Value.Binding)
+		if err != nil {
+			return nil, err
+		}
+		if result != nil {
+			return NewCell(*result), nil
+		}
+		return NewCell(NewValue(nil)), nil
+	case ValueFn:
+		f := fn.Value.Fn
+		name := e.lexer.GetString(&f.ident)
+		e.pushFrame(name)
+		for index, argName := range f.Args {
+			e.stackTop.locals[argName] = NewCell(*args[index])
+		}
+
+		action, err := e.evalStatement(f.Body)
+		if err != nil {
+			return nil, err
+		}
+
+		var retCell *Cell
+		if action == StmtActionReturn {
+			retCell = e.stackTop.returnValue
+		} else {
+			retCell = NewCell(NewValue(nil))
+		}
+
+		if err := e.popFrame(); err != nil {
+			return nil, err
+		}
+
+		return retCell, nil
+	default:
+		return nil, fmt.Errorf("attempted to call a %s", fn.Value.Tag)
 	}
 }
 
@@ -251,6 +259,16 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (*Cell, error) {
 		member, err := left.Value.GetMember(right.Value)
 		if err != nil {
 			return nil, e.error(expr.Left.Token(), err.Error())
+		}
+		member.Value.Binding = &left.Value
+
+		if member.Value.Tag == ValueNativeFn || member.Value.Tag == ValueFn {
+			// special case. if a member is a function, call it immediately
+			result, err := e.callFunction(member, []*Value{})
+			if err != nil {
+				return nil, e.error(expr.Token(), err.Error())
+			}
+			return result, nil
 		}
 		return member, nil
 	case LessThan, GreaterThan, EqualEqual, LessEqual, GreaterEqual, BangEqual:

@@ -42,8 +42,42 @@ type Value struct {
 	Bool     *bool
 	Array    *[]*Cell
 	Obj      *map[string]*Cell
-	NativeFn func(*Evaluator, []*Value) (*Value, error)
+	NativeFn func(*Evaluator, []*Value, *Value) (*Value, error)
 	Fn       *ExprFunction
+	Proto    *Value
+	Binding  *Value
+}
+
+var arrayPrototype *Value = nil
+
+func getArrayPrototype() *Value {
+	if arrayPrototype == nil {
+		proto := map[string]*Cell{
+			"length": NewCell(Value{
+				Tag: ValueNativeFn,
+				NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
+					if this == nil {
+						v := NewValue(0)
+						return &v, nil
+					}
+
+					if this.Tag != ValueArray {
+						v := NewValue(0)
+						return &v, nil
+					}
+
+					length := len(*this.Array)
+					lengthVal := NewValue(length)
+					return &lengthVal, nil
+				},
+			}),
+		}
+		arrayPrototype = &Value{
+			Tag: ValueObj,
+			Obj: &proto,
+		}
+	}
+	return arrayPrototype
 }
 
 func NewValue(srcVal interface{}) Value {
@@ -56,6 +90,7 @@ func NewValue(srcVal interface{}) Value {
 		return Value{
 			Tag:   ValueArray,
 			Array: &arr,
+			Proto: getArrayPrototype(),
 		}
 	case map[string]interface{}:
 		obj := make(map[string]*Cell)
@@ -160,8 +195,8 @@ func (v *Value) PrettyString(quote bool) string {
 func (v *Value) GetMember(member Value) (*Cell, error) {
 	switch v.Tag {
 	case ValueArray:
-		if member.Tag != ValueNum {
-			return nil, fmt.Errorf("arrays can only by indexed with numbers, got %s", member.Tag)
+		if member.Tag != ValueNum && v.Proto != nil {
+			return v.Proto.GetMember(member)
 		}
 		index := int(*member.Num)
 		arr := *v.Array
@@ -174,11 +209,14 @@ func (v *Value) GetMember(member Value) (*Cell, error) {
 			return nil, fmt.Errorf("objects can only by indexed with numbers or strings, got %s", member.Tag)
 		}
 		key := member.String()
-		member, present := (*v.Obj)[key]
-		if !present {
-			return NewCell(NewValue(nil)), nil
+		value, present := (*v.Obj)[key]
+		if present {
+			return value, nil
 		}
-		return member, nil
+		if v.Proto != nil {
+			return v.Proto.GetMember(member)
+		}
+		return NewCell(NewValue(nil)), nil
 	default:
 		return nil, fmt.Errorf("attempted to index a %s", v.Tag)
 	}

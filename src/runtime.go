@@ -18,7 +18,7 @@ func checkArg(args []*Value, index int, tag ValueTag) (*Value, error) {
 	return arg, nil
 }
 
-func nativePrintf(e *Evaluator, args []*Value) (*Value, error) {
+func nativePrintf(e *Evaluator, args []*Value, this *Value) (*Value, error) {
 	if len(args) < 1 {
 		return nil, fmt.Errorf("printf requires at least one argument")
 	}
