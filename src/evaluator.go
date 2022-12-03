@@ -265,14 +265,6 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (*Cell, error) {
 		}
 		member.Value.Binding = &left.Value
 
-		if member.Value.Tag == ValueNativeFn || member.Value.Tag == ValueFn {
-			// special case. if a member is a function, call it immediately
-			result, err := e.callFunction(member, []*Value{})
-			if err != nil {
-				return nil, e.error(expr.Token(), err.Error())
-			}
-			return result, nil
-		}
 		return member, nil
 	case LessThan, GreaterThan, EqualEqual, LessEqual, GreaterEqual, BangEqual:
 		if left.Value.Tag == ValueUnknown || right.Value.Tag == ValueUnknown {
