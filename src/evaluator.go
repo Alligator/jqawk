@@ -520,7 +520,7 @@ func (e *Evaluator) evalStatement(stmt Statement) (statementAction, error) {
 
 		switch iterable.Value.Tag {
 		case ValueArray:
-			for _, item := range *iterable.Value.Array {
+			for _, item := range iterable.Value.Array {
 				local.Value = item.Value
 				e.evalStatement(st.Body)
 			}
@@ -564,7 +564,7 @@ func (e *Evaluator) evalPatternRules(patternRules []*Rule) error {
 
 	switch e.root.Value.Tag {
 	case ValueArray:
-		for i, item := range *e.root.Value.Array {
+		for i, item := range e.root.Value.Array {
 			e.ruleRoot = item
 			e.stackTop.locals["$index"] = NewCell(NewValue(i))
 			if err := e.evalRules(patternRules); err != nil {

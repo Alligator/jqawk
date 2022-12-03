@@ -40,7 +40,7 @@ type Value struct {
 	Str      *string // used by ValueStr and ValueRegex
 	Num      *float64
 	Bool     *bool
-	Array    *[]*Cell
+	Array    []*Cell
 	Obj      *map[string]*Cell
 	NativeFn func(*Evaluator, []*Value, *Value) (*Value, error)
 	Fn       *ExprFunction
@@ -66,9 +66,23 @@ func getArrayPrototype() *Value {
 						return &v, nil
 					}
 
-					length := len(*this.Array)
+					length := len(this.Array)
 					lengthVal := NewValue(length)
 					return &lengthVal, nil
+				},
+			}),
+			"push": NewCell(Value{
+				Tag: ValueNativeFn,
+				NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
+					if this == nil {
+						return nil, nil
+					}
+					if err := checkArgCount(v, 1); err != nil {
+						return nil, err
+					}
+
+					this.Array = append(this.Array, NewCell(*v[0]))
+					return this, nil
 				},
 			}),
 		}
@@ -89,7 +103,7 @@ func NewValue(srcVal interface{}) Value {
 		}
 		return Value{
 			Tag:   ValueArray,
-			Array: &arr,
+			Array: arr,
 			Proto: getArrayPrototype(),
 		}
 	case map[string]interface{}:
@@ -173,7 +187,7 @@ func (v *Value) PrettyString(quote bool) string {
 	case ValueArray:
 		var sb strings.Builder
 		sb.WriteByte('[')
-		for index, cell := range *v.Array {
+		for index, cell := range v.Array {
 			if index > 0 {
 				sb.WriteString(", ")
 			}
@@ -208,9 +222,12 @@ func (v *Value) GetMember(member Value) (*Cell, error) {
 			return v.Proto.GetMember(member)
 		}
 		index := int(*member.Num)
-		arr := *v.Array
+		arr := v.Array
 		if index >= len(arr) {
 			return NewCell(NewValue(nil)), nil
+		}
+		if index < 0 {
+			return nil, fmt.Errorf("attempted to access negative array index")
 		}
 		return arr[index], nil
 	case ValueObj:
