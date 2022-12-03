@@ -7,6 +7,7 @@ import (
 	"go/ast"
 	"io"
 	"os"
+	"runtime/pprof"
 
 	lang "github.com/alligator/jqawk/src"
 )
@@ -36,7 +37,14 @@ func Run() (exitCode int) {
 	dbgAst := flag.Bool("dbg-ast", false, "print the AST")
 	progFile := flag.String("f", "", "the program file to run")
 	rootSelector := flag.String("r", "", "root selector")
+	profile := flag.Bool("profile", false, "record a CPU profile")
 	flag.Parse()
+
+	if *profile {
+		f, _ := os.Create("jqawk.prof")
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
 
 	var prog string
 	var filePath string
