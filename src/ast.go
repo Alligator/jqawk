@@ -62,6 +62,10 @@ type ExprIdentifier struct {
 	token Token
 }
 
+type ExprArray struct {
+	token Token
+}
+
 type ExprBinary struct {
 	Left    Expr
 	Right   Expr
@@ -83,6 +87,7 @@ func (*ExprString) exprNode()     {}
 func (*ExprRegex) exprNode()      {}
 func (*ExprNum) exprNode()        {}
 func (*ExprIdentifier) exprNode() {}
+func (*ExprArray) exprNode()      {}
 func (*ExprBinary) exprNode()     {}
 func (*ExprCall) exprNode()       {}
 func (*ExprFunction) exprNode()   {}
@@ -91,6 +96,7 @@ func (expr *ExprString) Token() Token     { return expr.token }
 func (expr *ExprRegex) Token() Token      { return expr.token }
 func (expr *ExprNum) Token() Token        { return expr.token }
 func (expr *ExprIdentifier) Token() Token { return expr.token }
+func (expr *ExprArray) Token() Token      { return expr.token }
 func (expr *ExprBinary) Token() Token     { return expr.Left.Token() }
 func (expr *ExprCall) Token() Token       { return expr.Func.Token() }
 func (expr *ExprFunction) Token() Token   { return expr.ident }

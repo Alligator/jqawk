@@ -40,7 +40,7 @@ func NewParser(l *Lexer) Parser {
 		Num:           {PrecNone, num, nil},
 		Dollar:        {PrecNone, identifier, nil},
 		Ident:         {PrecNone, identifier, nil},
-		LSquare:       {PrecCall, nil, computedMember},
+		LSquare:       {PrecCall, array, computedMember},
 		Dot:           {PrecCall, nil, member},
 		LParen:        {PrecCall, nil, call},
 		LessThan:      {PrecComparison, nil, binary},
@@ -395,6 +395,21 @@ func identifier(p *Parser) (Expr, error) {
 		return &ExprIdentifier{*p.previous}, nil
 	}
 	return nil, p.error(p.current.Pos, "expected an identifier")
+}
+
+func array(p *Parser) (Expr, error) {
+	if err := p.consume(LSquare); err != nil {
+		return nil, err
+	}
+	token := p.previous
+
+	// TODO non-empty array literal
+
+	if err := p.consume(RSquare); err != nil {
+		return nil, err
+	}
+
+	return &ExprArray{*token}, nil
 }
 
 func computedMember(p *Parser, left Expr) (Expr, error) {

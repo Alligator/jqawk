@@ -198,6 +198,9 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 			return nil, e.error(exp.Token(), err.Error())
 		}
 		return result, nil
+	case *ExprArray:
+		// TODO arrays literals with values
+		return NewCell(NewArray()), nil
 	default:
 		return nil, e.error(exp.Token(), "expected an expression")
 	}

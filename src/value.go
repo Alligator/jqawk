@@ -131,6 +131,15 @@ func NewValue(srcVal interface{}) Value {
 	}
 }
 
+func NewArray() Value {
+	arr := make([]*Cell, 0)
+	return Value{
+		Tag:   ValueArray,
+		Array: arr,
+		Proto: getArrayPrototype(),
+	}
+}
+
 // convert a value to a string suitable for string concatentation, object
 // indexing, etc
 func (v *Value) String() string {
