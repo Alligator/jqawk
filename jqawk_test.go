@@ -327,6 +327,21 @@ func TestJqawk(t *testing.T) {
 	})
 
 	test(t, testCase{
+		name: "match",
+		prog: `
+			{
+				print match ($) {
+					1 => 'one',
+					2 => 'two',
+					_ => '?',
+				}
+			}
+		`,
+		json:     "[1, 2, 3, 4]",
+		expected: "one\ntwo\n?\n?\n",
+	})
+
+	test(t, testCase{
 		name: "bug: statement after block",
 		prog: `
 			{

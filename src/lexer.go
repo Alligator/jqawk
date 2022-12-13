@@ -25,6 +25,7 @@ const (
 	For
 	While
 	In
+	Match
 	LCurly        // {
 	RCurly        // }
 	LSquare       // [
@@ -54,6 +55,7 @@ const (
 	BangTilde     // !~
 	AmpAmp        // &&
 	PipePipe      // ||
+	Arrow         // =>
 )
 
 type Token struct {
@@ -156,6 +158,8 @@ func (l *Lexer) identifier() Token {
 		return l.simpleToken(While)
 	case "in":
 		return l.simpleToken(In)
+	case "match":
+		return l.simpleToken(Match)
 	default:
 		return l.stringToken(Ident, l.pos-l.tokenStart)
 	}
@@ -252,7 +256,7 @@ func (l *Lexer) Next() (Token, error) {
 		return l.number(), nil
 	}
 
-	if unicode.IsLetter(r) {
+	if unicode.IsLetter(r) || r == '_' {
 		return l.identifier(), nil
 	}
 
@@ -316,11 +320,16 @@ func (l *Lexer) Next() (Token, error) {
 		}
 		return l.simpleToken(Divide), nil
 	case '=':
-		if l.peek() == '=' {
+		switch l.peek() {
+		case '=':
 			l.advance()
 			return l.simpleToken(EqualEqual), nil
+		case '>':
+			l.advance()
+			return l.simpleToken(Arrow), nil
+		default:
+			return l.simpleToken(Equal), nil
 		}
-		return l.simpleToken(Equal), nil
 	case '!':
 		switch l.peek() {
 		case '=':

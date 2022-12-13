@@ -83,6 +83,17 @@ type ExprFunction struct {
 	Body  Statement
 }
 
+type ExprMatch struct {
+	token Token
+	Value Expr
+	Cases []MatchCase
+}
+
+type MatchCase struct {
+	Expr Expr
+	Body Statement
+}
+
 func (*ExprString) exprNode()     {}
 func (*ExprRegex) exprNode()      {}
 func (*ExprNum) exprNode()        {}
@@ -91,6 +102,7 @@ func (*ExprArray) exprNode()      {}
 func (*ExprBinary) exprNode()     {}
 func (*ExprCall) exprNode()       {}
 func (*ExprFunction) exprNode()   {}
+func (*ExprMatch) exprNode()      {}
 
 func (expr *ExprString) Token() Token     { return expr.token }
 func (expr *ExprRegex) Token() Token      { return expr.token }
@@ -100,6 +112,7 @@ func (expr *ExprArray) Token() Token      { return expr.token }
 func (expr *ExprBinary) Token() Token     { return expr.Left.Token() }
 func (expr *ExprCall) Token() Token       { return expr.Func.Token() }
 func (expr *ExprFunction) Token() Token   { return expr.ident }
+func (expr *ExprMatch) Token() Token      { return expr.token }
 
 type StatementBlock struct {
 	token Token

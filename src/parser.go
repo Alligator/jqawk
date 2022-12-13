@@ -62,6 +62,7 @@ func NewParser(l *Lexer) Parser {
 		DivideEqual:   {PrecAssign, nil, binary},
 		AmpAmp:        {PrecLogical, nil, binary},
 		PipePipe:      {PrecLogical, nil, binary},
+		Match:         {PrecNone, match, nil},
 	}
 	return p
 }
@@ -476,6 +477,83 @@ func call(p *Parser, left Expr) (Expr, error) {
 		Func: left,
 		Args: args,
 	}, nil
+}
+
+func match(p *Parser) (Expr, error) {
+	if err := p.consume(Match); err != nil {
+		return nil, err
+	}
+	token := *p.previous
+
+	if err := p.consume(LParen); err != nil {
+		return nil, err
+	}
+	expr, err := p.expression()
+	if err != nil {
+		return nil, err
+	}
+	if err := p.consume(RParen); err != nil {
+		return nil, err
+	}
+
+	if err := p.consume(LCurly); err != nil {
+		return nil, err
+	}
+
+	match := ExprMatch{
+		token: token,
+		Value: expr,
+		Cases: make([]MatchCase, 0),
+	}
+
+	for p.current.Tag != RCurly && !p.atEnd() {
+		caseExpr, err := p.expression()
+		if err != nil {
+			return nil, err
+		}
+
+		if err := p.consume(Arrow); err != nil {
+			return nil, err
+		}
+
+		// a case can either be a block, or an expression
+		var caseBody Statement
+		if p.current.Tag == LCurly {
+			// if it looks like a block, parse a statement
+			caseBody, err = p.statement()
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			// otherwise parse an expr, and stuff if into a StatementExpr
+			expr, err := p.expression()
+			if err != nil {
+				return nil, err
+			}
+			caseBody = &StatementExpr{
+				Expr: expr,
+			}
+		}
+
+		matchCase := MatchCase{
+			Expr: caseExpr,
+			Body: caseBody,
+		}
+
+		match.Cases = append(match.Cases, matchCase)
+
+		if p.current.Tag == Comma {
+			if _, err := p.advance(); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	if err := p.consume(RCurly); err != nil {
+		return nil, err
+	}
+
+	return &match, nil
 }
 
 func binary(p *Parser, left Expr) (Expr, error) {

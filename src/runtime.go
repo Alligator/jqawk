@@ -69,6 +69,11 @@ func nativePrintf(e *Evaluator, args []*Value, this *Value) (*Value, error) {
 			}
 			argIndex++
 			sb.WriteString(arg.String())
+		case 'v':
+			sb.WriteString(args[argIndex].PrettyString(false))
+			argIndex++
+		default:
+			return nil, fmt.Errorf("unknown format code %c", fmtStr[i])
 		}
 	}
 
