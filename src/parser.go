@@ -27,6 +27,7 @@ const (
 	PrecComparison
 	PrecAddition
 	PrecMultiplication
+	PrecPrefix
 	PrecCall
 )
 
@@ -63,6 +64,7 @@ func NewParser(l *Lexer) Parser {
 		AmpAmp:        {PrecLogical, nil, binary},
 		PipePipe:      {PrecLogical, nil, binary},
 		Match:         {PrecNone, match, nil},
+		Bang:          {PrecPrefix, unary, nil},
 	}
 	return p
 }
@@ -554,6 +556,24 @@ func match(p *Parser) (Expr, error) {
 	}
 
 	return &match, nil
+}
+
+func unary(p *Parser) (Expr, error) {
+	_, err := p.advance()
+	if err != nil {
+		return nil, err
+	}
+	opToken := *p.previous
+
+	expr, err := p.expression()
+	if err != nil {
+		return nil, err
+	}
+
+	return &ExprUnary{
+		Expr:    expr,
+		OpToken: opToken,
+	}, nil
 }
 
 func binary(p *Parser, left Expr) (Expr, error) {

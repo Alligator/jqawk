@@ -143,6 +143,14 @@ func TestJqawk(t *testing.T) {
 	})
 
 	test(t, testCase{
+		name: "unary operators",
+		prog: `BEGIN {
+			print !0, !1
+		}`,
+		expected: "true false\n",
+	})
+
+	test(t, testCase{
 		name:     "dot",
 		prog:     "{ print $.name }",
 		json:     `[{ "name": "gate" }, { "name": "sponge" }]`,

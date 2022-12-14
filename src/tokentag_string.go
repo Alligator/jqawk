@@ -55,11 +55,12 @@ func _() {
 	_ = x[AmpAmp-44]
 	_ = x[PipePipe-45]
 	_ = x[Arrow-46]
+	_ = x[Bang-47]
 }
 
-const _TokenTag_name = "EOFErrorIdentStrRegexNumBeginEndPrintFunctionReturnIfElseForWhileInMatch{}[]()<>$,.===!=<=>=;+-*/+=-=*=/=~!~&&||=>"
+const _TokenTag_name = "EOFErrorIdentStrRegexNumBeginEndPrintFunctionReturnIfElseForWhileInMatch{}[]()<>$,.===!=<=>=;+-*/+=-=*=/=~!~&&||=>!"
 
-var _TokenTag_index = [...]uint8{0, 3, 8, 13, 16, 21, 24, 29, 32, 37, 45, 51, 53, 57, 60, 65, 67, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 86, 88, 90, 92, 93, 94, 95, 96, 97, 99, 101, 103, 105, 106, 108, 110, 112, 114}
+var _TokenTag_index = [...]uint8{0, 3, 8, 13, 16, 21, 24, 29, 32, 37, 45, 51, 53, 57, 60, 65, 67, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 86, 88, 90, 92, 93, 94, 95, 96, 97, 99, 101, 103, 105, 106, 108, 110, 112, 114, 115}
 
 func (i TokenTag) String() string {
 	if i >= TokenTag(len(_TokenTag_index)-1) {

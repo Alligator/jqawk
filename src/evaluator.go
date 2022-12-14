@@ -160,6 +160,8 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 			Tag: ValueNum,
 			Num: &f,
 		}), nil
+	case *ExprUnary:
+		return e.evalUnaryExpr(exp)
 	case *ExprBinary:
 		return e.evalBinaryExpr(exp)
 	case *ExprIdentifier:
@@ -294,6 +296,20 @@ func (e *Evaluator) callFunction(fn *Cell, args []*Value) (*Cell, error) {
 		return retCell, nil
 	default:
 		return nil, fmt.Errorf("attempted to call a %s", fn.Value.Tag)
+	}
+}
+
+func (e *Evaluator) evalUnaryExpr(expr *ExprUnary) (*Cell, error) {
+	val, err := e.evalExpr(expr.Expr)
+	if err != nil {
+		return nil, err
+	}
+
+	switch expr.OpToken.Tag {
+	case Bang:
+		return NewCell(NewValue(!val.Value.isTruthy())), nil
+	default:
+		return nil, e.error(expr.OpToken, fmt.Sprintf("unknown operator %s", expr.OpToken.Tag))
 	}
 }
 

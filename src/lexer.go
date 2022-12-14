@@ -56,6 +56,7 @@ const (
 	AmpAmp        // &&
 	PipePipe      // ||
 	Arrow         // =>
+	Bang          // !
 )
 
 type Token struct {
@@ -338,6 +339,8 @@ func (l *Lexer) Next() (Token, error) {
 		case '~':
 			l.advance()
 			return l.simpleToken(BangTilde), nil
+		default:
+			return l.simpleToken(Bang), nil
 		}
 	case '&':
 		if l.peek() == '&' {
