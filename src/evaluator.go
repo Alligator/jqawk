@@ -308,6 +308,12 @@ func (e *Evaluator) evalUnaryExpr(expr *ExprUnary) (*Cell, error) {
 	switch expr.OpToken.Tag {
 	case Bang:
 		return NewCell(NewValue(!val.Value.isTruthy())), nil
+	case Plus:
+		v := val.Value.asFloat64()
+		return NewCell(NewValue(v)), nil
+	case Minus:
+		v := val.Value.asFloat64()
+		return NewCell(NewValue(-v)), nil
 	default:
 		return nil, e.error(expr.OpToken, fmt.Sprintf("unknown operator %s", expr.OpToken.Tag))
 	}
