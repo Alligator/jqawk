@@ -244,7 +244,7 @@ func (v *Value) GetMember(member Value) (*Cell, error) {
 		}
 		return NewCell(NewValue(nil)), nil
 	default:
-		return nil, fmt.Errorf("attempted to index a %s", v.Tag)
+		return NewCell(NewValue(nil)), nil
 	}
 }
 
