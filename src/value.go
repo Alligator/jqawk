@@ -284,9 +284,24 @@ func (v *Value) GetMember(member Value) (*Cell, error) {
 		if v.Proto != nil {
 			return v.Proto.GetMember(member)
 		}
-		return NewCell(NewValue(nil)), nil
+		return nil, nil
 	default:
-		return NewCell(NewValue(nil)), nil
+		return nil, nil
+	}
+}
+
+func (v *Value) SetMember(member Value, cell *Cell) (*Cell, error) {
+	switch v.Tag {
+	case ValueArray:
+		// TODO
+		return nil, fmt.Errorf("setting array members is not yet implemented")
+	case ValueObj:
+		key := member.String()
+		(*v.Obj)[key] = cell
+		return cell, nil
+	default:
+		// TODO?
+		return nil, fmt.Errorf("cannot set member on a %s", v.Tag)
 	}
 }
 

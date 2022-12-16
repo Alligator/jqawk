@@ -357,6 +357,13 @@ func TestJqawk(t *testing.T) {
 	})
 
 	test(t, testCase{
+		name:     "implicit object creation",
+		prog:     "BEGIN { new_obj.name = 'hi'; print new_obj.name; }",
+		json:     `[]`,
+		expected: "hi\n",
+	})
+
+	test(t, testCase{
 		name: "bug: statement after block",
 		prog: `
 			{

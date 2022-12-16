@@ -362,9 +362,20 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (*Cell, error) {
 
 	switch expr.OpToken.Tag {
 	case LSquare, Dot:
+		if left.Value.Tag == ValueUnknown {
+			// if it's unknown, make it an object
+			left.Value = NewObject()
+		}
 		member, err := left.Value.GetMember(right.Value)
 		if err != nil {
 			return nil, e.error(expr.Left.Token(), err.Error())
+		}
+		if member == nil {
+			// auto-create members
+			member, err = left.Value.SetMember(right.Value, NewCell(NewValue(nil)))
+			if err != nil {
+				return nil, e.error(expr.Left.Token(), err.Error())
+			}
 		}
 		member.Value.Binding = &left.Value
 
