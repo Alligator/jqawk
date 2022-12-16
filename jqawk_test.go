@@ -350,6 +350,13 @@ func TestJqawk(t *testing.T) {
 	})
 
 	test(t, testCase{
+		name:     "length methods",
+		prog:     "{ print $.obj.length(), $.array.length(); }",
+		json:     `[{ "obj": { "key1": 1, "key2": 2 }, "array": [1, 2, 3, 4] }]`,
+		expected: "2 4\n",
+	})
+
+	test(t, testCase{
 		name: "bug: statement after block",
 		prog: `
 			{

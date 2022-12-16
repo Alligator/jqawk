@@ -94,6 +94,38 @@ func getArrayPrototype() *Value {
 	return arrayPrototype
 }
 
+var objPrototype *Value = nil
+
+func getObjPrototype() *Value {
+	if objPrototype == nil {
+		proto := map[string]*Cell{
+			"length": NewCell(Value{
+				Tag: ValueNativeFn,
+				NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
+					if this == nil {
+						v := NewValue(0)
+						return &v, nil
+					}
+
+					if this.Tag != ValueObj {
+						v := NewValue(0)
+						return &v, nil
+					}
+
+					length := len(*this.Obj)
+					lengthVal := NewValue(length)
+					return &lengthVal, nil
+				},
+			}),
+		}
+		objPrototype = &Value{
+			Tag: ValueObj,
+			Obj: &proto,
+		}
+	}
+	return objPrototype
+}
+
 func NewValue(srcVal interface{}) Value {
 	switch val := srcVal.(type) {
 	case []interface{}:
@@ -112,8 +144,9 @@ func NewValue(srcVal interface{}) Value {
 			obj[k] = NewCell(NewValue(v))
 		}
 		return Value{
-			Tag: ValueObj,
-			Obj: &obj,
+			Tag:   ValueObj,
+			Obj:   &obj,
+			Proto: getObjPrototype(),
 		}
 	case bool:
 		return Value{
@@ -151,6 +184,15 @@ func NewArray() Value {
 		Tag:   ValueArray,
 		Array: arr,
 		Proto: getArrayPrototype(),
+	}
+}
+
+func NewObject() Value {
+	obj := make(map[string]*Cell)
+	return Value{
+		Tag:   ValueObj,
+		Obj:   &obj,
+		Proto: getObjPrototype(),
 	}
 }
 
