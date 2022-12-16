@@ -114,6 +114,16 @@ func TestJqawk(t *testing.T) {
 	})
 
 	test(t, testCase{
+		name: "postfix operators",
+		prog: `BEGIN {
+			for (i = 0; i < 4; i++) {
+				print a++, b--, b--;
+			}
+		}`,
+		expected: "0 0 -1\n1 -2 -3\n2 -4 -5\n3 -6 -7\n",
+	})
+
+	test(t, testCase{
 		name: "compound operators",
 		prog: `
 		BEGIN {

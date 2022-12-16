@@ -57,6 +57,8 @@ const (
 	PipePipe      // ||
 	Arrow         // =>
 	Bang          // !
+	PlusPlus      // ++
+	MinusMinus    // --
 )
 
 type Token struct {
@@ -297,17 +299,27 @@ func (l *Lexer) Next() (Token, error) {
 		}
 		return l.simpleToken(GreaterThan), nil
 	case '+':
-		if l.peek() == '=' {
+		switch l.peek() {
+		case '+':
+			l.advance()
+			return l.simpleToken(PlusPlus), nil
+		case '=':
 			l.advance()
 			return l.simpleToken(PlusEqual), nil
+		default:
+			return l.simpleToken(Plus), nil
 		}
-		return l.simpleToken(Plus), nil
 	case '-':
-		if l.peek() == '=' {
+		switch l.peek() {
+		case '-':
+			l.advance()
+			return l.simpleToken(MinusMinus), nil
+		case '=':
 			l.advance()
 			return l.simpleToken(MinusEqual), nil
+		default:
+			return l.simpleToken(Minus), nil
 		}
-		return l.simpleToken(Minus), nil
 	case '*':
 		if l.peek() == '=' {
 			l.advance()

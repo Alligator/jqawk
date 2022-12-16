@@ -314,6 +314,20 @@ func (e *Evaluator) evalUnaryExpr(expr *ExprUnary) (*Cell, error) {
 	case Minus:
 		v := val.Value.asFloat64()
 		return NewCell(NewValue(-v)), nil
+	case PlusPlus, MinusMinus:
+		v := val.Value.asFloat64()
+
+		switch expr.OpToken.Tag {
+		case PlusPlus:
+			val.Value = NewValue(v + 1)
+		case MinusMinus:
+			val.Value = NewValue(v - 1)
+		}
+
+		if expr.Postfix {
+			return NewCell(NewValue(v)), nil
+		}
+		return val, nil
 	default:
 		return nil, e.error(expr.OpToken, fmt.Sprintf("unknown operator %s", expr.OpToken.Tag))
 	}

@@ -69,6 +69,7 @@ type ExprArray struct {
 type ExprUnary struct {
 	Expr    Expr
 	OpToken Token
+	Postfix bool
 }
 
 type ExprBinary struct {
