@@ -66,8 +66,8 @@ func NewParser(l *Lexer) Parser {
 		PipePipe:      {PrecLogical, nil, binary},
 		Match:         {PrecNone, match, nil},
 		Bang:          {PrecPrefix, unary, nil},
-		PlusPlus:      {PrecPostfix, nil, postfix},
-		MinusMinus:    {PrecPostfix, nil, postfix},
+		PlusPlus:      {PrecPostfix, prefix, postfix},
+		MinusMinus:    {PrecPostfix, prefix, postfix},
 	}
 	return p
 }
@@ -576,6 +576,25 @@ func unary(p *Parser) (Expr, error) {
 	return &ExprUnary{
 		Expr:    expr,
 		OpToken: opToken,
+	}, nil
+}
+
+func prefix(p *Parser) (Expr, error) {
+	_, err := p.advance()
+	if err != nil {
+		return nil, err
+	}
+	opToken := *p.previous
+
+	expr, err := p.expressionWithPrec(p.rule(opToken.Tag).prec)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ExprUnary{
+		Expr:    expr,
+		OpToken: opToken,
+		Postfix: false,
 	}, nil
 }
 

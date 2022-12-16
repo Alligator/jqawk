@@ -327,7 +327,7 @@ func (e *Evaluator) evalUnaryExpr(expr *ExprUnary) (*Cell, error) {
 		if expr.Postfix {
 			return NewCell(NewValue(v)), nil
 		}
-		return val, nil
+		return NewCell(val.Value), nil
 	default:
 		return nil, e.error(expr.OpToken, fmt.Sprintf("unknown operator %s", expr.OpToken.Tag))
 	}

@@ -117,10 +117,10 @@ func TestJqawk(t *testing.T) {
 		name: "postfix operators",
 		prog: `BEGIN {
 			for (i = 0; i < 4; i++) {
-				print a++, b--, b--;
+				print a++, b--, b--, ++c, --d, --d;
 			}
 		}`,
-		expected: "0 0 -1\n1 -2 -3\n2 -4 -5\n3 -6 -7\n",
+		expected: "0 0 -1 1 -1 -2\n1 -2 -3 2 -3 -4\n2 -4 -5 3 -5 -6\n3 -6 -7 4 -7 -8\n",
 	})
 
 	test(t, testCase{
