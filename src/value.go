@@ -361,3 +361,38 @@ func (v *Value) Not() *Value {
 	}
 	return &notValue
 }
+
+func (v *Value) ToGoValue() (interface{}, error) {
+	switch v.Tag {
+	case ValueStr:
+		return *v.Str, nil
+	case ValueBool:
+		return *v.Bool, nil
+	case ValueNum:
+		return *v.Num, nil
+	case ValueArray:
+		var array []interface{}
+		for _, item := range v.Array {
+			val, err := item.Value.ToGoValue()
+			if err != nil {
+				return nil, err
+			}
+			array = append(array, val)
+		}
+		return array, nil
+	case ValueObj:
+		obj := make(map[string]interface{})
+		for k, v := range *v.Obj {
+			val, err := v.Value.ToGoValue()
+			if err != nil {
+				return nil, err
+			}
+			obj[k] = val
+		}
+		return obj, nil
+	case ValueNil:
+		return nil, nil
+	default:
+		return nil, fmt.Errorf("a %s cannot be converted to a native type", v.Tag)
+	}
+}

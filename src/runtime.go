@@ -1,6 +1,7 @@
 package lang
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 )
@@ -81,9 +82,32 @@ func nativePrintf(e *Evaluator, args []*Value, this *Value) (*Value, error) {
 	return nil, nil
 }
 
+func nativeJson(e *Evaluator, args []*Value, this *Value) (*Value, error) {
+	if err := checkArgCount(args, 1); err != nil {
+		return nil, err
+	}
+
+	val, err := args[0].ToGoValue()
+	if err != nil {
+		return nil, err
+	}
+
+	bytes, err := json.MarshalIndent(val, "", "  ")
+	if err != nil {
+		return nil, err
+	}
+
+	v := NewValue(string(bytes))
+	return &v, nil
+}
+
 func addRuntimeFunctions(e *Evaluator) {
 	e.stackTop.locals["printf"] = NewCell(Value{
 		Tag:      ValueNativeFn,
 		NativeFn: nativePrintf,
+	})
+	e.stackTop.locals["json"] = NewCell(Value{
+		Tag:      ValueNativeFn,
+		NativeFn: nativeJson,
 	})
 }

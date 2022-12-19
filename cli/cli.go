@@ -38,6 +38,7 @@ func Run() (exitCode int) {
 	progFile := flag.String("f", "", "the program file to run")
 	rootSelector := flag.String("r", "", "root selector")
 	profile := flag.Bool("profile", false, "record a CPU profile")
+	outfile := flag.String("o", "", "the file to write JSON to")
 	flag.Parse()
 
 	if *profile {
@@ -106,7 +107,7 @@ func Run() (exitCode int) {
 		rootCell = lang.NewCell(lang.NewValue(rootValue))
 	}
 
-	err := lang.EvalProgram(prog, rootCell, os.Stdout)
+	ev, err := lang.EvalProgram(prog, rootCell, os.Stdout)
 	if err != nil {
 		switch tErr := err.(type) {
 		case lang.SyntaxError:
@@ -121,6 +122,28 @@ func Run() (exitCode int) {
 			fmt.Fprintln(os.Stderr, err)
 		}
 		return 1
+	}
+
+	if len(*outfile) > 0 {
+		j, err := ev.GetRootJson()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error writing JSON: %s\n", err.Error())
+		}
+
+		if *outfile == "-" {
+			fmt.Print(j)
+			return 0
+		}
+
+		file, err := os.Create(*outfile)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error writing JSON: %s\n", err.Error())
+		}
+
+		_, err = file.WriteString(j)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error writing JSON: %s\n", err.Error())
+		}
 	}
 
 	return 0

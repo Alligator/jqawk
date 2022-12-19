@@ -1,6 +1,7 @@
 package lang
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"regexp"
@@ -714,6 +715,19 @@ func (e *Evaluator) evalPatternRules(patternRules []*Rule) error {
 	return nil
 }
 
+func (e *Evaluator) GetRootJson() (string, error) {
+	val, err := e.root.Value.ToGoValue()
+	if err != nil {
+		return "", err
+	}
+
+	bytes, err := json.MarshalIndent(val, "", "  ")
+	if err != nil {
+		return "", err
+	}
+	return string(bytes), nil
+}
+
 func EvalExpression(exprSrc string, rootValue interface{}, stdout io.Writer) (*Cell, error) {
 	lex := NewLexer(exprSrc)
 	parser := NewParser(&lex)
@@ -732,19 +746,19 @@ func EvalExpression(exprSrc string, rootValue interface{}, stdout io.Writer) (*C
 	return cell, nil
 }
 
-func EvalProgram(progSrc string, rootCell *Cell, stdout io.Writer) error {
+func EvalProgram(progSrc string, rootCell *Cell, stdout io.Writer) (*Evaluator, error) {
 	lex := NewLexer(progSrc)
 	parser := NewParser(&lex)
 	prog, err := parser.Parse()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	ev := NewEvaluator(prog, &lex, stdout)
 	err = ev.Eval(rootCell)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return &ev, nil
 }
 
 func (e *Evaluator) Eval(rootCell *Cell) error {
