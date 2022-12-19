@@ -366,9 +366,9 @@ func (p *Parser) expressionWithPrec(prec Precedence) (Expr, error) {
 
 func str(p *Parser) (Expr, error) {
 	if err := p.consume(Str); err != nil {
-		return &ExprString{}, err
+		return &ExprLiteral{}, err
 	}
-	return &ExprString{*p.previous}, nil
+	return &ExprLiteral{*p.previous}, nil
 }
 
 func regex(p *Parser) (Expr, error) {
@@ -383,14 +383,14 @@ func regex(p *Parser) (Expr, error) {
 	if _, err := p.advance(); err != nil {
 		return nil, err
 	}
-	return &ExprRegex{token}, nil
+	return &ExprLiteral{token}, nil
 }
 
 func num(p *Parser) (Expr, error) {
 	if err := p.consume(Num); err != nil {
-		return &ExprNum{}, err
+		return nil, err
 	}
-	return &ExprNum{*p.previous}, nil
+	return &ExprLiteral{*p.previous}, nil
 }
 
 func identifier(p *Parser) (Expr, error) {
@@ -453,7 +453,7 @@ func member(p *Parser, left Expr) (Expr, error) {
 
 	return &ExprBinary{
 		Left:    left,
-		Right:   &ExprString{*ident},
+		Right:   &ExprLiteral{*ident},
 		OpToken: *opToken,
 	}, nil
 }

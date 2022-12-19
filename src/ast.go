@@ -46,16 +46,8 @@ type Rule struct {
 	Body    Statement
 }
 
-type ExprString struct {
-	token Token
-}
-
-type ExprRegex struct {
-	token Token
-}
-
-type ExprNum struct {
-	token Token
+type ExprLiteral struct {
+	TToken Token
 }
 
 type ExprIdentifier struct {
@@ -101,9 +93,7 @@ type MatchCase struct {
 	Body Statement
 }
 
-func (*ExprString) exprNode()     {}
-func (*ExprRegex) exprNode()      {}
-func (*ExprNum) exprNode()        {}
+func (*ExprLiteral) exprNode()    {}
 func (*ExprIdentifier) exprNode() {}
 func (*ExprArray) exprNode()      {}
 func (*ExprUnary) exprNode()      {}
@@ -112,9 +102,7 @@ func (*ExprCall) exprNode()       {}
 func (*ExprFunction) exprNode()   {}
 func (*ExprMatch) exprNode()      {}
 
-func (expr *ExprString) Token() Token     { return expr.token }
-func (expr *ExprRegex) Token() Token      { return expr.token }
-func (expr *ExprNum) Token() Token        { return expr.token }
+func (expr *ExprLiteral) Token() Token    { return expr.TToken }
 func (expr *ExprIdentifier) Token() Token { return expr.token }
 func (expr *ExprArray) Token() Token      { return expr.token }
 func (expr *ExprUnary) Token() Token      { return expr.OpToken }

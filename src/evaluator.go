@@ -140,27 +140,32 @@ func (e *Evaluator) evalString(str string) (*Cell, error) {
 
 func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 	switch exp := expr.(type) {
-	case *ExprString:
-		str := e.lexer.GetString(&exp.token)
-		return e.evalString(str)
-	case *ExprRegex:
-		str := e.lexer.GetString(&exp.token)
-		val := Value{
-			Tag: ValueRegex,
-			Str: &str,
+	case *ExprLiteral:
+		switch exp.TToken.Tag {
+		case Str, Ident:
+			str := e.lexer.GetString(&exp.TToken)
+			return e.evalString(str)
+		case Regex:
+			str := e.lexer.GetString(&exp.TToken)
+			val := Value{
+				Tag: ValueRegex,
+				Str: &str,
+			}
+			return NewCell(val), nil
+		case Num:
+			numStr := e.lexer.GetString(&exp.TToken)
+			num, err := strconv.ParseInt(numStr, 10, 64)
+			if err != nil {
+				return nil, err
+			}
+			f := float64(num)
+			return NewCell(Value{
+				Tag: ValueNum,
+				Num: &f,
+			}), nil
+		default:
+			panic(fmt.Errorf("unhandled literal type: %s", exp.TToken.Tag))
 		}
-		return NewCell(val), nil
-	case *ExprNum:
-		numStr := e.lexer.GetString(&exp.token)
-		num, err := strconv.ParseInt(numStr, 10, 64)
-		if err != nil {
-			return nil, err
-		}
-		f := float64(num)
-		return NewCell(Value{
-			Tag: ValueNum,
-			Num: &f,
-		}), nil
 	case *ExprUnary:
 		return e.evalUnaryExpr(exp)
 	case *ExprBinary:
@@ -248,7 +253,7 @@ func (e *Evaluator) evalCaseMatch(value *Cell, expr Expr) (bool, error) {
 	switch expr.(type) {
 	case *ExprIdentifier:
 		return true, nil
-	case *ExprNum, *ExprString:
+	case *ExprLiteral:
 		caseValue, err := e.evalExpr(expr)
 		if err != nil {
 			return false, err
