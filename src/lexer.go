@@ -26,6 +26,8 @@ const (
 	While
 	In
 	Match
+	True          // true
+	False         // false
 	LCurly        // {
 	RCurly        // }
 	LSquare       // [
@@ -163,6 +165,10 @@ func (l *Lexer) identifier() Token {
 		return l.simpleToken(In)
 	case "match":
 		return l.simpleToken(Match)
+	case "true":
+		return l.simpleToken(True)
+	case "false":
+		return l.simpleToken(False)
 	default:
 		return l.stringToken(Ident, l.pos-l.tokenStart)
 	}

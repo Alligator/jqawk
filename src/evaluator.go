@@ -163,6 +163,10 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 				Tag: ValueNum,
 				Num: &f,
 			}), nil
+		case True:
+			return NewCell(NewValue(true)), nil
+		case False:
+			return NewCell(NewValue(false)), nil
 		default:
 			panic(fmt.Errorf("unhandled literal type: %s", exp.TToken.Tag))
 		}

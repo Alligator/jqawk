@@ -39,8 +39,10 @@ func NewParser(l *Lexer) Parser {
 		didEndStatement: false,
 	}
 	p.rules = map[TokenTag]parseRule{
-		Str:           {PrecNone, str, nil},
-		Num:           {PrecNone, num, nil},
+		Str:           {PrecNone, literal, nil},
+		Num:           {PrecNone, literal, nil},
+		True:          {PrecNone, literal, nil},
+		False:         {PrecNone, literal, nil},
 		Dollar:        {PrecNone, identifier, nil},
 		Ident:         {PrecNone, identifier, nil},
 		LSquare:       {PrecCall, array, computedMember},
@@ -364,9 +366,9 @@ func (p *Parser) expressionWithPrec(prec Precedence) (Expr, error) {
 	return lhs, nil
 }
 
-func str(p *Parser) (Expr, error) {
-	if err := p.consume(Str); err != nil {
-		return &ExprLiteral{}, err
+func literal(p *Parser) (Expr, error) {
+	if _, err := p.advance(); err != nil {
+		return nil, err
 	}
 	return &ExprLiteral{*p.previous}, nil
 }
@@ -384,13 +386,6 @@ func regex(p *Parser) (Expr, error) {
 		return nil, err
 	}
 	return &ExprLiteral{token}, nil
-}
-
-func num(p *Parser) (Expr, error) {
-	if err := p.consume(Num); err != nil {
-		return nil, err
-	}
-	return &ExprLiteral{*p.previous}, nil
 }
 
 func identifier(p *Parser) (Expr, error) {
