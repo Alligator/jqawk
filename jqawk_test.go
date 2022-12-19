@@ -109,8 +109,9 @@ func TestJqawk(t *testing.T) {
 			print 2 - 3;
 			print 2 * 3;
 			print 6 / 3;
+			print 6 / 2 - 1 * 3;
 		}`,
-		expected: "5\n-1\n6\n2\n",
+		expected: "5\n-1\n6\n2\n0\n",
 	})
 
 	test(t, testCase{
@@ -371,6 +372,13 @@ func TestJqawk(t *testing.T) {
 		prog:     "BEGIN { new_obj.name = 'hi'; print new_obj.name; }",
 		json:     `[]`,
 		expected: "hi\n",
+	})
+
+	test(t, testCase{
+		name:     "groupings",
+		prog:     "BEGIN { print (1 + 2) * 3; }",
+		json:     "[]",
+		expected: "9\n",
 	})
 
 	test(t, testCase{

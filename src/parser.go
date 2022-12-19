@@ -30,6 +30,7 @@ const (
 	PrecPrefix
 	PrecPostfix
 	PrecCall
+	PrecGroup
 )
 
 func NewParser(l *Lexer) Parser {
@@ -44,7 +45,7 @@ func NewParser(l *Lexer) Parser {
 		Ident:         {PrecNone, identifier, nil},
 		LSquare:       {PrecCall, array, computedMember},
 		Dot:           {PrecCall, nil, member},
-		LParen:        {PrecCall, nil, call},
+		LParen:        {PrecCall, group, call},
 		LessThan:      {PrecComparison, nil, binary},
 		GreaterThan:   {PrecComparison, nil, binary},
 		EqualEqual:    {PrecComparison, nil, binary},
@@ -577,6 +578,23 @@ func unary(p *Parser) (Expr, error) {
 		Expr:    expr,
 		OpToken: opToken,
 	}, nil
+}
+
+func group(p *Parser) (Expr, error) {
+	if err := p.consume(LParen); err != nil {
+		return nil, err
+	}
+
+	expr, err := p.expression()
+	if err != nil {
+		return nil, err
+	}
+
+	if err := p.consume(RParen); err != nil {
+		return nil, err
+	}
+
+	return expr, nil
 }
 
 func prefix(p *Parser) (Expr, error) {
