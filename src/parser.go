@@ -410,13 +410,12 @@ func array(p *Parser) (Expr, error) {
 	}
 	token := p.previous
 
-	// TODO non-empty array literal
-
-	if err := p.consume(RSquare); err != nil {
+	items, err := p.evalExprList(RSquare)
+	if err != nil {
 		return nil, err
 	}
 
-	return &ExprArray{*token}, nil
+	return &ExprArray{*token, items}, nil
 }
 
 func computedMember(p *Parser, left Expr) (Expr, error) {
@@ -459,10 +458,7 @@ func member(p *Parser, left Expr) (Expr, error) {
 	}, nil
 }
 
-func call(p *Parser, left Expr) (Expr, error) {
-	if err := p.consume(LParen); err != nil {
-		return nil, err
-	}
+func (p *Parser) evalExprList(endToken TokenTag) ([]Expr, error) {
 	args := make([]Expr, 0)
 	for !p.atEnd() && p.current.Tag != RParen {
 		expr, err := p.expression()
@@ -476,9 +472,22 @@ func call(p *Parser, left Expr) (Expr, error) {
 			break
 		}
 	}
-	if err := p.consume(RParen); err != nil {
+	if err := p.consume(endToken); err != nil {
 		return nil, err
 	}
+	return args, nil
+}
+
+func call(p *Parser, left Expr) (Expr, error) {
+	if err := p.consume(LParen); err != nil {
+		return nil, err
+	}
+
+	args, err := p.evalExprList(RParen)
+	if err != nil {
+		return nil, err
+	}
+
 	return &ExprCall{
 		Func: left,
 		Args: args,

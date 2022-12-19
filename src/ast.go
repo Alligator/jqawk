@@ -64,6 +64,7 @@ type ExprIdentifier struct {
 
 type ExprArray struct {
 	token Token
+	Items []Expr
 }
 
 type ExprUnary struct {

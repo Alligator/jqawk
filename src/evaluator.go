@@ -201,8 +201,11 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 		}
 		return result, nil
 	case *ExprArray:
-		// TODO arrays literals with values
-		return NewCell(NewArray()), nil
+		items, err := e.evalExprList(exp.Items)
+		if err != nil {
+			return nil, err
+		}
+		return NewCell(NewValue(items)), nil
 	case *ExprMatch:
 		value, err := e.evalExpr(exp.Value)
 		if err != nil {

@@ -128,6 +128,12 @@ func getObjPrototype() *Value {
 
 func NewValue(srcVal interface{}) Value {
 	switch val := srcVal.(type) {
+	case []*Cell:
+		return Value{
+			Tag:   ValueArray,
+			Array: val,
+			Proto: getArrayPrototype(),
+		}
 	case []interface{}:
 		arr := make([]*Cell, 0, len(val))
 		for _, item := range val {
