@@ -53,11 +53,3 @@ Susie 76.5
 ------
 Total 337.5
 ```
-
-## TODO
-
-- good syntax/runtime errors
-- for loops
-- match statements with pattern matching
-- in place modification à la `sed -i`
-  - `jqawk -i { $.version += 1 }`
