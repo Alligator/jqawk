@@ -44,6 +44,7 @@ const (
 	BangEqual     // !=
 	LessEqual     // <=
 	GreaterEqual  // >=
+	Colon         // :
 	SemiColon     // ;
 	Plus          // +
 	Minus         // -
@@ -290,6 +291,8 @@ func (l *Lexer) Next() (Token, error) {
 		return l.simpleToken(Dot), nil
 	case ';':
 		return l.simpleToken(SemiColon), nil
+	case ':':
+		return l.simpleToken(Colon), nil
 	case '~':
 		return l.simpleToken(Tilde), nil
 	case '<':

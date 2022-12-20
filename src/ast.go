@@ -47,7 +47,7 @@ type Rule struct {
 }
 
 type ExprLiteral struct {
-	TToken Token
+	token Token
 }
 
 type ExprIdentifier struct {
@@ -57,6 +57,16 @@ type ExprIdentifier struct {
 type ExprArray struct {
 	token Token
 	Items []Expr
+}
+
+type ExprObject struct {
+	token Token
+	Items []ObjectKeyValue
+}
+
+type ObjectKeyValue struct {
+	Key   string
+	Value Expr
 }
 
 type ExprUnary struct {
@@ -96,15 +106,17 @@ type MatchCase struct {
 func (*ExprLiteral) exprNode()    {}
 func (*ExprIdentifier) exprNode() {}
 func (*ExprArray) exprNode()      {}
+func (*ExprObject) exprNode()     {}
 func (*ExprUnary) exprNode()      {}
 func (*ExprBinary) exprNode()     {}
 func (*ExprCall) exprNode()       {}
 func (*ExprFunction) exprNode()   {}
 func (*ExprMatch) exprNode()      {}
 
-func (expr *ExprLiteral) Token() Token    { return expr.TToken }
+func (expr *ExprLiteral) Token() Token    { return expr.token }
 func (expr *ExprIdentifier) Token() Token { return expr.token }
 func (expr *ExprArray) Token() Token      { return expr.token }
+func (expr *ExprObject) Token() Token     { return expr.token }
 func (expr *ExprUnary) Token() Token      { return expr.OpToken }
 func (expr *ExprBinary) Token() Token     { return expr.Left.Token() }
 func (expr *ExprCall) Token() Token       { return expr.Func.Token() }

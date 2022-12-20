@@ -141,19 +141,19 @@ func (e *Evaluator) evalString(str string) (*Cell, error) {
 func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 	switch exp := expr.(type) {
 	case *ExprLiteral:
-		switch exp.TToken.Tag {
+		switch exp.token.Tag {
 		case Str, Ident:
-			str := e.lexer.GetString(&exp.TToken)
+			str := e.lexer.GetString(&exp.token)
 			return e.evalString(str)
 		case Regex:
-			str := e.lexer.GetString(&exp.TToken)
+			str := e.lexer.GetString(&exp.token)
 			val := Value{
 				Tag: ValueRegex,
 				Str: &str,
 			}
 			return NewCell(val), nil
 		case Num:
-			numStr := e.lexer.GetString(&exp.TToken)
+			numStr := e.lexer.GetString(&exp.token)
 			num, err := strconv.ParseInt(numStr, 10, 64)
 			if err != nil {
 				return nil, err
@@ -168,7 +168,7 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 		case False:
 			return NewCell(NewValue(false)), nil
 		default:
-			panic(fmt.Errorf("unhandled literal type: %s", exp.TToken.Tag))
+			panic(fmt.Errorf("unhandled literal type: %s", exp.token.Tag))
 		}
 	case *ExprUnary:
 		return e.evalUnaryExpr(exp)
@@ -248,6 +248,16 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 			}
 		}
 		return NewCell(NewValue(nil)), nil
+	case *ExprObject:
+		obj := NewObject()
+		for _, kv := range exp.Items {
+			value, err := e.evalExpr(kv.Value)
+			if err != nil {
+				return nil, err
+			}
+			(*obj.Obj)[kv.Key] = value
+		}
+		return NewCell(obj), nil
 	default:
 		return nil, e.error(exp.Token(), "expected an expression")
 	}

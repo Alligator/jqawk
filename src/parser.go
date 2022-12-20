@@ -2,6 +2,7 @@ package lang
 
 import (
 	"fmt"
+	"strings"
 )
 
 type Parser struct {
@@ -71,6 +72,7 @@ func NewParser(l *Lexer) Parser {
 		Bang:          {PrecPrefix, unary, nil},
 		PlusPlus:      {PrecPostfix, prefix, postfix},
 		MinusMinus:    {PrecPostfix, prefix, postfix},
+		LCurly:        {PrecNone, object, nil},
 	}
 	return p
 }
@@ -108,10 +110,30 @@ func (p *Parser) advance() (Token, error) {
 	return t, nil
 }
 
-func (p *Parser) consume(tag TokenTag) error {
-	if p.current.Tag != tag {
-		return p.error(p.current.Pos, fmt.Sprintf("expected %s", tag))
+func (p *Parser) consume(tags ...TokenTag) error {
+	match := false
+	for _, tag := range tags {
+		if p.current.Tag == tag {
+			match = true
+			break
+		}
 	}
+
+	if !match {
+		if len(tags) == 1 {
+			return p.error(p.current.Pos, fmt.Sprintf("expected %s", tags[0]))
+		}
+
+		var sb strings.Builder
+		for index, tag := range tags {
+			if index > 0 {
+				sb.WriteString(", ")
+			}
+			sb.WriteString(tag.String())
+		}
+		return p.error(p.current.Pos, fmt.Sprintf("expected one of %s", sb.String()))
+	}
+
 	_, err := p.advance()
 	return err
 }
@@ -411,6 +433,42 @@ func array(p *Parser) (Expr, error) {
 	}
 
 	return &ExprArray{*token, items}, nil
+}
+
+func object(p *Parser) (Expr, error) {
+	if err := p.consume(LCurly); err != nil {
+		return nil, err
+	}
+	token := *p.previous
+
+	items := make([]ObjectKeyValue, 0)
+	for p.current.Tag != RCurly && !p.atEnd() {
+		err := p.consume(Str, Ident)
+		if err != nil {
+			return nil, err
+		}
+		key := p.lexer.GetString(p.previous)
+		if err = p.consume(Colon); err != nil {
+			return nil, err
+		}
+		value, err := p.expression()
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, ObjectKeyValue{key, value})
+
+		if p.current.Tag == Comma {
+			if err = p.consume(Comma); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	if err := p.consume(RCurly); err != nil {
+		return nil, err
+	}
+
+	return &ExprObject{token, items}, nil
 }
 
 func computedMember(p *Parser, left Expr) (Expr, error) {

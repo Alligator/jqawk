@@ -43,28 +43,29 @@ func _() {
 	_ = x[BangEqual-32]
 	_ = x[LessEqual-33]
 	_ = x[GreaterEqual-34]
-	_ = x[SemiColon-35]
-	_ = x[Plus-36]
-	_ = x[Minus-37]
-	_ = x[Multiply-38]
-	_ = x[Divide-39]
-	_ = x[PlusEqual-40]
-	_ = x[MinusEqual-41]
-	_ = x[MultiplyEqual-42]
-	_ = x[DivideEqual-43]
-	_ = x[Tilde-44]
-	_ = x[BangTilde-45]
-	_ = x[AmpAmp-46]
-	_ = x[PipePipe-47]
-	_ = x[Arrow-48]
-	_ = x[Bang-49]
-	_ = x[PlusPlus-50]
-	_ = x[MinusMinus-51]
+	_ = x[Colon-35]
+	_ = x[SemiColon-36]
+	_ = x[Plus-37]
+	_ = x[Minus-38]
+	_ = x[Multiply-39]
+	_ = x[Divide-40]
+	_ = x[PlusEqual-41]
+	_ = x[MinusEqual-42]
+	_ = x[MultiplyEqual-43]
+	_ = x[DivideEqual-44]
+	_ = x[Tilde-45]
+	_ = x[BangTilde-46]
+	_ = x[AmpAmp-47]
+	_ = x[PipePipe-48]
+	_ = x[Arrow-49]
+	_ = x[Bang-50]
+	_ = x[PlusPlus-51]
+	_ = x[MinusMinus-52]
 }
 
-const _TokenTag_name = "EOFErrorIdentStrRegexNumBeginEndPrintFunctionReturnIfElseForWhileInMatchtruefalse{}[]()<>$,.===!=<=>=;+-*/+=-=*=/=~!~&&||=>!++--"
+const _TokenTag_name = "EOFErrorIdentStrRegexNumBeginEndPrintFunctionReturnIfElseForWhileInMatchtruefalse{}[]()<>$,.===!=<=>=:;+-*/+=-=*=/=~!~&&||=>!++--"
 
-var _TokenTag_index = [...]uint8{0, 3, 8, 13, 16, 21, 24, 29, 32, 37, 45, 51, 53, 57, 60, 65, 67, 72, 76, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 95, 97, 99, 101, 102, 103, 104, 105, 106, 108, 110, 112, 114, 115, 117, 119, 121, 123, 124, 126, 128}
+var _TokenTag_index = [...]uint8{0, 3, 8, 13, 16, 21, 24, 29, 32, 37, 45, 51, 53, 57, 60, 65, 67, 72, 76, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 95, 97, 99, 101, 102, 103, 104, 105, 106, 107, 109, 111, 113, 115, 116, 118, 120, 122, 124, 125, 127, 129}
 
 func (i TokenTag) String() string {
 	if i >= TokenTag(len(_TokenTag_index)-1) {

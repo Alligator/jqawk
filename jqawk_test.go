@@ -382,6 +382,18 @@ func TestJqawk(t *testing.T) {
 	})
 
 	test(t, testCase{
+		name: "object literal",
+		prog: `
+			BEGIN {
+				x = { a: 1, 'b': '2' };
+				print x.a, x.b;
+			}
+		`,
+		json:     "[]",
+		expected: "1 2\n",
+	})
+
+	test(t, testCase{
 		name: "bug: statement after block",
 		prog: `
 			{
