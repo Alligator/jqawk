@@ -443,6 +443,20 @@ func TestJqawkExe(t *testing.T) {
 		json:     `[[2, 3], [0, 1]]`,
 		expected: "2\n3\n",
 	})
+
+	testExe(t, testCase{
+		name: "json output",
+		args: []string{"-o", "-", "{ $.x++ }"},
+		json: `[{ "x": 1 }, { "x": 2 }]`,
+		expected: `[
+  {
+    "x": 2
+  },
+  {
+    "x": 3
+  }
+]`,
+	})
 }
 
 func TestJqawkOneTrueAwk(t *testing.T) {
