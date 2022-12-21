@@ -680,6 +680,11 @@ func (e *Evaluator) evalStatement(stmt Statement) (statementAction, *Cell, error
 				local.Value = item.Value
 				e.evalStatement(st.Body)
 			}
+		case ValueStr:
+			for _, c := range *iterable.Value.Str {
+				local.Value = NewString(string(c))
+				e.evalStatement(st.Body)
+			}
 		default:
 			return 0, nil, e.error(st.Iterable.Token(), fmt.Sprintf("%s is not iterable", iterable.Value.Tag))
 		}

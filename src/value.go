@@ -218,6 +218,15 @@ func (v *Value) GetMember(member Value) (*Cell, error) {
 			return v.Proto.GetMember(member)
 		}
 		return nil, nil
+	case ValueStr:
+		if member.Tag != ValueNum {
+			return v.Proto.GetMember(member)
+		}
+		index := int(*member.Num)
+		if index < 0 || index >= len(*v.Str) {
+			return NewCell(NewValue(nil)), nil
+		}
+		return NewCell(NewString(string((*v.Str)[index]))), nil
 	default:
 		if v.Proto != nil {
 			return v.Proto.GetMember(member)
