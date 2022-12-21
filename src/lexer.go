@@ -62,6 +62,7 @@ const (
 	Bang          // !
 	PlusPlus      // ++
 	MinusMinus    // --
+	Percent       // %
 )
 
 type Token struct {
@@ -295,6 +296,8 @@ func (l *Lexer) Next() (Token, error) {
 		return l.simpleToken(Colon), nil
 	case '~':
 		return l.simpleToken(Tilde), nil
+	case '%':
+		return l.simpleToken(Percent), nil
 	case '<':
 		if l.peek() == '=' {
 			l.advance()

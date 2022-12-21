@@ -73,6 +73,7 @@ func NewParser(l *Lexer) Parser {
 		PlusPlus:      {PrecPostfix, prefix, postfix},
 		MinusMinus:    {PrecPostfix, prefix, postfix},
 		LCurly:        {PrecNone, object, nil},
+		Percent:       {PrecMultiplication, nil, binary},
 	}
 	return p
 }

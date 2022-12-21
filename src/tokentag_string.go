@@ -61,11 +61,12 @@ func _() {
 	_ = x[Bang-50]
 	_ = x[PlusPlus-51]
 	_ = x[MinusMinus-52]
+	_ = x[Percent-53]
 }
 
-const _TokenTag_name = "EOFErrorIdentStrRegexNumBeginEndPrintFunctionReturnIfElseForWhileInMatchtruefalse{}[]()<>$,.===!=<=>=:;+-*/+=-=*=/=~!~&&||=>!++--"
+const _TokenTag_name = "EOFErrorIdentStrRegexNumBeginEndPrintFunctionReturnIfElseForWhileInMatchtruefalse{}[]()<>$,.===!=<=>=:;+-*/+=-=*=/=~!~&&||=>!++--%"
 
-var _TokenTag_index = [...]uint8{0, 3, 8, 13, 16, 21, 24, 29, 32, 37, 45, 51, 53, 57, 60, 65, 67, 72, 76, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 95, 97, 99, 101, 102, 103, 104, 105, 106, 107, 109, 111, 113, 115, 116, 118, 120, 122, 124, 125, 127, 129}
+var _TokenTag_index = [...]uint8{0, 3, 8, 13, 16, 21, 24, 29, 32, 37, 45, 51, 53, 57, 60, 65, 67, 72, 76, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 95, 97, 99, 101, 102, 103, 104, 105, 106, 107, 109, 111, 113, 115, 116, 118, 120, 122, 124, 125, 127, 129, 130}
 
 func (i TokenTag) String() string {
 	if i >= TokenTag(len(_TokenTag_index)-1) {

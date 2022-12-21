@@ -458,7 +458,7 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (*Cell, error) {
 		default:
 			panic("unhandled comparison operator")
 		}
-	case Plus, Minus, Multiply, Divide:
+	case Plus, Minus, Multiply, Divide, Percent:
 		if expr.OpToken.Tag == Plus && (left.Value.Tag == ValueStr || right.Value.Tag == ValueStr) {
 			// string concat
 			leftStr := left.Value.String()
@@ -477,6 +477,8 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (*Cell, error) {
 			return NewCell(NewValue(leftNum * rightNum)), nil
 		case Divide:
 			return NewCell(NewValue(leftNum / rightNum)), nil
+		case Percent:
+			return NewCell(NewValue(int(leftNum) % int(rightNum))), nil
 		default:
 			panic("unhandled operator")
 		}
