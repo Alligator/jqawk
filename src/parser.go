@@ -575,9 +575,17 @@ func match(p *Parser) (Expr, error) {
 	}
 
 	for p.current.Tag != RCurly && !p.atEnd() {
-		caseExpr, err := p.expression()
-		if err != nil {
-			return nil, err
+		exprs := make([]Expr, 0)
+		for !p.atEnd() {
+			caseExpr, err := p.expression()
+			if err != nil {
+				return nil, err
+			}
+			exprs = append(exprs, caseExpr)
+			if p.current.Tag != Comma {
+				break
+			}
+			p.consume(Comma)
 		}
 
 		if err := p.consume(Arrow); err != nil {
@@ -604,8 +612,8 @@ func match(p *Parser) (Expr, error) {
 		}
 
 		matchCase := MatchCase{
-			Expr: caseExpr,
-			Body: caseBody,
+			Exprs: exprs,
+			Body:  caseBody,
 		}
 
 		match.Cases = append(match.Cases, matchCase)

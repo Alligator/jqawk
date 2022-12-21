@@ -222,18 +222,26 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 		}
 
 		for _, matchCase := range exp.Cases {
-			isMatch, err := e.evalCaseMatch(value, matchCase.Expr)
-			if err != nil {
-				return nil, err
-			}
-			if isMatch {
-				e.pushFrame("<match>")
+			isMatch := false
 
-				switch exp := matchCase.Expr.(type) {
-				case *ExprIdentifier:
+			// identifier => case
+			if len(matchCase.Exprs) == 1 {
+				if exp, ok := matchCase.Exprs[0].(*ExprIdentifier); ok {
+					isMatch = true
 					ident := e.lexer.GetString(&exp.token)
 					e.stackTop.locals[ident] = value
 				}
+			}
+
+			if !isMatch {
+				isMatch, err = e.evalCaseMatch(value, matchCase.Exprs)
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			if isMatch {
+				e.pushFrame("<match>")
 
 				// TODO deal with StatementAction
 				_, value, err := e.evalStatement(matchCase.Body)
@@ -263,22 +271,26 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 	}
 }
 
-func (e *Evaluator) evalCaseMatch(value *Cell, expr Expr) (bool, error) {
-	switch expr.(type) {
-	case *ExprIdentifier:
-		return true, nil
-	case *ExprLiteral:
-		caseValue, err := e.evalExpr(expr)
-		if err != nil {
-			return false, err
+func (e *Evaluator) evalCaseMatch(value *Cell, exprs []Expr) (bool, error) {
+	for _, expr := range exprs {
+		switch expr.(type) {
+		case *ExprLiteral:
+			caseValue, err := e.evalExpr(expr)
+			if err != nil {
+				return false, err
+			}
+			cmp, err := value.Value.Compare(&caseValue.Value)
+			if err != nil {
+				return false, err
+			}
+			if cmp == 0 {
+				return true, nil
+			}
+		default:
+			return false, e.error(exprs[0].Token(), "only numbers and strings are supported in match expressions")
 		}
-		cmp, err := value.Value.Compare(&caseValue.Value)
-		if err != nil {
-			return false, err
-		}
-		return cmp == 0, nil
 	}
-	return false, e.error(expr.Token(), "only numbers and strings are supported in match expressions")
+	return false, nil
 }
 
 func (e *Evaluator) callFunction(fn *Cell, args []*Value) (*Cell, error) {

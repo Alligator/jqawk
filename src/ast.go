@@ -99,8 +99,8 @@ type ExprMatch struct {
 }
 
 type MatchCase struct {
-	Expr Expr
-	Body Statement
+	Exprs []Expr
+	Body  Statement
 }
 
 func (*ExprLiteral) exprNode()    {}
