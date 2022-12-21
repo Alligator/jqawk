@@ -48,84 +48,6 @@ type Value struct {
 	Binding  *Value
 }
 
-var arrayPrototype *Value = nil
-
-func getArrayPrototype() *Value {
-	if arrayPrototype == nil {
-		proto := map[string]*Cell{
-			"length": NewCell(Value{
-				Tag: ValueNativeFn,
-				NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
-					if this == nil {
-						v := NewValue(0)
-						return &v, nil
-					}
-
-					if this.Tag != ValueArray {
-						v := NewValue(0)
-						return &v, nil
-					}
-
-					length := len(this.Array)
-					lengthVal := NewValue(length)
-					return &lengthVal, nil
-				},
-			}),
-			"push": NewCell(Value{
-				Tag: ValueNativeFn,
-				NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
-					if this == nil {
-						return nil, nil
-					}
-					if err := checkArgCount(v, 1); err != nil {
-						return nil, err
-					}
-
-					this.Array = append(this.Array, NewCell(*v[0]))
-					return this, nil
-				},
-			}),
-		}
-		arrayPrototype = &Value{
-			Tag: ValueObj,
-			Obj: &proto,
-		}
-	}
-	return arrayPrototype
-}
-
-var objPrototype *Value = nil
-
-func getObjPrototype() *Value {
-	if objPrototype == nil {
-		proto := map[string]*Cell{
-			"length": NewCell(Value{
-				Tag: ValueNativeFn,
-				NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
-					if this == nil {
-						v := NewValue(0)
-						return &v, nil
-					}
-
-					if this.Tag != ValueObj {
-						v := NewValue(0)
-						return &v, nil
-					}
-
-					length := len(*this.Obj)
-					lengthVal := NewValue(length)
-					return &lengthVal, nil
-				},
-			}),
-		}
-		objPrototype = &Value{
-			Tag: ValueObj,
-			Obj: &proto,
-		}
-	}
-	return objPrototype
-}
-
 func NewValue(srcVal interface{}) Value {
 	switch val := srcVal.(type) {
 	case []*Cell:
@@ -171,10 +93,7 @@ func NewValue(srcVal interface{}) Value {
 			Num: &f,
 		}
 	case string:
-		return Value{
-			Tag: ValueStr,
-			Str: &val,
-		}
+		return NewString(val)
 	case nil:
 		return Value{
 			Tag: ValueNil,
@@ -199,6 +118,14 @@ func NewObject() Value {
 		Tag:   ValueObj,
 		Obj:   &obj,
 		Proto: getObjPrototype(),
+	}
+}
+
+func NewString(str string) Value {
+	return Value{
+		Tag:   ValueStr,
+		Str:   &str,
+		Proto: getStrPrototype(),
 	}
 }
 
@@ -292,6 +219,9 @@ func (v *Value) GetMember(member Value) (*Cell, error) {
 		}
 		return nil, nil
 	default:
+		if v.Proto != nil {
+			return v.Proto.GetMember(member)
+		}
 		return nil, nil
 	}
 }

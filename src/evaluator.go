@@ -132,10 +132,7 @@ func (e *Evaluator) evalString(str string) (*Cell, error) {
 		}
 	}
 	s := string(buf)
-	return NewCell(Value{
-		Tag: ValueStr,
-		Str: &s,
-	}), nil
+	return NewCell(NewString(s)), nil
 }
 
 func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
@@ -537,10 +534,7 @@ func (e *Evaluator) evalAssignment(left *Cell, right *Cell) (*Cell, error) {
 		left.Value = NewValue(nil)
 	case ValueStr:
 		s := *right.Value.Str
-		left.Value = Value{
-			Tag: ValueStr,
-			Str: &s,
-		}
+		left.Value = NewString(s)
 
 	// reference
 	case ValueArray, ValueObj:
