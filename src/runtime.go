@@ -3,6 +3,7 @@ package lang
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -101,6 +102,29 @@ func nativeJson(e *Evaluator, args []*Value, this *Value) (*Value, error) {
 	return &v, nil
 }
 
+func nativeInt(e *Evaluator, args []*Value, this *Value) (*Value, error) {
+	if err := checkArgCount(args, 1); err != nil {
+		return nil, err
+	}
+
+	switch args[0].Tag {
+	case ValueNum:
+		v := NewValue(int(*args[0].Num))
+		return &v, nil
+	case ValueStr:
+		n, err := strconv.ParseInt(*args[0].Str, 10, 64)
+		if err != nil {
+			// TODO better error message
+			return nil, err
+		}
+		v := NewValue(n)
+		return &v, nil
+	default:
+		v := NewValue(nil)
+		return &v, nil
+	}
+}
+
 func addRuntimeFunctions(e *Evaluator) {
 	e.stackTop.locals["printf"] = NewCell(Value{
 		Tag:      ValueNativeFn,
@@ -109,5 +133,9 @@ func addRuntimeFunctions(e *Evaluator) {
 	e.stackTop.locals["json"] = NewCell(Value{
 		Tag:      ValueNativeFn,
 		NativeFn: nativeJson,
+	})
+	e.stackTop.locals["int"] = NewCell(Value{
+		Tag:      ValueNativeFn,
+		NativeFn: nativeInt,
 	})
 }

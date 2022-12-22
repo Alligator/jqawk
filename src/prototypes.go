@@ -1,5 +1,7 @@
 package lang
 
+import "strings"
+
 var arrayPrototype *Value = nil
 var objPrototype *Value = nil
 var strPrototype *Value = nil
@@ -97,6 +99,23 @@ func getStrPrototype() *Value {
 					length := len(*this.Str)
 					lengthVal := NewValue(length)
 					return &lengthVal, nil
+				},
+			}),
+			"split": NewCell(Value{
+				Tag: ValueNativeFn,
+				NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
+					if this == nil || this.Tag != ValueStr {
+						v := NewArray()
+						return &v, nil
+					}
+
+					str, err := checkArg(v, 0, ValueStr)
+					if err != nil {
+						return nil, err
+					}
+
+					splits := NewValue(strings.Split(*this.Str, *str.Str))
+					return &splits, nil
 				},
 			}),
 		}
