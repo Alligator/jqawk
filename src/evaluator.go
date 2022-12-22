@@ -29,6 +29,7 @@ type statementAction uint8
 const (
 	StmtActionNone statementAction = iota
 	StmtActionReturn
+	StmtActionBreak
 )
 
 func NewEvaluator(prog Program, lexer *Lexer, stdout io.Writer) Evaluator {
@@ -570,7 +571,7 @@ func (e *Evaluator) evalStatement(stmt Statement) (statementAction, *Cell, error
 			if err != nil {
 				return 0, nil, err
 			}
-			if action == StmtActionReturn {
+			if action == StmtActionReturn || action == StmtActionBreak {
 				return action, value, nil
 			}
 			lastValue = value
@@ -631,7 +632,7 @@ func (e *Evaluator) evalStatement(stmt Statement) (statementAction, *Cell, error
 				if err != nil {
 					return 0, nil, err
 				}
-				if action == StmtActionReturn {
+				if action == StmtActionReturn || action == StmtActionBreak {
 					return action, nil, nil
 				}
 			} else {
@@ -650,7 +651,7 @@ func (e *Evaluator) evalStatement(stmt Statement) (statementAction, *Cell, error
 				if err != nil {
 					return 0, nil, err
 				}
-				if action == StmtActionReturn {
+				if action == StmtActionReturn || action == StmtActionBreak {
 					return action, nil, nil
 				}
 
@@ -688,7 +689,8 @@ func (e *Evaluator) evalStatement(stmt Statement) (statementAction, *Cell, error
 		default:
 			return 0, nil, e.error(st.Iterable.Token(), fmt.Sprintf("%s is not iterable", iterable.Value.Tag))
 		}
-
+	case *StatementBreak:
+		return StmtActionBreak, nil, nil
 	default:
 		return 0, nil, e.error(st.Token(), fmt.Sprintf("expected a statement but found %T", st))
 	}

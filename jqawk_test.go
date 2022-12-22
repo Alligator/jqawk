@@ -394,6 +394,22 @@ func TestJqawk(t *testing.T) {
 	})
 
 	test(t, testCase{
+		name: "break",
+		prog: `
+			BEGIN {
+				for (i = 0; i < 10; i++) {
+					print i;
+					if (i > 2) {
+						break;
+					}
+				}
+			}
+		`,
+		json:     "[]",
+		expected: "0\n1\n2\n3\n",
+	})
+
+	test(t, testCase{
 		name: "bug: statement after block",
 		prog: `
 			{

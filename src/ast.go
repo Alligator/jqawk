@@ -141,6 +141,10 @@ type StatementReturn struct {
 	Expr Expr
 }
 
+type StatementBreak struct {
+	token Token
+}
+
 type StatementIf struct {
 	Expr     Expr
 	Body     Statement
@@ -169,6 +173,7 @@ func (*StatementBlock) statementNode()  {}
 func (*StatementPrint) statementNode()  {}
 func (*StatementExpr) statementNode()   {}
 func (*StatementReturn) statementNode() {}
+func (*StatementBreak) statementNode()  {}
 func (*StatementIf) statementNode()     {}
 func (*StatementWhile) statementNode()  {}
 func (*StatementFor) statementNode()    {}
@@ -178,6 +183,7 @@ func (stmt *StatementBlock) Token() Token  { return stmt.token }
 func (stmt *StatementPrint) Token() Token  { return stmt.token }
 func (stmt *StatementExpr) Token() Token   { return stmt.Expr.Token() }
 func (stmt *StatementReturn) Token() Token { return stmt.Expr.Token() }
+func (stmt *StatementBreak) Token() Token  { return stmt.token }
 func (stmt *StatementIf) Token() Token     { return stmt.Expr.Token() }
 func (stmt *StatementWhile) Token() Token  { return stmt.Expr.Token() }
 func (stmt *StatementFor) Token() Token    { return stmt.Expr.Token() }

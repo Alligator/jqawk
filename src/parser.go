@@ -308,6 +308,10 @@ func (p *Parser) statement() (Statement, error) {
 			return nil, err
 		}
 		return &block, nil
+	case Break:
+		p.consume(Break)
+		stmt := StatementBreak{*p.previous}
+		return &stmt, nil
 	default:
 		expr, err := p.expression()
 		if err != nil {
