@@ -145,6 +145,10 @@ type StatementBreak struct {
 	token Token
 }
 
+type StatementContinue struct {
+	token Token
+}
+
 type StatementIf struct {
 	Expr     Expr
 	Body     Statement
@@ -169,22 +173,24 @@ type StatementForIn struct {
 	Body     Statement
 }
 
-func (*StatementBlock) statementNode()  {}
-func (*StatementPrint) statementNode()  {}
-func (*StatementExpr) statementNode()   {}
-func (*StatementReturn) statementNode() {}
-func (*StatementBreak) statementNode()  {}
-func (*StatementIf) statementNode()     {}
-func (*StatementWhile) statementNode()  {}
-func (*StatementFor) statementNode()    {}
-func (*StatementForIn) statementNode()  {}
+func (*StatementBlock) statementNode()    {}
+func (*StatementPrint) statementNode()    {}
+func (*StatementExpr) statementNode()     {}
+func (*StatementReturn) statementNode()   {}
+func (*StatementBreak) statementNode()    {}
+func (*StatementContinue) statementNode() {}
+func (*StatementIf) statementNode()       {}
+func (*StatementWhile) statementNode()    {}
+func (*StatementFor) statementNode()      {}
+func (*StatementForIn) statementNode()    {}
 
-func (stmt *StatementBlock) Token() Token  { return stmt.token }
-func (stmt *StatementPrint) Token() Token  { return stmt.token }
-func (stmt *StatementExpr) Token() Token   { return stmt.Expr.Token() }
-func (stmt *StatementReturn) Token() Token { return stmt.Expr.Token() }
-func (stmt *StatementBreak) Token() Token  { return stmt.token }
-func (stmt *StatementIf) Token() Token     { return stmt.Expr.Token() }
-func (stmt *StatementWhile) Token() Token  { return stmt.Expr.Token() }
-func (stmt *StatementFor) Token() Token    { return stmt.Expr.Token() }
-func (stmt *StatementForIn) Token() Token  { return stmt.Ident.Token() }
+func (stmt *StatementBlock) Token() Token    { return stmt.token }
+func (stmt *StatementPrint) Token() Token    { return stmt.token }
+func (stmt *StatementExpr) Token() Token     { return stmt.Expr.Token() }
+func (stmt *StatementReturn) Token() Token   { return stmt.Expr.Token() }
+func (stmt *StatementBreak) Token() Token    { return stmt.token }
+func (stmt *StatementContinue) Token() Token { return stmt.token }
+func (stmt *StatementIf) Token() Token       { return stmt.Expr.Token() }
+func (stmt *StatementWhile) Token() Token    { return stmt.Expr.Token() }
+func (stmt *StatementFor) Token() Token      { return stmt.Expr.Token() }
+func (stmt *StatementForIn) Token() Token    { return stmt.Ident.Token() }

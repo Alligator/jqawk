@@ -30,6 +30,7 @@ const (
 	StmtActionNone statementAction = iota
 	StmtActionReturn
 	StmtActionBreak
+	StmtActionContinue
 )
 
 func NewEvaluator(prog Program, lexer *Lexer, stdout io.Writer) Evaluator {
@@ -571,7 +572,8 @@ func (e *Evaluator) evalStatement(stmt Statement) (statementAction, *Cell, error
 			if err != nil {
 				return 0, nil, err
 			}
-			if action == StmtActionReturn || action == StmtActionBreak {
+			switch action {
+			case StmtActionReturn, StmtActionBreak, StmtActionContinue:
 				return action, value, nil
 			}
 			lastValue = value
@@ -691,6 +693,8 @@ func (e *Evaluator) evalStatement(stmt Statement) (statementAction, *Cell, error
 		}
 	case *StatementBreak:
 		return StmtActionBreak, nil, nil
+	case *StatementContinue:
+		return StmtActionContinue, nil, nil
 	default:
 		return 0, nil, e.error(st.Token(), fmt.Sprintf("expected a statement but found %T", st))
 	}
