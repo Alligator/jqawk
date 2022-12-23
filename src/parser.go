@@ -522,7 +522,7 @@ func member(p *Parser, left Expr) (Expr, error) {
 
 func (p *Parser) evalExprList(endToken TokenTag) ([]Expr, error) {
 	args := make([]Expr, 0)
-	for !p.atEnd() && p.current.Tag != RParen {
+	for !p.atEnd() && p.current.Tag != endToken {
 		expr, err := p.expression()
 		if err != nil {
 			return nil, err

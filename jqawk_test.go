@@ -382,6 +382,19 @@ func TestJqawk(t *testing.T) {
 	})
 
 	test(t, testCase{
+		name: "array literal",
+		prog: `
+			BEGIN {
+				x = [];
+				y = [1, 2, 3];
+				print x, y;
+			}
+		`,
+		json:     "[]",
+		expected: "[] [1, 2, 3]\n",
+	})
+
+	test(t, testCase{
 		name: "object literal",
 		prog: `
 			BEGIN {
