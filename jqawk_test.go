@@ -443,6 +443,13 @@ func TestJqawk(t *testing.T) {
 	})
 
 	test(t, testCase{
+		name:     "next",
+		prog:     "{ print $; next } { print $ }",
+		json:     "[1, 2, 3, 4]",
+		expected: "1\n2\n3\n4\n",
+	})
+
+	test(t, testCase{
 		name: "bug: statement after block",
 		prog: `
 			{

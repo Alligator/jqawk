@@ -28,9 +28,11 @@ type statementAction uint8
 
 const (
 	StmtActionNone statementAction = iota
-	StmtActionReturn
-	StmtActionBreak
 	StmtActionContinue
+	// all actions below force an early exit from the block they're in
+	StmtActionBreak
+	StmtActionReturn
+	StmtActionNext
 )
 
 func NewEvaluator(prog Program, lexer *Lexer, stdout io.Writer) Evaluator {
@@ -572,8 +574,7 @@ func (e *Evaluator) evalStatement(stmt Statement) (statementAction, *Cell, error
 			if err != nil {
 				return 0, nil, err
 			}
-			switch action {
-			case StmtActionReturn, StmtActionBreak, StmtActionContinue:
+			if action == StmtActionContinue || action >= StmtActionBreak {
 				return action, value, nil
 			}
 			lastValue = value
@@ -634,7 +635,7 @@ func (e *Evaluator) evalStatement(stmt Statement) (statementAction, *Cell, error
 				if err != nil {
 					return 0, nil, err
 				}
-				if action == StmtActionReturn || action == StmtActionBreak {
+				if action != StmtActionNone {
 					return action, val, nil
 				}
 			} else {
@@ -653,7 +654,8 @@ func (e *Evaluator) evalStatement(stmt Statement) (statementAction, *Cell, error
 				if err != nil {
 					return 0, nil, err
 				}
-				if action == StmtActionReturn || action == StmtActionBreak {
+
+				if action >= StmtActionBreak {
 					return action, val, nil
 				}
 
@@ -697,7 +699,7 @@ func (e *Evaluator) evalStatement(stmt Statement) (statementAction, *Cell, error
 				if err != nil {
 					return 0, nil, err
 				}
-				if action == StmtActionReturn || action == StmtActionBreak {
+				if action >= StmtActionBreak {
 					return action, val, nil
 				}
 			}
@@ -711,7 +713,7 @@ func (e *Evaluator) evalStatement(stmt Statement) (statementAction, *Cell, error
 				if err != nil {
 					return 0, nil, err
 				}
-				if action == StmtActionReturn || action == StmtActionBreak {
+				if action >= StmtActionBreak {
 					return action, val, nil
 				}
 			}
@@ -722,6 +724,8 @@ func (e *Evaluator) evalStatement(stmt Statement) (statementAction, *Cell, error
 		return StmtActionBreak, nil, nil
 	case *StatementContinue:
 		return StmtActionContinue, nil, nil
+	case *StatementNext:
+		return StmtActionNext, nil, nil
 	default:
 		return 0, nil, e.error(st.Token(), fmt.Sprintf("expected a statement but found %T", st))
 	}
@@ -743,9 +747,12 @@ func (e *Evaluator) evalRules(rules []*Rule) error {
 			continue
 		}
 
-		_, _, err := e.evalStatement(rule.Body)
+		action, _, err := e.evalStatement(rule.Body)
 		if err != nil {
 			return err
+		}
+		if action == StmtActionNext {
+			return nil
 		}
 	}
 	return nil

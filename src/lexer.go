@@ -28,6 +28,7 @@ const (
 	Match
 	Break
 	Continue
+	Next
 	True          // true
 	False         // false
 	LCurly        // {
@@ -177,6 +178,8 @@ func (l *Lexer) identifier() Token {
 		return l.simpleToken(Break)
 	case "continue":
 		return l.simpleToken(Continue)
+	case "next":
+		return l.simpleToken(Next)
 	default:
 		return l.stringToken(Ident, l.pos-l.tokenStart)
 	}

@@ -325,6 +325,10 @@ func (p *Parser) statement() (Statement, error) {
 		p.consume(Continue)
 		stmt := StatementContinue{*p.previous}
 		return &stmt, nil
+	case Next:
+		p.consume(Next)
+		stmt := StatementNext{*p.previous}
+		return &stmt, nil
 	default:
 		expr, err := p.expression()
 		if err != nil {
