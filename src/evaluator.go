@@ -2,6 +2,7 @@ package lang
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"regexp"
@@ -16,23 +17,20 @@ type stackFrame struct {
 }
 
 type Evaluator struct {
-	prog     Program
-	lexer    *Lexer
-	stdout   io.Writer
-	root     *Cell
-	ruleRoot *Cell
-	stackTop *stackFrame
+	prog      Program
+	lexer     *Lexer
+	stdout    io.Writer
+	root      *Cell
+	ruleRoot  *Cell
+	stackTop  *stackFrame
+	returnVal *Value
 }
 
-type statementAction uint8
-
-const (
-	StmtActionNone statementAction = iota
-	StmtActionContinue
-	// all actions below force an early exit from the block they're in
-	StmtActionBreak
-	StmtActionReturn
-	StmtActionNext
+var (
+	errContinue = errors.New("continue")
+	errBreak    = errors.New("break")
+	errReturn   = errors.New("return")
+	errNext     = errors.New("next")
 )
 
 func NewEvaluator(prog Program, lexer *Lexer, stdout io.Writer) Evaluator {
@@ -242,18 +240,24 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 			}
 
 			if isMatch {
-				e.pushFrame("<match>")
-
-				// TODO deal with StatementAction
-				_, value, err := e.evalStatement(matchCase.Body)
-				if err != nil {
-					return nil, err
+				switch body := matchCase.Body.(type) {
+				case *StatementExpr:
+					val, err := e.evalExpr(body.Expr)
+					if err != nil {
+						return nil, err
+					}
+					return val, nil
+				default:
+					e.pushFrame("<match>")
+					err := e.evalStatement(body)
+					if err != nil {
+						return nil, err
+					}
+					if err := e.popFrame(); err != nil {
+						return nil, err
+					}
 				}
-
-				if err := e.popFrame(); err != nil {
-					return nil, err
-				}
-				return value, nil
+				return nil, nil
 			}
 		}
 		return NewCell(NewValue(nil)), nil
@@ -313,23 +317,18 @@ func (e *Evaluator) callFunction(fn *Cell, args []*Value) (*Cell, error) {
 			e.stackTop.locals[argName] = NewCell(*args[index])
 		}
 
-		action, value, err := e.evalStatement(f.Body)
-		if err != nil {
+		err := e.evalStatement(f.Body)
+		if err == errReturn {
+			return NewCell(*e.returnVal), nil
+		} else if err != nil {
 			return nil, err
-		}
-
-		var retCell *Cell
-		if action == StmtActionReturn {
-			retCell = value
-		} else {
-			retCell = NewCell(NewValue(nil))
 		}
 
 		if err := e.popFrame(); err != nil {
 			return nil, err
 		}
 
-		return retCell, nil
+		return nil, nil
 	default:
 		return nil, fmt.Errorf("attempted to call a %s", fn.Value.Tag)
 	}
@@ -564,31 +563,25 @@ func (e *Evaluator) evalExprList(exprs []Expr) ([]*Cell, error) {
 	return evaledExprs, nil
 }
 
-func (e *Evaluator) evalStatement(stmt Statement) (statementAction, *Cell, error) {
+func (e *Evaluator) evalStatement(stmt Statement) error {
 	switch st := stmt.(type) {
 	case *StatementBlock:
-		var lastValue *Cell
 		for _, s := range st.Body {
-			action, value, err := e.evalStatement(s)
-			lastValue = value
+			err := e.evalStatement(s)
 			if err != nil {
-				return 0, nil, err
+				return err
 			}
-			if action == StmtActionContinue || action >= StmtActionBreak {
-				return action, value, nil
-			}
-			lastValue = value
 		}
-		return StmtActionNone, lastValue, nil
+		return nil
 	case *StatementPrint:
 		args, err := e.evalExprList(st.Args)
 		if err != nil {
-			return 0, nil, err
+			return err
 		}
 
 		if len(args) == 0 {
 			fmt.Fprintln(e.stdout, e.ruleRoot.Value.PrettyString(false))
-			return StmtActionNone, nil, nil
+			return nil
 		}
 
 		for i, cell := range args {
@@ -603,21 +596,22 @@ func (e *Evaluator) evalStatement(stmt Statement) (statementAction, *Cell, error
 		}
 		fmt.Fprint(e.stdout, "\n")
 	case *StatementExpr:
-		value, err := e.evalExpr(st.Expr)
+		_, err := e.evalExpr(st.Expr)
 		if err != nil {
-			return 0, nil, err
+			return err
 		}
-		return 0, value, nil
+		return nil
 	case *StatementReturn:
 		cell, err := e.evalExpr(st.Expr)
 		if err != nil {
-			return StmtActionReturn, nil, err
+			return err
 		}
-		return StmtActionReturn, cell, nil
+		e.returnVal = &cell.Value
+		return errReturn
 	case *StatementIf:
 		cell, err := e.evalExpr(st.Expr)
 		if err != nil {
-			return 0, nil, err
+			return err
 		}
 		if cell.Value.isTruthy() {
 			return e.evalStatement(st.Body)
@@ -628,15 +622,14 @@ func (e *Evaluator) evalStatement(stmt Statement) (statementAction, *Cell, error
 		for {
 			cell, err := e.evalExpr(st.Expr)
 			if err != nil {
-				return 0, nil, err
+				return err
 			}
 			if cell.Value.isTruthy() {
-				action, val, err := e.evalStatement(st.Body)
-				if err != nil {
-					return 0, nil, err
-				}
-				if action != StmtActionNone {
-					return action, val, nil
+				err := e.evalStatement(st.Body)
+				if err == errBreak {
+					break
+				} else if err != nil && err != errContinue {
+					return err
 				}
 			} else {
 				break
@@ -647,21 +640,19 @@ func (e *Evaluator) evalStatement(stmt Statement) (statementAction, *Cell, error
 		for {
 			cell, err := e.evalExpr(st.Expr)
 			if err != nil {
-				return 0, nil, err
+				return err
 			}
 			if cell.Value.isTruthy() {
-				action, val, err := e.evalStatement(st.Body)
-				if err != nil {
-					return 0, nil, err
-				}
-
-				if action >= StmtActionBreak {
-					return action, val, nil
+				err := e.evalStatement(st.Body)
+				if err == errBreak {
+					break
+				} else if err != nil && err != errContinue {
+					return err
 				}
 
 				_, err = e.evalExpr(st.PostExpr)
 				if err != nil {
-					return 0, nil, err
+					return err
 				}
 			} else {
 				break
@@ -671,7 +662,7 @@ func (e *Evaluator) evalStatement(stmt Statement) (statementAction, *Cell, error
 		ident := e.lexer.GetString(&st.Ident.token)
 		local, err := e.getVariable(ident)
 		if err != nil {
-			return 0, nil, err
+			return err
 		}
 
 		var indexLocal *Cell
@@ -679,13 +670,13 @@ func (e *Evaluator) evalStatement(stmt Statement) (statementAction, *Cell, error
 			indexIdent := e.lexer.GetString(&st.IndexIdent.token)
 			indexLocal, err = e.getVariable(indexIdent)
 			if err != nil {
-				return 0, nil, err
+				return err
 			}
 		}
 
 		iterable, err := e.evalExpr(st.Iterable)
 		if err != nil {
-			return 0, nil, err
+			return err
 		}
 
 		switch iterable.Value.Tag {
@@ -695,12 +686,11 @@ func (e *Evaluator) evalStatement(stmt Statement) (statementAction, *Cell, error
 					indexLocal.Value = NewValue(index)
 				}
 				local.Value = item.Value
-				action, val, err := e.evalStatement(st.Body)
-				if err != nil {
-					return 0, nil, err
-				}
-				if action >= StmtActionBreak {
-					return action, val, nil
+				err := e.evalStatement(st.Body)
+				if err == errBreak {
+					break
+				} else if err != nil && err != errContinue {
+					return err
 				}
 			}
 		case ValueStr:
@@ -709,27 +699,26 @@ func (e *Evaluator) evalStatement(stmt Statement) (statementAction, *Cell, error
 					indexLocal.Value = NewValue(index)
 				}
 				local.Value = NewString(string(c))
-				action, val, err := e.evalStatement(st.Body)
-				if err != nil {
-					return 0, nil, err
-				}
-				if action >= StmtActionBreak {
-					return action, val, nil
+				err := e.evalStatement(st.Body)
+				if err == errBreak {
+					break
+				} else if err != nil && err != errContinue {
+					return err
 				}
 			}
 		default:
-			return 0, nil, e.error(st.Iterable.Token(), fmt.Sprintf("%s is not iterable", iterable.Value.Tag))
+			return e.error(st.Iterable.Token(), fmt.Sprintf("%s is not iterable", iterable.Value.Tag))
 		}
 	case *StatementBreak:
-		return StmtActionBreak, nil, nil
+		return errBreak
 	case *StatementContinue:
-		return StmtActionContinue, nil, nil
+		return errContinue
 	case *StatementNext:
-		return StmtActionNext, nil, nil
+		return errNext
 	default:
-		return 0, nil, e.error(st.Token(), fmt.Sprintf("expected a statement but found %T", st))
+		return e.error(st.Token(), fmt.Sprintf("expected a statement but found %T", st))
 	}
-	return StmtActionNone, nil, nil
+	return nil
 }
 
 func (e *Evaluator) evalRules(rules []*Rule) error {
@@ -747,12 +736,12 @@ func (e *Evaluator) evalRules(rules []*Rule) error {
 			continue
 		}
 
-		action, _, err := e.evalStatement(rule.Body)
+		err := e.evalStatement(rule.Body)
+		if err == errNext {
+			return nil
+		}
 		if err != nil {
 			return err
-		}
-		if action == StmtActionNext {
-			return nil
 		}
 	}
 	return nil
@@ -853,7 +842,7 @@ func (e *Evaluator) Eval(rootCell *Cell) error {
 	}
 
 	for _, rule := range beginRules {
-		if _, _, err := e.evalStatement(rule.Body); err != nil {
+		if err := e.evalStatement(rule.Body); err != nil {
 			return err
 		}
 	}
@@ -863,7 +852,7 @@ func (e *Evaluator) Eval(rootCell *Cell) error {
 	}
 
 	for _, rule := range endRules {
-		if _, _, err := e.evalStatement(rule.Body); err != nil {
+		if err := e.evalStatement(rule.Body); err != nil {
 			return err
 		}
 	}
