@@ -650,6 +650,7 @@ func match(p *Parser) (Expr, error) {
 	if err := p.consume(RCurly); err != nil {
 		return nil, err
 	}
+	p.didEndStatement = true
 
 	return &match, nil
 }
