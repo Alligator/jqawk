@@ -51,8 +51,25 @@ func getArrayPrototype() *Value {
 						return nil, err
 					}
 
+					// TODO handle 0 length arrays
 					retVal := this.Array[len(this.Array)-1].Value
 					this.Array = this.Array[:len(this.Array)-1]
+					return &retVal, nil
+				},
+			}),
+			"popfirst": NewCell(Value{
+				Tag: ValueNativeFn,
+				NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
+					if this == nil {
+						return nil, nil
+					}
+					if err := checkArgCount(v, 0); err != nil {
+						return nil, err
+					}
+
+					// TODO handle 0 length arrays
+					retVal := this.Array[0].Value
+					this.Array = this.Array[1:]
 					return &retVal, nil
 				},
 			}),
