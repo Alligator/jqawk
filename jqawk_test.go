@@ -336,13 +336,17 @@ func TestJqawk(t *testing.T) {
 		name: "for in",
 		prog: `
 			{
-				for (i in $) {
-					print i;
+				for (x in $) {
+					print x;
+				}
+
+				for (x, i in $) {
+					print i, x;
 				}
 			}
 		`,
 		json:     "[[1, 2], [3, 4]]",
-		expected: "1\n2\n3\n4\n",
+		expected: "1\n2\n0 1\n1 2\n3\n4\n0 3\n1 4\n",
 	})
 
 	test(t, testCase{

@@ -168,9 +168,10 @@ type StatementFor struct {
 }
 
 type StatementForIn struct {
-	Ident    *ExprIdentifier
-	Iterable Expr
-	Body     Statement
+	Ident      *ExprIdentifier
+	IndexIdent *ExprIdentifier
+	Iterable   Expr
+	Body       Statement
 }
 
 func (*StatementBlock) statementNode()    {}

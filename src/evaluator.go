@@ -672,6 +672,15 @@ func (e *Evaluator) evalStatement(stmt Statement) (statementAction, *Cell, error
 			return 0, nil, err
 		}
 
+		var indexLocal *Cell
+		if st.IndexIdent != nil {
+			indexIdent := e.lexer.GetString(&st.IndexIdent.token)
+			indexLocal, err = e.getVariable(indexIdent)
+			if err != nil {
+				return 0, nil, err
+			}
+		}
+
 		iterable, err := e.evalExpr(st.Iterable)
 		if err != nil {
 			return 0, nil, err
@@ -679,12 +688,18 @@ func (e *Evaluator) evalStatement(stmt Statement) (statementAction, *Cell, error
 
 		switch iterable.Value.Tag {
 		case ValueArray:
-			for _, item := range iterable.Value.Array {
+			for index, item := range iterable.Value.Array {
+				if indexLocal != nil {
+					indexLocal.Value = NewValue(index)
+				}
 				local.Value = item.Value
 				e.evalStatement(st.Body)
 			}
 		case ValueStr:
-			for _, c := range *iterable.Value.Str {
+			for index, c := range *iterable.Value.Str {
+				if indexLocal != nil {
+					indexLocal.Value = NewValue(index)
+				}
 				local.Value = NewString(string(c))
 				e.evalStatement(st.Body)
 			}

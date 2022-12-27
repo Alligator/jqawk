@@ -252,9 +252,18 @@ func (p *Parser) statement() (Statement, error) {
 			return nil, err
 		}
 
-		// try to parse for (ident in expr)
+		// try to parse for (ident[, ident] in expr)
 		if ident, ok := preExpr.(*ExprIdentifier); ok {
-			if p.current.Tag == In {
+			if p.current.Tag == In || p.current.Tag == Comma {
+				var indexIdent *ExprIdentifier
+				if p.current.Tag == Comma {
+					p.consume(Comma)
+					if err := p.consume(Ident); err != nil {
+						return nil, err
+					}
+					indexIdent = &ExprIdentifier{*p.previous}
+				}
+
 				p.consume(In)
 				expr, err := p.expression()
 				if err != nil {
@@ -270,7 +279,7 @@ func (p *Parser) statement() (Statement, error) {
 					return nil, err
 				}
 
-				return &StatementForIn{ident, expr, body}, nil
+				return &StatementForIn{ident, indexIdent, expr, body}, nil
 			}
 		}
 
