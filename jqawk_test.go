@@ -476,6 +476,53 @@ func TestJqawk(t *testing.T) {
 		json:          "[]",
 		expectedError: "unknown variable $",
 	})
+
+	test(t, testCase{
+		name: "bug: nested return",
+		prog: `
+			function add_while(a, b) {
+				while (true) {
+					return a + b;
+				}
+			}
+
+			function add_for(a, b) {
+				for (i = 0; i < 5; i++) {
+					return a + b;
+				}
+			}
+
+			function add_for_in(a, b) {
+				for (x in [1, 2, 3]) {
+					return a + b;
+				}
+			}
+
+			function add_if(a, b) {
+				if (true) {
+					return a + b;
+				}
+			}
+
+			function add_else(a, b) {
+				if (false) {
+					return 0;
+				} else {
+					return a + b;
+				}
+			}
+
+			BEGIN {
+				print add_while(1, 2);
+				print add_for(3, 4);
+				print add_for_in(5, 6);
+				print add_if(7, 8);
+				print add_if(9, 10);
+			}
+		`,
+		json:     "[]",
+		expected: "3\n7\n11\n15\n19\n",
+	})
 }
 
 func TestJqawkExe(t *testing.T) {

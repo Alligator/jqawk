@@ -630,12 +630,12 @@ func (e *Evaluator) evalStatement(stmt Statement) (statementAction, *Cell, error
 				return 0, nil, err
 			}
 			if cell.Value.isTruthy() {
-				action, _, err := e.evalStatement(st.Body)
+				action, val, err := e.evalStatement(st.Body)
 				if err != nil {
 					return 0, nil, err
 				}
 				if action == StmtActionReturn || action == StmtActionBreak {
-					return action, nil, nil
+					return action, val, nil
 				}
 			} else {
 				break
@@ -649,12 +649,12 @@ func (e *Evaluator) evalStatement(stmt Statement) (statementAction, *Cell, error
 				return 0, nil, err
 			}
 			if cell.Value.isTruthy() {
-				action, _, err := e.evalStatement(st.Body)
+				action, val, err := e.evalStatement(st.Body)
 				if err != nil {
 					return 0, nil, err
 				}
 				if action == StmtActionReturn || action == StmtActionBreak {
-					return action, nil, nil
+					return action, val, nil
 				}
 
 				_, err = e.evalExpr(st.PostExpr)
@@ -693,7 +693,13 @@ func (e *Evaluator) evalStatement(stmt Statement) (statementAction, *Cell, error
 					indexLocal.Value = NewValue(index)
 				}
 				local.Value = item.Value
-				e.evalStatement(st.Body)
+				action, val, err := e.evalStatement(st.Body)
+				if err != nil {
+					return 0, nil, err
+				}
+				if action == StmtActionReturn || action == StmtActionBreak {
+					return action, val, nil
+				}
 			}
 		case ValueStr:
 			for index, c := range *iterable.Value.Str {
@@ -701,7 +707,13 @@ func (e *Evaluator) evalStatement(stmt Statement) (statementAction, *Cell, error
 					indexLocal.Value = NewValue(index)
 				}
 				local.Value = NewString(string(c))
-				e.evalStatement(st.Body)
+				action, val, err := e.evalStatement(st.Body)
+				if err != nil {
+					return 0, nil, err
+				}
+				if action == StmtActionReturn || action == StmtActionBreak {
+					return action, val, nil
+				}
 			}
 		default:
 			return 0, nil, e.error(st.Iterable.Token(), fmt.Sprintf("%s is not iterable", iterable.Value.Tag))
