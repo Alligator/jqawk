@@ -318,16 +318,20 @@ func (e *Evaluator) callFunction(fn *Cell, args []*Value) (*Cell, error) {
 		}
 
 		err := e.evalStatement(f.Body)
+		var retVal *Value
 		if err == errReturn {
-			return NewCell(*e.returnVal), nil
+			retVal = e.returnVal
 		} else if err != nil {
-			return nil, err
+			retVal = nil
 		}
 
 		if err := e.popFrame(); err != nil {
 			return nil, err
 		}
 
+		if retVal != nil {
+			return NewCell(*retVal), nil
+		}
 		return nil, nil
 	default:
 		return nil, fmt.Errorf("attempted to call a %s", fn.Value.Tag)
@@ -602,11 +606,15 @@ func (e *Evaluator) evalStatement(stmt Statement) error {
 		}
 		return nil
 	case *StatementReturn:
-		cell, err := e.evalExpr(st.Expr)
-		if err != nil {
-			return err
+		if st.Expr != nil {
+			cell, err := e.evalExpr(st.Expr)
+			if err != nil {
+				return err
+			}
+			e.returnVal = &cell.Value
+		} else {
+			e.returnVal = nil
 		}
-		e.returnVal = &cell.Value
 		return errReturn
 	case *StatementIf:
 		cell, err := e.evalExpr(st.Expr)

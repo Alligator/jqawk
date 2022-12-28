@@ -177,11 +177,15 @@ func (p *Parser) statement() (Statement, error) {
 		if err := p.consume(Return); err != nil {
 			return nil, err
 		}
-		expr, err := p.expression()
-		if err != nil {
-			return nil, err
+		if !p.atStatementEnd() {
+			expr, err := p.expression()
+			if err != nil {
+				return nil, err
+			}
+			return &StatementReturn{expr}, nil
 		}
-		return &StatementReturn{expr}, nil
+		p.didEndStatement = true
+		return &StatementReturn{nil}, nil
 	case If:
 		if err := p.consume(If); err != nil {
 			return nil, err

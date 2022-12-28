@@ -251,15 +251,22 @@ func TestJqawk(t *testing.T) {
 				return a + b;
 			}
 
+			function empty_return(a, b) {
+				print a;
+				return;
+				print b;
+			}
+
 			function log(a) { print a }
 
 			BEGIN {
 				print add(3, 4);
 				log("hello");
+				empty_return(5, 6);
 			}
 		`,
 		json:     "[]",
-		expected: "7\nhello\n",
+		expected: "7\nhello\n5\n",
 	})
 
 	test(t, testCase{
