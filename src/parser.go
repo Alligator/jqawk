@@ -32,6 +32,7 @@ const (
 	PrecPostfix
 	PrecCall
 	PrecGroup
+	PrecUnary
 )
 
 func NewParser(l *Lexer) Parser {
@@ -662,7 +663,7 @@ func unary(p *Parser) (Expr, error) {
 	}
 	opToken := *p.previous
 
-	expr, err := p.expression()
+	expr, err := p.expressionWithPrec(PrecUnary)
 	if err != nil {
 		return nil, err
 	}

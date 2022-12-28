@@ -530,6 +530,14 @@ func TestJqawk(t *testing.T) {
 		json:     "[]",
 		expected: "3\n7\n11\n15\n19\n",
 	})
+
+	test(t, testCase{
+		name:     "bug: unary precedence",
+		prog:     "BEGIN { print 1 == -1 + 2; }",
+		json:     "[]",
+		expected: "true\n",
+	})
+
 }
 
 func TestJqawkExe(t *testing.T) {
