@@ -350,6 +350,19 @@ func TestJqawk(t *testing.T) {
 	})
 
 	test(t, testCase{
+		name: "for in object",
+		prog: `
+			{
+				for (k, v in $) {
+					print k, v;
+				}
+			}
+		`,
+		json:     `{ "a": 1 }`,
+		expected: "a 1\n",
+	})
+
+	test(t, testCase{
 		name: "match",
 		prog: `
 			{

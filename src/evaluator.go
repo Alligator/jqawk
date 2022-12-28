@@ -693,6 +693,19 @@ func (e *Evaluator) evalStatement(stmt Statement) error {
 					return err
 				}
 			}
+		case ValueObj:
+			for k, v := range *iterable.Value.Obj {
+				if indexLocal != nil {
+					indexLocal.Value = v.Value
+				}
+				local.Value = NewValue(k)
+				err := e.evalStatement(st.Body)
+				if err == errBreak {
+					break
+				} else if err != nil && err != errContinue {
+					return err
+				}
+			}
 		case ValueStr:
 			for index, c := range *iterable.Value.Str {
 				if indexLocal != nil {
