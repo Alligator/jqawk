@@ -14,7 +14,7 @@ func checkArg(args []*Value, index int, tag ValueTag) (*Value, error) {
 
 	arg := args[index]
 	if arg.Tag != tag {
-		return nil, fmt.Errorf("expected arguments %d to have type %s", index, tag)
+		return nil, fmt.Errorf("expected argument %d to have type %s", index, tag)
 	}
 
 	return arg, nil

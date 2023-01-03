@@ -203,9 +203,9 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 			argVals = append(argVals, &argCell.Value)
 		}
 
-		result, err := e.callFunction(fn, argVals)
+		result, err := e.callFunction(exp, fn, argVals)
 		if err != nil {
-			return nil, e.error(exp.Token(), err.Error())
+			return nil, err
 		}
 		return result, nil
 	case *ExprArray:
@@ -298,7 +298,7 @@ func (e *Evaluator) evalCaseMatch(value *Cell, exprs []Expr) (bool, error) {
 	return false, nil
 }
 
-func (e *Evaluator) callFunction(fn *Cell, args []*Value) (*Cell, error) {
+func (e *Evaluator) callFunction(exp *ExprCall, fn *Cell, args []*Value) (*Cell, error) {
 	switch fn.Value.Tag {
 	case ValueNativeFn:
 		result, err := fn.Value.NativeFn(e, args, fn.Value.Binding)
@@ -322,6 +322,8 @@ func (e *Evaluator) callFunction(fn *Cell, args []*Value) (*Cell, error) {
 		if err == errReturn {
 			retVal = e.returnVal
 		} else if err != nil {
+			return nil, err
+		} else {
 			retVal = nil
 		}
 
@@ -334,7 +336,7 @@ func (e *Evaluator) callFunction(fn *Cell, args []*Value) (*Cell, error) {
 		}
 		return nil, nil
 	default:
-		return nil, fmt.Errorf("attempted to call a %s", fn.Value.Tag)
+		return nil, e.error(exp.Token(), fmt.Sprintf("attempted to call a %s", fn.Value.Tag))
 	}
 }
 
