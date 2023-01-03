@@ -127,7 +127,7 @@ func (e *Evaluator) evalString(str string) (*Cell, error) {
 			buf = append(buf, '\n')
 		case '\\':
 			buf = append(buf, '\\')
-		case '\t':
+		case 't':
 			buf = append(buf, '\t')
 		default:
 			return nil, fmt.Errorf("unknown escape char %q", str[i])
