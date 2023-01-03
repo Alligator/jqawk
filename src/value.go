@@ -271,7 +271,7 @@ func (v *Value) isTruthy() bool {
 	case ValueBool:
 		return *v.Bool
 	case ValueNum:
-		return *v.Num > 0.0
+		return *v.Num != 0.0
 	case ValueStr:
 		return len(*v.Str) > 0
 	}
