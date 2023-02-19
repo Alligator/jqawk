@@ -498,13 +498,6 @@ func TestJqawk(t *testing.T) {
 	})
 
 	test(t, testCase{
-		name:          "bug: $ in BEGIN",
-		prog:          "BEGIN { print $ }",
-		json:          "[]",
-		expectedError: "unknown variable $",
-	})
-
-	test(t, testCase{
 		name: "bug: nested return",
 		prog: `
 			function add_while(a, b) {
@@ -558,6 +551,15 @@ func TestJqawk(t *testing.T) {
 		expected: "true\n",
 	})
 
+	test(t, testCase{
+		name: "bug: $ in BEGIN and END",
+		prog: `
+			BEGIN { print $ }
+			END { print $ }
+		`,
+		json:     "{}",
+		expected: "{}\n{}\n",
+	})
 }
 
 func TestJqawkExe(t *testing.T) {

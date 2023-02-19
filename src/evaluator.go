@@ -865,6 +865,7 @@ func (e *Evaluator) Eval(rootCell *Cell) error {
 	}
 
 	for _, rule := range beginRules {
+		e.ruleRoot = e.root
 		if err := e.evalStatement(rule.Body); err != nil {
 			return err
 		}
@@ -875,6 +876,7 @@ func (e *Evaluator) Eval(rootCell *Cell) error {
 	}
 
 	for _, rule := range endRules {
+		e.ruleRoot = e.root
 		if err := e.evalStatement(rule.Body); err != nil {
 			return err
 		}
