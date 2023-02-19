@@ -29,6 +29,7 @@ const (
 	Break
 	Continue
 	Next
+	Newline
 	True          // true
 	False         // false
 	LCurly        // {
@@ -123,7 +124,7 @@ func (l *Lexer) peek() byte {
 func (l *Lexer) skipWhitespace() {
 	for !l.atEnd() {
 		switch l.peek() {
-		case ' ', '\n', '\r', '\t':
+		case ' ', '\r', '\t':
 			l.advance()
 		case '#':
 			for !l.atEnd() && l.peek() != '\n' {
@@ -266,6 +267,11 @@ func (l *Lexer) Next() (Token, error) {
 	c := l.peek()
 	r := rune(c)
 	l.tokenStart = l.pos
+
+	if c == '\n' {
+		l.pos++
+		return l.simpleToken(Newline), nil
+	}
 
 	if c == '$' {
 		l.pos++

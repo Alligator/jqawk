@@ -33,8 +33,43 @@ func DebugAst(prog string, rootSelector string) {
 	ast.Print(nil, program)
 }
 
+func DebugLex(prog string, rootSelector string) {
+	dbg := func(prog string) {
+		lex := lang.NewLexer(prog)
+		line := 1
+		fmt.Print("   1: ")
+		for {
+			tok, err := lex.Next()
+			if err != nil {
+				panic(err)
+			}
+
+			if tok.Len == 0 {
+				fmt.Printf("%s ", tok.Tag)
+			} else {
+				fmt.Printf("%s(%#v) ", tok.Tag, lex.GetString(&tok))
+			}
+
+			if tok.Tag == lang.Newline {
+				line++
+				fmt.Printf("\n%4d: ", line)
+			} else if tok.Tag == lang.EOF {
+				break
+			}
+		}
+	}
+	if len(rootSelector) > 0 {
+		fmt.Println("root selector tokens")
+		dbg(rootSelector)
+		fmt.Print("\n")
+	}
+	fmt.Println("program tokens")
+	dbg(prog)
+}
+
 func Run() (exitCode int) {
-	dbgAst := flag.Bool("dbg-ast", false, "print the AST")
+	dbgAst := flag.Bool("dbg-ast", false, "print the AST and exit")
+	dbgLex := flag.Bool("dbg-lex", false, "print tokens and exit")
 	progFile := flag.String("f", "", "the program file to run")
 	rootSelector := flag.String("r", "", "root selector")
 	profile := flag.Bool("profile", false, "record a CPU profile")
@@ -64,6 +99,11 @@ func Run() (exitCode int) {
 
 	if *dbgAst {
 		DebugAst(prog, *rootSelector)
+		os.Exit(0)
+	}
+
+	if *dbgLex {
+		DebugLex(prog, *rootSelector)
 		os.Exit(0)
 	}
 

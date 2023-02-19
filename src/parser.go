@@ -109,6 +109,16 @@ func (p *Parser) advance() (Token, error) {
 	p.previous = p.current
 	p.current = &t
 	p.didEndStatement = false
+
+	if t.Tag == Newline {
+		// pretend the newline didn't exist and set didEndStatement
+		oldPrev := p.previous
+		newToken, err := p.advance()
+		p.previous = oldPrev
+		p.didEndStatement = true
+		return newToken, err
+	}
+
 	return t, nil
 }
 

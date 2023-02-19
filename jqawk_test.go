@@ -105,11 +105,11 @@ func TestJqawk(t *testing.T) {
 	test(t, testCase{
 		name: "operators",
 		prog: `BEGIN {
-			print 2 + 3;
-			print 2 - 3;
-			print 2 * 3;
-			print 6 / 3;
-			print 6 / 2 - 1 * 3;
+			print 2 + 3
+			print 2 - 3
+			print 2 * 3
+			print 6 / 3
+			print 6 / 2 - 1 * 3
 		}`,
 		expected: "5\n-1\n6\n2\n0\n",
 	})
