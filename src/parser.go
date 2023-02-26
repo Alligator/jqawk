@@ -28,11 +28,10 @@ const (
 	PrecComparison
 	PrecAddition
 	PrecMultiplication
-	PrecPrefix
 	PrecPostfix
+	PrecUnary
 	PrecCall
 	PrecGroup
-	PrecUnary
 )
 
 func NewParser(l *Lexer) Parser {
@@ -49,7 +48,7 @@ func NewParser(l *Lexer) Parser {
 		Ident:         {PrecNone, identifier, nil},
 		LSquare:       {PrecCall, array, computedMember},
 		Dot:           {PrecCall, nil, member},
-		LParen:        {PrecCall, group, call},
+		LParen:        {PrecGroup, group, call},
 		LessThan:      {PrecComparison, nil, binary},
 		GreaterThan:   {PrecComparison, nil, binary},
 		EqualEqual:    {PrecComparison, nil, binary},
@@ -70,9 +69,9 @@ func NewParser(l *Lexer) Parser {
 		AmpAmp:        {PrecLogical, nil, binary},
 		PipePipe:      {PrecLogical, nil, binary},
 		Match:         {PrecNone, match, nil},
-		Bang:          {PrecPrefix, unary, nil},
-		PlusPlus:      {PrecPostfix, prefix, postfix},
-		MinusMinus:    {PrecPostfix, prefix, postfix},
+		Bang:          {PrecUnary, unary, nil},
+		PlusPlus:      {PrecPostfix, unary, postfix},
+		MinusMinus:    {PrecPostfix, unary, postfix},
 		LCurly:        {PrecNone, object, nil},
 		Percent:       {PrecMultiplication, nil, binary},
 	}
@@ -670,24 +669,6 @@ func match(p *Parser) (Expr, error) {
 	return &match, nil
 }
 
-func unary(p *Parser) (Expr, error) {
-	_, err := p.advance()
-	if err != nil {
-		return nil, err
-	}
-	opToken := *p.previous
-
-	expr, err := p.expressionWithPrec(PrecUnary)
-	if err != nil {
-		return nil, err
-	}
-
-	return &ExprUnary{
-		Expr:    expr,
-		OpToken: opToken,
-	}, nil
-}
-
 func group(p *Parser) (Expr, error) {
 	if err := p.consume(LParen); err != nil {
 		return nil, err
@@ -705,14 +686,14 @@ func group(p *Parser) (Expr, error) {
 	return expr, nil
 }
 
-func prefix(p *Parser) (Expr, error) {
+func unary(p *Parser) (Expr, error) {
 	_, err := p.advance()
 	if err != nil {
 		return nil, err
 	}
 	opToken := *p.previous
 
-	expr, err := p.expressionWithPrec(p.rule(opToken.Tag).prec)
+	expr, err := p.expressionWithPrec(PrecUnary)
 	if err != nil {
 		return nil, err
 	}

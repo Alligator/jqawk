@@ -110,8 +110,13 @@ func TestJqawk(t *testing.T) {
 			print 2 * 3
 			print 6 / 3
 			print 6 / 2 - 1 * 3
+
+			obj = { a: 1 }
+			print !obj.a
+			print -obj.a + 2
+			print -(obj.a + 2)
 		}`,
-		expected: "5\n-1\n6\n2\n0\n",
+		expected: "5\n-1\n6\n2\n0\nfalse\n1\n-3\n",
 	})
 
 	test(t, testCase{
@@ -546,9 +551,9 @@ func TestJqawk(t *testing.T) {
 
 	test(t, testCase{
 		name:     "bug: unary precedence",
-		prog:     "BEGIN { print 1 == -1 + 2; }",
+		prog:     "BEGIN { print -1 + 2; }",
 		json:     "[]",
-		expected: "true\n",
+		expected: "1\n",
 	})
 
 	test(t, testCase{
@@ -559,6 +564,13 @@ func TestJqawk(t *testing.T) {
 		`,
 		json:     "{}",
 		expected: "{}\n{}\n",
+	})
+
+	test(t, testCase{
+		name:     "bug: !! precedence",
+		prog:     "{ print !!$[0] }",
+		json:     "[[0], [1]]",
+		expected: "false\ntrue\n",
 	})
 }
 
