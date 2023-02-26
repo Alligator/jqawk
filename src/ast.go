@@ -123,6 +123,16 @@ func (expr *ExprCall) Token() Token       { return expr.Func.Token() }
 func (expr *ExprFunction) Token() Token   { return expr.ident }
 func (expr *ExprMatch) Token() Token      { return expr.token }
 
+func (expr *ExprLiteral) String() string    { return "literal" }
+func (expr *ExprIdentifier) String() string { return "identifier" }
+func (expr *ExprArray) String() string      { return "array" }
+func (expr *ExprObject) String() string     { return "object" }
+func (expr *ExprUnary) String() string      { return "<unary expression>" }
+func (expr *ExprBinary) String() string     { return "<binary expression>" }
+func (expr *ExprCall) String() string       { return "<call expression>" }
+func (expr *ExprFunction) String() string   { return "function" }
+func (expr *ExprMatch) String() string      { return "match" }
+
 type StatementBlock struct {
 	token Token
 	Body  []Statement

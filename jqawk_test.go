@@ -233,7 +233,7 @@ func TestJqawk(t *testing.T) {
 	})
 
 	test(t, testCase{
-		name: "match, not match",
+		name: "regex match, not match",
 		prog: `
 			$.name ~ 'gate' { print 'eq', $.name }
 			$.name !~ 'gate' { print 'neq', $.name }
@@ -387,6 +387,34 @@ func TestJqawk(t *testing.T) {
 		`,
 		json:     "[1, 2, 3, 4]",
 		expected: "one\ntwo\n?\n?\n",
+	})
+
+	test(t, testCase{
+		name: "match array",
+		prog: `
+			{
+				print match ($) {
+					[1, x] => x * 2,
+					[2, x] => x + 10,
+				}
+			}
+		`,
+		json:     "[[1, 1], [1, 2], [2, 1]]",
+		expected: "2\n4\n11\n",
+	})
+
+	test(t, testCase{
+		name: "match nested array",
+		prog: `
+			{
+				print match ($) {
+					[x, [2, y]] => y,
+					[x, [5, y]] => x,
+				}
+			}
+		`,
+		json:     "[[1, [2, 3]], [4, [5, 6]]]",
+		expected: "3\n4\n",
 	})
 
 	test(t, testCase{

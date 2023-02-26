@@ -110,6 +110,23 @@ func (e *Evaluator) getVariable(name string) (*Cell, error) {
 	return cell, nil
 }
 
+func (e *Evaluator) getIdentifier(expr *ExprIdentifier) (*Cell, error) {
+	if expr.token.Tag == Dollar {
+		if e.ruleRoot != nil {
+			return e.ruleRoot, nil
+		} else {
+			return nil, e.error(expr.Token(), "unknown variable $")
+		}
+	} else {
+		ident := e.lexer.GetString(&expr.token)
+		local, err := e.getVariable(ident)
+		if err != nil {
+			return nil, e.error(expr.Token(), err.Error())
+		}
+		return local, nil
+	}
+}
+
 func (e *Evaluator) evalString(str string) (*Cell, error) {
 	buf := make([]byte, 0, len(str))
 	for i := 0; i < len(str); i++ {
@@ -174,20 +191,7 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 	case *ExprBinary:
 		return e.evalBinaryExpr(exp)
 	case *ExprIdentifier:
-		if exp.token.Tag == Dollar {
-			if e.ruleRoot != nil {
-				return e.ruleRoot, nil
-			} else {
-				return nil, e.error(exp.Token(), "unknown variable $")
-			}
-		} else {
-			ident := e.lexer.GetString(&exp.token)
-			local, err := e.getVariable(ident)
-			if err != nil {
-				return nil, e.error(exp.Token(), err.Error())
-			}
-			return local, nil
-		}
+		return e.getIdentifier(exp)
 	case *ExprCall:
 		fn, err := e.evalExpr(exp.Func)
 		if err != nil {
@@ -223,23 +227,18 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 		for _, matchCase := range exp.Cases {
 			isMatch := false
 
-			// identifier => case
-			if len(matchCase.Exprs) == 1 {
-				if exp, ok := matchCase.Exprs[0].(*ExprIdentifier); ok {
-					isMatch = true
-					ident := e.lexer.GetString(&exp.token)
-					e.stackTop.locals[ident] = value
-				}
-			}
-
-			if !isMatch {
-				isMatch, err = e.evalCaseMatch(value, matchCase.Exprs)
-				if err != nil {
-					return nil, err
-				}
+			var bindings map[string]*Cell
+			isMatch, bindings, err = e.evalCaseMatch(value, matchCase.Exprs)
+			if err != nil {
+				return nil, err
 			}
 
 			if isMatch {
+				e.pushFrame("<match>")
+				for k, v := range bindings {
+					e.stackTop.locals[k] = v
+				}
+
 				switch body := matchCase.Body.(type) {
 				case *StatementExpr:
 					val, err := e.evalExpr(body.Expr)
@@ -248,15 +247,16 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 					}
 					return val, nil
 				default:
-					e.pushFrame("<match>")
 					err := e.evalStatement(body)
 					if err != nil {
 						return nil, err
 					}
-					if err := e.popFrame(); err != nil {
-						return nil, err
-					}
 				}
+
+				if err := e.popFrame(); err != nil {
+					return nil, err
+				}
+
 				return nil, nil
 			}
 		}
@@ -276,26 +276,58 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 	}
 }
 
-func (e *Evaluator) evalCaseMatch(value *Cell, exprs []Expr) (bool, error) {
+func (e *Evaluator) evalCaseMatch(value *Cell, exprs []Expr) (bool, map[string]*Cell, error) {
 	for _, expr := range exprs {
-		switch expr.(type) {
+		switch ex := expr.(type) {
 		case *ExprLiteral:
 			caseValue, err := e.evalExpr(expr)
 			if err != nil {
-				return false, err
+				return false, nil, err
 			}
 			cmp, err := value.Value.Compare(&caseValue.Value)
 			if err != nil {
-				return false, err
+				return false, nil, err
 			}
 			if cmp == 0 {
-				return true, nil
+				return true, nil, nil
 			}
+		case *ExprArray:
+			if value.Value.Tag != ValueArray {
+				return false, nil, nil
+			}
+
+			array := value.Value.Array
+			if len(array) != len(ex.Items) {
+				return false, nil, nil
+			}
+
+			bindings := make(map[string]*Cell)
+
+			for i, item := range array {
+				exprToMatch := ex.Items[i]
+				match, newBindings, err := e.evalCaseMatch(item, []Expr{exprToMatch})
+				if err != nil {
+					return false, nil, err
+				}
+				if !match {
+					return false, nil, nil
+				}
+				for k, v := range newBindings {
+					bindings[k] = v
+				}
+			}
+
+			return true, bindings, nil
+		case *ExprIdentifier:
+			bindings := make(map[string]*Cell)
+			ident := e.lexer.GetString(&ex.token)
+			bindings[ident] = value
+			return true, bindings, nil
 		default:
-			return false, e.error(exprs[0].Token(), "only numbers and strings are supported in match expressions")
+			return false, nil, e.error(expr.Token(), fmt.Sprintf("%s not supported in match expressions", expr))
 		}
 	}
-	return false, nil
+	return false, nil, nil
 }
 
 func (e *Evaluator) callFunction(exp *ExprCall, fn *Cell, args []*Value) (*Cell, error) {
