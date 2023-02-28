@@ -149,6 +149,7 @@ func Run() (exitCode int) {
 
 	ev, err := lang.EvalProgram(prog, rootCell, os.Stdout)
 	if err != nil {
+		// TODO re-use this in the tests
 		switch tErr := err.(type) {
 		case lang.SyntaxError:
 			fmt.Fprintf(os.Stderr, "  %s\n", tErr.SrcLine)

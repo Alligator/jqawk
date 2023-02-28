@@ -73,6 +73,31 @@ func getArrayPrototype() *Value {
 					return &retVal, nil
 				},
 			}),
+			"contains": NewCell(Value{
+				Tag: ValueNativeFn,
+				NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
+					if this == nil {
+						return nil, nil
+					}
+					if err := checkArgCount(v, 1); err != nil {
+						return nil, err
+					}
+
+					for _, item := range this.Array {
+						comp, err := v[0].Compare(&item.Value)
+						if err != nil {
+							return nil, err
+						}
+						if comp == 0 {
+							retVal := NewValue(true)
+							return &retVal, nil
+						}
+					}
+
+					retVal := NewValue(false)
+					return &retVal, nil
+				},
+			}),
 		}
 		arrayPrototype = &Value{
 			Tag: ValueObj,
