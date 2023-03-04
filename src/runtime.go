@@ -66,7 +66,7 @@ func nativePrintf(e *Evaluator, args []*Value, this *Value) (*Value, error) {
 			num, err := strconv.ParseInt(numStr, 10, 64)
 			widthSpec = int(num)
 			if err != nil {
-				return nil, fmt.Errorf("invlid width specifier")
+				return nil, fmt.Errorf("invalid width specifier")
 			}
 			i = numEnd
 			if numStr[0] == '0' {
