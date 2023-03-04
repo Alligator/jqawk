@@ -69,7 +69,19 @@ func test(t *testing.T, tc testCase) {
 		}
 
 		if sb.String() != tc.expected {
-			t.Fatalf("\n-- expected\n%s\n-- got\n%s\n", tc.expected, sb.String())
+			actualLines := strings.Split(sb.String(), "\n")
+			expectedLines := strings.Split(tc.expected, "\n")
+			for i, line := range actualLines {
+				if len(expectedLines) < i {
+					fmt.Printf("\x1b[92m+ %s\x1b[0m\n", line)
+				} else if len(expectedLines) > i && line != expectedLines[i] {
+					fmt.Printf("\x1b[91m- %s\x1b[0m\n", expectedLines[i])
+					fmt.Printf("\x1b[92m+ %s\x1b[0m\n", line)
+				} else {
+					fmt.Printf("  %s\n", line)
+				}
+			}
+			t.Fatalf("unexpected result")
 		}
 	})
 }
