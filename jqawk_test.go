@@ -69,7 +69,7 @@ func test(t *testing.T, tc testCase) {
 		}
 
 		if sb.String() != tc.expected {
-			t.Fatalf("expected %q\ngot %q\n", tc.expected, sb.String())
+			t.Fatalf("\n-- expected\n%s\n-- got\n%s\n", tc.expected, sb.String())
 		}
 	})
 }
@@ -216,10 +216,26 @@ func TestJqawk(t *testing.T) {
 	})
 
 	test(t, testCase{
-		name:     "printf",
-		prog:     "{ printf('name: %s\\nage: %f\\n', $.name, $.age) }",
-		json:     `[{ "name": "gate", "age": 1 }, { "name": "sponge", "age": 2.300 }]`,
-		expected: "name: gate\nage: 1\nname: sponge\nage: 2.3\n",
+		name: "printf",
+		prog: `
+		{
+			printf('name: %s\nage: %f\n', $.name, $.age)
+			printf('string lpad: %10s %1s\n', $.name, $.name)
+			printf('string rpad: %-10s %-1s\n', $.name, $.name)
+			printf(' float lpad: %6f %06f\n', $.age, $.age)
+		}`,
+		json: `[{ "name": "gate", "age": 1 }, { "name": "sponge", "age": 2.300 }]`,
+		expected: `name: gate
+age: 1
+string lpad:       gate gate
+string rpad: gate       gate
+ float lpad:      1 000001
+name: sponge
+age: 2.3
+string lpad:     sponge sponge
+string rpad: sponge     sponge
+ float lpad:    2.3 0002.3
+`,
 	})
 
 	test(t, testCase{

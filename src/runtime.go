@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"unicode"
 )
 
 func checkArg(args []*Value, index int, tag ValueTag) (*Value, error) {
@@ -54,6 +55,25 @@ func nativePrintf(e *Evaluator, args []*Value, this *Value) (*Value, error) {
 		}
 		i++
 
+		widthSpec := 0
+		padChar := " "
+		if unicode.IsDigit(rune(fmtStr[i])) || fmtStr[i] == '-' {
+			numEnd := i + 1
+			for numEnd < end && unicode.IsDigit(rune(fmtStr[numEnd])) {
+				numEnd++
+			}
+			numStr := fmtStr[i:numEnd]
+			num, err := strconv.ParseInt(numStr, 10, 64)
+			widthSpec = int(num)
+			if err != nil {
+				return nil, fmt.Errorf("invlid width specifier")
+			}
+			i = numEnd
+			if numStr[0] == '0' {
+				padChar = "0"
+			}
+		}
+
 		switch fmtStr[i] {
 		case '%':
 			sb.WriteByte('%')
@@ -63,14 +83,30 @@ func nativePrintf(e *Evaluator, args []*Value, this *Value) (*Value, error) {
 				return nil, err
 			}
 			argIndex++
-			sb.WriteString(arg.String())
+			argStr := arg.String()
+
+			if widthSpec > 0 && len(argStr) < widthSpec {
+				argStr = strings.Repeat(padChar, widthSpec-len(argStr)) + argStr
+			} else if widthSpec < 0 && len(argStr) < -widthSpec {
+				argStr = argStr + strings.Repeat(padChar, -widthSpec-len(argStr))
+			}
+
+			sb.WriteString(argStr)
 		case 'f':
 			arg, err := checkArg(args, argIndex, ValueNum)
 			if err != nil {
 				return nil, err
 			}
 			argIndex++
-			sb.WriteString(arg.String())
+			argStr := arg.String()
+
+			if widthSpec > 0 && len(argStr) < widthSpec {
+				argStr = strings.Repeat(padChar, widthSpec-len(argStr)) + argStr
+			} else if widthSpec < 0 && len(argStr) < -widthSpec {
+				argStr = argStr + strings.Repeat(padChar, -widthSpec-len(argStr))
+			}
+
+			sb.WriteString(argStr)
 		case 'v':
 			sb.WriteString(args[argIndex].PrettyString(false))
 			argIndex++
