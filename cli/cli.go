@@ -11,6 +11,7 @@ import (
 	"runtime/pprof"
 
 	lang "github.com/alligator/jqawk/src"
+	"github.com/mattn/go-isatty"
 )
 
 func DebugAst(prog string, rootSelector string) {
@@ -127,7 +128,9 @@ func Run(version string) (exitCode int) {
 
 	var input io.Reader
 	if filePath == "" {
-		input = os.Stdin
+		if !isatty.IsTerminal(os.Stdin.Fd()) {
+			input = os.Stdin
+		}
 	} else {
 		file, err := os.Open(filePath)
 		if err != nil {
