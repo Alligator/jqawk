@@ -196,7 +196,7 @@ Mary 121
 Susie 76.5
 ```
 
-### `$` Variables
+## `$` Variables
 
 If the input is an array, jqawk sets two variables in a pattern rule:
 
