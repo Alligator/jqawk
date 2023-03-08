@@ -157,11 +157,12 @@ Kathy      4          10
 Mark       5          20
 Mary       5.5        22
 Susie      4.25       18
+--------------------------------
 ```
 
 ## Regex
 
-Regex literals can be matched with the `~` operator:
+Regex literals can be matched against with the `~` operator:
 
 ```shellsession
 $ jqawk "$.name ~ /^M/ { print $.name }" emp.json
@@ -169,9 +170,11 @@ Mark
 Mary
 ```
 
+Use `!~` to invert the match.
+
 ## Functions
 
-Functions can be defined along with rules:
+Functions can be defined at the same level as rules:
 
 ```awk
 function pay(rate, hours) {
@@ -192,6 +195,17 @@ Mark 100
 Mary 121
 Susie 76.5
 ```
+
+### `$` Variables
+
+If the input is an array, jqawk sets two variables in a pattern rule:
+
+- `$` is the current item in the array
+- `$index` is the array index of that item
+
+If the input is not an array, or the rule is a `BEGIN` and `END` rule, jqawk sets one variable:
+
+- `$` is the input value
 
 ## Modifying the JSON
 
@@ -271,21 +285,12 @@ false             bool
 ```
 pattern { body }    runs when pattern is truthy
 BEGIN { body }      runs before the input is processed
-END { body}         runs after the input
+END { body}         runs after the input is processed
 ```
 
 If the input is an array, each pattern rule runs for each item in the array.
 
 If the input is not an array, each pattern rule runs once.
-
-### `$` Variables
-
-If the input is an array, jqawk sets two variables:
-
-- `$` is the current item in the array
-- `$index` is the array index of that item
-
-If the input is not an array, `$` is the input value in all rules.
 
 ### Statements
 
@@ -294,13 +299,13 @@ print <expression>, <expression>, ...
   print <expression>s, separated by spaces
 
 return <expression>
-  return from the current function, optionally returning the value of
+  return from the current function, optionally returning the value of <expression>
 
 break
   exit the enclosing for or while loop
 
 continue
-  immediately begin the next iteration of the loop
+  immediately begin the next iteration of the enclosing loop
 
 next
   immediately exit the rule and process no further rules for the current item
@@ -318,8 +323,11 @@ for (<preexpression>; <checkexpression>; <postexpression>) <body>
 
 for (<identifier> in <expression>) <body>
   execute <body> for each item in <expression> with <identifier> set to it's
-  value. if <expression> is an array, it's each item. for objects, it's each
-  key. for strings, each character
+  value.
+  
+  if <expression> is an array, <identifier> is each item.
+  if it's an object, <identifier> is each key.
+  if it's a string, <identifier> is each character.
 
 for (<identifier>, <indexidentifier> in <expression>) <body>
   same as above, with <indexindeitifer> set to the index of the item for arrays
