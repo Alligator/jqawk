@@ -7,6 +7,7 @@ import (
 	"go/ast"
 	"io"
 	"os"
+	"runtime/debug"
 	"runtime/pprof"
 
 	lang "github.com/alligator/jqawk/src"
@@ -67,14 +68,31 @@ func DebugLex(prog string, rootSelector string) {
 	dbg(prog)
 }
 
-func Run() (exitCode int) {
+func getCommit() string {
+	if info, ok := debug.ReadBuildInfo(); ok {
+		for _, setting := range info.Settings {
+			if setting.Key == "vcs.revision" {
+				return setting.Value[:7]
+			}
+		}
+	}
+	return "dev"
+}
+
+func Run(version string) (exitCode int) {
 	dbgAst := flag.Bool("dbg-ast", false, "print the AST and exit")
 	dbgLex := flag.Bool("dbg-lex", false, "print tokens and exit")
 	progFile := flag.String("f", "", "the program file to run")
 	rootSelector := flag.String("r", "", "root selector")
 	profile := flag.Bool("profile", false, "record a CPU profile")
 	outfile := flag.String("o", "", "the file to write JSON to")
+	showVersion := flag.Bool("version", false, "print version information")
 	flag.Parse()
+
+	if *showVersion {
+		fmt.Printf("jqawk %s (revision %s)\n", version, getCommit())
+		return 0
+	}
 
 	if *profile {
 		f, _ := os.Create("jqawk.prof")
