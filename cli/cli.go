@@ -118,12 +118,12 @@ func Run(version string) (exitCode int) {
 
 	if *dbgAst {
 		DebugAst(prog, *rootSelector)
-		os.Exit(0)
+		return 0
 	}
 
 	if *dbgLex {
 		DebugLex(prog, *rootSelector)
-		os.Exit(0)
+		return 0
 	}
 
 	var input io.Reader
