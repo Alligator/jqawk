@@ -526,10 +526,12 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (*Cell, error) {
 			}
 			return NewCell(NewValue(leftNum / rightNum)), nil
 		case Percent:
-			if leftNum == 0 || rightNum == 0 {
+			leftInt := int(leftNum)
+			rightInt := int(rightNum)
+			if leftInt == 0 || rightInt == 0 {
 				return nil, e.error(expr.OpToken, "divide by zero")
 			}
-			return NewCell(NewValue(int(leftNum) % int(rightNum))), nil
+			return NewCell(NewValue(leftInt % rightInt)), nil
 		default:
 			panic("unhandled operator")
 		}
