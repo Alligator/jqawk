@@ -588,6 +588,13 @@ func (e *Evaluator) evalAssignment(left *Cell, right *Cell) (*Cell, error) {
 	case ValueStr:
 		s := *right.Value.Str
 		left.Value = NewString(s)
+	case ValueRegex:
+		r := *right.Value.Str
+		val := Value{
+			Tag: ValueRegex,
+			Str: &r,
+		}
+		left.Value = val
 
 	// reference
 	case ValueArray, ValueObj, ValueUnknown:
