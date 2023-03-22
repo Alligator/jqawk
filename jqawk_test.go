@@ -32,6 +32,8 @@ func TestMain(m *testing.M) {
 
 func FuzzJqawk(f *testing.F) {
 	f.Add("BEGIN { print 'hi' }")
+	f.Add("{ print $ }")
+	f.Add("END { print json(1 + 2 * 3) }")
 
 	f.Fuzz(func(t *testing.T, src string) {
 		lex := lang.NewLexer(src)
