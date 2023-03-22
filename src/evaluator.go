@@ -547,7 +547,7 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (*Cell, error) {
 
 		re, err := regexp.Compile(regex)
 		if err != nil {
-			return nil, err
+			return nil, e.error(expr.Right.Token(), err.Error())
 		}
 
 		var v Value
