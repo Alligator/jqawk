@@ -1,3 +1,5 @@
 /target
-jqawk.exe
 *.json
+*.exe
+*.prof
+build/
