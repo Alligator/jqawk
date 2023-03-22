@@ -586,7 +586,7 @@ func (e *Evaluator) evalAssignment(left *Cell, right *Cell) (*Cell, error) {
 		left.Value = NewString(s)
 
 	// reference
-	case ValueArray, ValueObj:
+	case ValueArray, ValueObj, ValueUnknown:
 		left.Value = right.Value
 
 	default:
