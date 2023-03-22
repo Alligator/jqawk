@@ -30,6 +30,32 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
+func FuzzJqawk(f *testing.F) {
+	f.Add("BEGIN { print 'hi' }")
+
+	f.Fuzz(func(t *testing.T, src string) {
+		lex := lang.NewLexer(src)
+		parser := lang.NewParser(&lex)
+		rules, err := parser.Parse()
+		if err != nil {
+			if _, ok := err.(lang.SyntaxError); !ok {
+				t.Errorf("%#v", err)
+			}
+		}
+
+		var sb strings.Builder
+		ev := lang.NewEvaluator(rules, &lex, &sb)
+		rootValue := lang.NewValue([]interface{}{})
+
+		err = ev.Eval(lang.NewCell(rootValue))
+		if err != nil {
+			if _, ok := err.(lang.RuntimeError); !ok {
+				t.Errorf("%#v", err)
+			}
+		}
+	})
+}
+
 func test(t *testing.T, tc testCase) {
 	t.Run(tc.name, func(t *testing.T) {
 		handleError := func(err error) {
