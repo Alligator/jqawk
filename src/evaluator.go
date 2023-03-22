@@ -160,7 +160,11 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 		switch exp.token.Tag {
 		case Str, Ident:
 			str := e.lexer.GetString(&exp.token)
-			return e.evalString(str)
+			cell, err := e.evalString(str)
+			if err != nil {
+				return nil, e.error(expr.Token(), err.Error())
+			}
+			return cell, nil
 		case Regex:
 			str := e.lexer.GetString(&exp.token)
 			val := Value{
