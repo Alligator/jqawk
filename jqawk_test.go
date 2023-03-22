@@ -654,6 +654,20 @@ string rpad: sponge     sponge
 		json:     "[[0], [1]]",
 		expected: "false\ntrue\n",
 	})
+
+	test(t, testCase{
+		name:          "bug: divide by 0",
+		prog:          "{ print 0 / 0 }",
+		json:          "[]",
+		expectedError: "divide by zero",
+	})
+
+	test(t, testCase{
+		name:          "bug: modulo by 0",
+		prog:          "{ print 0 % 0 }",
+		json:          "[]",
+		expectedError: "divide by zero",
+	})
 }
 
 func TestJqawkExe(t *testing.T) {
