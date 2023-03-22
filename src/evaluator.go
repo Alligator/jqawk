@@ -172,7 +172,7 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 			numStr := e.lexer.GetString(&exp.token)
 			num, err := strconv.ParseInt(numStr, 10, 64)
 			if err != nil {
-				return nil, err
+				return nil, e.error(expr.Token(), "could not parse number")
 			}
 			f := float64(num)
 			return NewCell(Value{
