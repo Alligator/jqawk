@@ -126,7 +126,7 @@ func nativeJson(e *Evaluator, args []*Value, this *Value) (*Value, error) {
 
 	val, err := args[0].ToGoValue()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error creating JSON: %s", err.Error())
 	}
 
 	bytes, err := json.MarshalIndent(val, "", "  ")

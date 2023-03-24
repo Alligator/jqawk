@@ -160,6 +160,24 @@ func (v *Value) String() string {
 
 // convert a value to prettified string
 func (v *Value) PrettyString(quote bool) string {
+	return v.prettyStringInteral(v, quote, false)
+}
+
+func isSame(a *Value, b *Value) bool {
+	if a.Tag != b.Tag {
+		return false
+	}
+	if a.Tag == ValueObj || a.Tag == ValueArray {
+		return a.Obj == b.Obj
+	}
+	return false
+}
+
+func (v *Value) prettyStringInteral(rootValue *Value, quote bool, checkCircularReference bool) string {
+	if checkCircularReference && isSame(rootValue, v) {
+		return "<circular reference>"
+	}
+
 	switch v.Tag {
 	case ValueStr:
 		if quote {
@@ -182,7 +200,7 @@ func (v *Value) PrettyString(quote bool) string {
 			if index > 0 {
 				sb.WriteString(", ")
 			}
-			sb.WriteString(cell.Value.PrettyString(true))
+			sb.WriteString(cell.Value.prettyStringInteral(rootValue, true, true))
 		}
 		sb.WriteByte(']')
 		return sb.String()
@@ -194,9 +212,10 @@ func (v *Value) PrettyString(quote bool) string {
 			if index > 0 {
 				sb.WriteString(", ")
 			}
+
 			sb.WriteString("\"" + key + "\"")
 			sb.WriteString(": ")
-			sb.WriteString(value.Value.PrettyString(true))
+			sb.WriteString(value.Value.prettyStringInteral(rootValue, true, true))
 			index++
 		}
 		sb.WriteByte('}')
@@ -324,6 +343,14 @@ func (v *Value) Not() *Value {
 }
 
 func (v *Value) ToGoValue() (interface{}, error) {
+	return v.toGoValueInterval(v, false)
+}
+
+func (v *Value) toGoValueInterval(rootValue *Value, checkCircularReference bool) (interface{}, error) {
+	if checkCircularReference && isSame(v, rootValue) {
+		return nil, fmt.Errorf("circular reference")
+	}
+
 	switch v.Tag {
 	case ValueStr:
 		return *v.Str, nil
@@ -334,7 +361,7 @@ func (v *Value) ToGoValue() (interface{}, error) {
 	case ValueArray:
 		var array []interface{}
 		for _, item := range v.Array {
-			val, err := item.Value.ToGoValue()
+			val, err := item.Value.toGoValueInterval(rootValue, true)
 			if err != nil {
 				return nil, err
 			}
@@ -344,7 +371,7 @@ func (v *Value) ToGoValue() (interface{}, error) {
 	case ValueObj:
 		obj := make(map[string]interface{})
 		for k, v := range *v.Obj {
-			val, err := v.Value.ToGoValue()
+			val, err := v.Value.toGoValueInterval(rootValue, true)
 			if err != nil {
 				return nil, err
 			}

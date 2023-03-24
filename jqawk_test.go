@@ -559,6 +559,20 @@ string rpad: sponge     sponge
 	})
 
 	test(t, testCase{
+		name:     "printing circular references",
+		prog:     "BEGIN { a.a=a; print a }",
+		json:     "[]",
+		expected: "{\"a\": <circular reference>}\n",
+	})
+
+	test(t, testCase{
+		name:          "converting circular references to JSON",
+		prog:          "BEGIN { a.a=a; print json(a) }",
+		json:          "[]",
+		expectedError: "error creating JSON: circular reference",
+	})
+
+	test(t, testCase{
 		name: "bug: statement after block",
 		prog: `
 			{
