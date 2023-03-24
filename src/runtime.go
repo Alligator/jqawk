@@ -23,7 +23,7 @@ func checkArg(args []*Value, index int, tag ValueTag) (*Value, error) {
 
 func checkArgCount(args []*Value, expectedCount int) error {
 	if len(args) != expectedCount {
-		return fmt.Errorf("expected %d arguments", expectedCount)
+		return fmt.Errorf("expected %d argument(s)", expectedCount)
 	}
 	return nil
 }

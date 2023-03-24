@@ -339,7 +339,7 @@ func (e *Evaluator) callFunction(exp *ExprCall, fn *Cell, args []*Value) (*Cell,
 	case ValueNativeFn:
 		result, err := fn.Value.NativeFn(e, args, fn.Value.Binding)
 		if err != nil {
-			return nil, err
+			return nil, e.error(exp.Token(), err.Error())
 		}
 		if result != nil {
 			return NewCell(*result), nil
