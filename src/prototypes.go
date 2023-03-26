@@ -175,6 +175,30 @@ func getStrPrototype() *Value {
 					return &splits, nil
 				},
 			}),
+			"lower": NewCell(Value{
+				Tag: ValueNativeFn,
+				NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
+					if this == nil || this.Tag != ValueStr {
+						v := NewValue(0)
+						return &v, nil
+					}
+
+					lower := NewValue(strings.ToLower(*this.Str))
+					return &lower, nil
+				},
+			}),
+			"upper": NewCell(Value{
+				Tag: ValueNativeFn,
+				NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
+					if this == nil || this.Tag != ValueStr {
+						v := NewValue(0)
+						return &v, nil
+					}
+
+					upper := NewValue(strings.ToUpper(*this.Str))
+					return &upper, nil
+				},
+			}),
 		}
 		strPrototype = &Value{
 			Tag: ValueObj,

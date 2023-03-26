@@ -573,6 +573,22 @@ string rpad: sponge     sponge
 	})
 
 	test(t, testCase{
+		name: "string methods",
+		prog: `
+			BEGIN {
+				print "aBc".upper()
+				print "aBc".lower()
+				print "aBc".split("B")
+			}
+		`,
+		json: "[]",
+		expected: `ABC
+abc
+["a", "c"]
+`,
+	})
+
+	test(t, testCase{
 		name: "bug: statement after block",
 		prog: `
 			{
