@@ -46,6 +46,13 @@ func DebugLex(prog string, rootSelector string) {
 				panic(err)
 			}
 
+			if tok.Tag == lang.Divide {
+				tok, err = lex.Regex()
+				if err != nil {
+					panic(err)
+				}
+			}
+
 			if tok.Len == 0 {
 				fmt.Printf("%s ", tok.Tag)
 			} else {

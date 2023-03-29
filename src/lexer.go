@@ -211,7 +211,7 @@ func (l *Lexer) string(quoteChar byte) (Token, error) {
 }
 
 // the parser calls this when it finds a '/' in prefix position
-func (l *Lexer) regex() (Token, error) {
+func (l *Lexer) Regex() (Token, error) {
 	for !l.atEnd() && l.peek() != '/' {
 		l.advance()
 	}

@@ -432,7 +432,7 @@ func literal(p *Parser) (Expr, error) {
 }
 
 func regex(p *Parser) (Expr, error) {
-	token, err := p.lexer.regex()
+	token, err := p.lexer.Regex()
 	if err != nil {
 		return nil, err
 	}
