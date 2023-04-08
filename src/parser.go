@@ -57,7 +57,7 @@ func NewParser(l *Lexer) Parser {
 		GreaterEqual:  {PrecComparison, nil, binary},
 		Tilde:         {PrecComparison, nil, binary},
 		BangTilde:     {PrecComparison, nil, binary},
-		Equal:         {PrecAssign, nil, binary},
+		Equal:         {PrecAssign, nil, assign},
 		Plus:          {PrecAddition, unary, binary},
 		Minus:         {PrecAddition, unary, binary},
 		Multiply:      {PrecMultiplication, nil, binary},
@@ -778,6 +778,35 @@ func (p *Parser) rewriteCompundAssingment(left Expr, right Expr, opToken Token) 
 		},
 		OpToken: equalOp,
 	}, nil
+}
+
+func assign(p *Parser, left Expr) (Expr, error) {
+	switch left.(type) {
+	case *ExprLiteral, *ExprArray, *ExprObject, *ExprUnary:
+		return nil, p.error(left.Token().Pos, "invalid assignment")
+	}
+
+	_, err := p.advance()
+	if err != nil {
+		return nil, err
+	}
+	opToken := *p.previous
+
+	expr, err := p.expressionWithPrec(p.rule(opToken.Tag).prec)
+	if err != nil {
+		return nil, err
+	}
+
+	switch opToken.Tag {
+	case PlusEqual, MinusEqual, MultiplyEqual, DivideEqual:
+		return p.rewriteCompundAssingment(left, expr, opToken)
+	default:
+		return &ExprBinary{
+			Left:    left,
+			Right:   expr,
+			OpToken: opToken,
+		}, nil
+	}
 }
 
 func (p *Parser) parseRule() (Rule, error) {
