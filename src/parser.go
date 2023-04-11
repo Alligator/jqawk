@@ -781,9 +781,13 @@ func (p *Parser) rewriteCompundAssingment(left Expr, right Expr, opToken Token) 
 }
 
 func assign(p *Parser, left Expr) (Expr, error) {
-	switch left.(type) {
-	case *ExprLiteral, *ExprArray, *ExprObject, *ExprUnary:
+	switch e := left.(type) {
+	case *ExprLiteral, *ExprArray, *ExprObject:
 		return nil, p.error(left.Token().Pos, "invalid assignment")
+	case *ExprBinary:
+		if e.OpToken.Tag != Dot && e.OpToken.Tag != LSquare {
+			return nil, p.error(left.Token().Pos, "invalid assignment")
+		}
 	}
 
 	_, err := p.advance()

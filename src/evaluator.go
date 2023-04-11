@@ -564,13 +564,13 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (*Cell, error) {
 		}
 		return NewCell(v), nil
 	case Equal:
-		return e.evalAssignment(left, right)
+		return e.evalAssignment(expr, left, right)
 	default:
 		return nil, e.error(expr.OpToken, fmt.Sprintf("unknown operator %s", expr.OpToken.Tag))
 	}
 }
 
-func (e *Evaluator) evalAssignment(left *Cell, right *Cell) (*Cell, error) {
+func (e *Evaluator) evalAssignment(expr *ExprBinary, left *Cell, right *Cell) (*Cell, error) {
 	switch right.Value.Tag {
 	// copy
 	case ValueNum:
@@ -603,7 +603,7 @@ func (e *Evaluator) evalAssignment(left *Cell, right *Cell) (*Cell, error) {
 		left.Value = right.Value
 
 	default:
-		panic(fmt.Errorf("assignment not implemented for %s", right.Value.Tag))
+		return nil, e.error(expr.OpToken, "invalid assignment")
 	}
 	return left, nil
 }
