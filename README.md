@@ -310,6 +310,9 @@ continue
 next
   immediately exit the rule and process no further rules for the current item
 
+exit
+  immediately exit the program
+
 if (<expression>) <body> else <elsebody>
   execute <body> if <expression> is truthy. If the value is falsy and the else
   is present, execute <elsebody>

@@ -31,6 +31,7 @@ var (
 	errBreak    = errors.New("break")
 	errReturn   = errors.New("return")
 	errNext     = errors.New("next")
+	errExit     = errors.New("exit")
 )
 
 func NewEvaluator(prog Program, lexer *Lexer, stdout io.Writer) Evaluator {
@@ -789,6 +790,8 @@ func (e *Evaluator) evalStatement(stmt Statement) error {
 		return errContinue
 	case *StatementNext:
 		return errNext
+	case *StatementExit:
+		return errExit
 	default:
 		return e.error(st.Token(), fmt.Sprintf("expected a statement but found %T", st))
 	}
@@ -875,7 +878,7 @@ func EvalExpression(exprSrc string, rootValue interface{}, stdout io.Writer) (*C
 	ev.root = rootCell
 	ev.ruleRoot = rootCell
 	cell, err := ev.evalExpr(expr)
-	if err != nil {
+	if err != nil && err != errExit {
 		return nil, err
 	}
 	return cell, nil
@@ -918,17 +921,26 @@ func (e *Evaluator) Eval(rootCell *Cell) error {
 	for _, rule := range beginRules {
 		e.ruleRoot = e.root
 		if err := e.evalStatement(rule.Body); err != nil {
+			if err == errExit {
+				return nil
+			}
 			return err
 		}
 	}
 
 	if err := e.evalPatternRules(patternRules); err != nil {
+		if err == errExit {
+			return nil
+		}
 		return err
 	}
 
 	for _, rule := range endRules {
 		e.ruleRoot = e.root
 		if err := e.evalStatement(rule.Body); err != nil {
+			if err == errExit {
+				return nil
+			}
 			return err
 		}
 	}

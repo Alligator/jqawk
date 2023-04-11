@@ -30,6 +30,7 @@ const (
 	Continue
 	Next
 	Newline
+	Exit
 	True          // true
 	False         // false
 	LCurly        // {
@@ -181,6 +182,8 @@ func (l *Lexer) identifier() Token {
 		return l.simpleToken(Continue)
 	case "next":
 		return l.simpleToken(Next)
+	case "exit":
+		return l.simpleToken(Exit)
 	default:
 		return l.stringToken(Ident, l.pos-l.tokenStart)
 	}

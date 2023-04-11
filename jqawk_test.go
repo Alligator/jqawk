@@ -596,6 +596,13 @@ abc
 	})
 
 	test(t, testCase{
+		name:     "exit",
+		prog:     "{ print $; exit }",
+		json:     "[1, 2]",
+		expected: "1\n",
+	})
+
+	test(t, testCase{
 		name: "bug: statement after block",
 		prog: `
 			{

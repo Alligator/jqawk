@@ -163,6 +163,10 @@ type StatementNext struct {
 	token Token
 }
 
+type StatementExit struct {
+	token Token
+}
+
 type StatementIf struct {
 	Expr     Expr
 	Body     Statement
@@ -195,6 +199,7 @@ func (*StatementReturn) statementNode()   {}
 func (*StatementBreak) statementNode()    {}
 func (*StatementContinue) statementNode() {}
 func (*StatementNext) statementNode()     {}
+func (*StatementExit) statementNode()     {}
 func (*StatementIf) statementNode()       {}
 func (*StatementWhile) statementNode()    {}
 func (*StatementFor) statementNode()      {}
@@ -207,6 +212,7 @@ func (stmt *StatementReturn) Token() Token   { return stmt.Expr.Token() }
 func (stmt *StatementBreak) Token() Token    { return stmt.token }
 func (stmt *StatementContinue) Token() Token { return stmt.token }
 func (stmt *StatementNext) Token() Token     { return stmt.token }
+func (stmt *StatementExit) Token() Token     { return stmt.token }
 func (stmt *StatementIf) Token() Token       { return stmt.Expr.Token() }
 func (stmt *StatementWhile) Token() Token    { return stmt.Expr.Token() }
 func (stmt *StatementFor) Token() Token      { return stmt.Expr.Token() }
