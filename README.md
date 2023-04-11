@@ -351,6 +351,8 @@ int(arg)
 
 ```
 string.length()           return the length
+string.upper()            return an uppercase copy of the string
+string.lower()            return a lowercase copy of the string
 string.split(separator)   split the string into substrings on a separator
 
 object.length()           return the number of keys
