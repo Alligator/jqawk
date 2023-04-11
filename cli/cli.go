@@ -14,7 +14,7 @@ import (
 	"github.com/mattn/go-isatty"
 )
 
-func DebugAst(prog string, rootSelector string) {
+func debugAst(prog string, rootSelector string) {
 	if len(rootSelector) > 0 {
 		fmt.Println("root selector ast")
 		rsLex := lang.NewLexer(rootSelector)
@@ -35,7 +35,7 @@ func DebugAst(prog string, rootSelector string) {
 	ast.Print(nil, program)
 }
 
-func DebugLex(prog string, rootSelector string) {
+func debugLex(prog string, rootSelector string) {
 	dbg := func(prog string) {
 		lex := lang.NewLexer(prog)
 		line := 1
@@ -124,12 +124,12 @@ func Run(version string) (exitCode int) {
 	}
 
 	if *dbgAst {
-		DebugAst(prog, *rootSelector)
+		debugAst(prog, *rootSelector)
 		return 0
 	}
 
 	if *dbgLex {
-		DebugLex(prog, *rootSelector)
+		debugLex(prog, *rootSelector)
 		return 0
 	}
 
