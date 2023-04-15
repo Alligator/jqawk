@@ -589,6 +589,13 @@ abc
 	})
 
 	test(t, testCase{
+		name:     "pluck",
+		prog:     "{ print $.pluck('a') }",
+		json:     `[{ "a": 1, "b": 2}]`,
+		expected: "{\"a\": 1}\n",
+	})
+
+	test(t, testCase{
 		name: "bug: statement after block",
 		prog: `
 			{

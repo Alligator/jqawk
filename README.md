@@ -356,6 +356,8 @@ string.lower()            return a lowercase copy of the string
 string.split(separator)   split the string into substrings on a separator
 
 object.length()           return the number of keys
+object.pluck(k1, k2, ...) return a shallow copy of the object containg only the
+                          given keys
 
 array.length()            return the length
 array.push(value)         push value to the end of the array

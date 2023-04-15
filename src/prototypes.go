@@ -128,6 +128,23 @@ func getObjPrototype() *Value {
 					return &lengthVal, nil
 				},
 			}),
+			"pluck": NewCell(Value{
+				Tag: ValueNativeFn,
+				NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
+					newObj := NewObject()
+					for _, value := range v {
+						val, err := this.GetMember(*value)
+						if err != nil {
+							return nil, err
+						}
+						_, err = newObj.SetMember(*value, NewCell(val.Value))
+						if err != nil {
+							return nil, err
+						}
+					}
+					return &newObj, nil
+				},
+			}),
 		}
 		objPrototype = &Value{
 			Tag: ValueObj,
