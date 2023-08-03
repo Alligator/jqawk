@@ -488,6 +488,13 @@ string rpad: sponge     sponge
 	})
 
 	test(t, testCase{
+		name:     "optional chaining",
+		prog:     "{ print $.a.b.c.d.e }",
+		json:     `[{ "a": 1 }]`,
+		expected: "nil\n",
+	})
+
+	test(t, testCase{
 		name:     "deep implicit object creation",
 		prog:     "BEGIN { new_obj.a.b.c = 'hi'; print new_obj; }",
 		json:     `[]`,
