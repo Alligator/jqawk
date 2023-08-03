@@ -488,6 +488,13 @@ string rpad: sponge     sponge
 	})
 
 	test(t, testCase{
+		name:     "deep implicit object creation",
+		prog:     "BEGIN { new_obj.a.b.c = 'hi'; print new_obj; }",
+		json:     `[]`,
+		expected: `{"a": {"b": {"c": "hi"}}}` + "\n",
+	})
+
+	test(t, testCase{
 		name:     "groupings",
 		prog:     "BEGIN { print (1 + 2) * 3; }",
 		json:     "[]",

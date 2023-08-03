@@ -462,12 +462,15 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (*Cell, error) {
 		if err != nil {
 			return nil, e.error(expr.Left.Token(), err.Error())
 		}
+
 		if member == nil {
-			// auto-create members
-			member, err = left.Value.SetMember(right.Value, NewCell(NewValue(nil)))
-			if err != nil {
-				return nil, e.error(expr.Left.Token(), err.Error())
-			}
+			// speculatively create members
+			// see createSpeculativeObjects
+			memberVal := NewValue(nil)
+			rightStr := right.Value.String()
+			memberVal.Str = &rightStr
+			memberVal.ParentObj = &left.Value
+			return NewCell(memberVal), nil
 		}
 		member.Value.Binding = &left.Value
 
@@ -571,7 +574,59 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (*Cell, error) {
 	}
 }
 
+func (e *Evaluator) createSpeculativeObjects(specObj *Cell) (*Cell, error) {
+	// Speculative objects are how jqawk implements two features:
+	//
+	// 1. Optional chaining, where "a.b.c.d" should evaluate to nil if a is an
+	//  	object but has no "b" property
+	//
+	// 2. Implicit member creation, where "a.b.c.d = 4" should create all the
+	// 		intervening objects
+	//
+	// To support both, b, c, and d are created as speculative objects, a special
+	// class of nil value with ParentObj and Str properties. If a speculative
+	// object is assigned to, we create it. If not, it's just a nil.
+	//
+	// ParentObj points to the object this value should be set on, Str is the key.
+	// ParentObj could also be a speculative object, so this function recursively
+	// create parents.
+	parent := specObj.Value.ParentObj
+
+	if parent.Tag == ValueNil && parent.ParentObj == nil {
+		panic(fmt.Errorf("attempt to create speculative object with no ParentObj"))
+	}
+
+	var objToSet *Value
+	if parent.Tag == ValueNil {
+		newParent, err := e.createSpeculativeObjects(NewCell(*parent))
+		if err != nil {
+			return nil, err
+		}
+		newObj := NewObject()
+		newParent.Value = newObj
+		objToSet = &newParent.Value
+	} else {
+		objToSet = parent
+	}
+
+	cell, err := objToSet.SetMember(NewString(*specObj.Value.Str), specObj)
+	if err != nil {
+		return nil, err
+	}
+
+	return cell, nil
+}
+
 func (e *Evaluator) evalAssignment(expr *ExprBinary, left *Cell, right *Cell) (*Cell, error) {
+	if left.Value.Tag == ValueNil && left.Value.ParentObj != nil {
+		// speculative object creation
+		var err error
+		left, err = e.createSpeculativeObjects(left)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	switch right.Value.Tag {
 	// copy
 	case ValueNum:

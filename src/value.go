@@ -36,16 +36,17 @@ const (
 )
 
 type Value struct {
-	Tag      ValueTag
-	Str      *string // used by ValueStr and ValueRegex
-	Num      *float64
-	Bool     *bool
-	Array    []*Cell
-	Obj      *map[string]*Cell
-	NativeFn func(*Evaluator, []*Value, *Value) (*Value, error)
-	Fn       *ExprFunction
-	Proto    *Value
-	Binding  *Value
+	Tag       ValueTag
+	Str       *string // used by ValueStr and ValueRegex
+	Num       *float64
+	Bool      *bool
+	Array     []*Cell
+	Obj       *map[string]*Cell
+	NativeFn  func(*Evaluator, []*Value, *Value) (*Value, error)
+	Fn        *ExprFunction
+	Proto     *Value
+	Binding   *Value
+	ParentObj *Value
 }
 
 func NewValue(srcVal interface{}) Value {
