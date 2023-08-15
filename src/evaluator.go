@@ -593,7 +593,7 @@ func (e *Evaluator) createSpeculativeObjects(specObj *Cell) (*Cell, error) {
 	parent := specObj.Value.ParentObj
 
 	if parent.Tag == ValueNil && parent.ParentObj == nil {
-		panic(fmt.Errorf("attempt to create speculative object with no ParentObj"))
+		return nil, fmt.Errorf("could not create this object")
 	}
 
 	var objToSet *Value
