@@ -623,7 +623,7 @@ func (e *Evaluator) evalAssignment(expr *ExprBinary, left *Cell, right *Cell) (*
 		var err error
 		left, err = e.createSpeculativeObjects(left)
 		if err != nil {
-			return nil, err
+			return nil, e.error(expr.OpToken, err.Error())
 		}
 	}
 
