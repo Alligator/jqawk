@@ -455,9 +455,15 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (*Cell, error) {
 	switch expr.OpToken.Tag {
 	case LSquare, Dot:
 		if left.Value.Tag == ValueUnknown {
-			// if it's unknown, make it an object
-			left.Value = NewObject()
+			if right.Value.Tag == ValueNum {
+				// if it's unknown and the rhs is a number, make it an array
+				left.Value = NewArray()
+			} else {
+				// otherwise make it an object
+				left.Value = NewObject()
+			}
 		}
+
 		member, err := left.Value.GetMember(right.Value)
 		if err != nil {
 			return nil, e.error(expr.Left.Token(), err.Error())

@@ -235,7 +235,14 @@ func (v *Value) GetMember(member Value) (*Cell, error) {
 		index := int(*member.Num)
 		arr := v.Array
 		if index >= len(arr) {
-			return NewCell(NewValue(nil)), nil
+			// fill the array with empty cells up to the index
+			var lastCell *Cell
+			for i := len(arr); i <= index; i++ {
+				lastCell = NewCell(NewValue(nil))
+				arr = append(arr, lastCell)
+			}
+			v.Array = arr
+			return lastCell, nil
 		}
 		if index < 0 {
 			return nil, fmt.Errorf("attempted to access negative array index")

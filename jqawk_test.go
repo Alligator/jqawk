@@ -502,6 +502,13 @@ string rpad: sponge     sponge
 	})
 
 	test(t, testCase{
+		name:     "implicit array creation",
+		prog:     "BEGIN { a[0] = 1; a[2] = 'hello'; print a; }",
+		json:     "[]",
+		expected: "[1, nil, \"hello\"]\n",
+	})
+
+	test(t, testCase{
 		name:     "groupings",
 		prog:     "BEGIN { print (1 + 2) * 3; }",
 		json:     "[]",
