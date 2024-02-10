@@ -278,6 +278,7 @@ false             bool
 [1, 2]            array
 { a: 1, b: '2' }  object
 /hello/           regex
+null              null
 ```
 
 ### Rules

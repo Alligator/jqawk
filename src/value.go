@@ -193,7 +193,7 @@ func (v *Value) prettyStringInteral(rootValue *Value, quote bool, checkCircularR
 		}
 		return "false"
 	case ValueNil:
-		return "nil"
+		return "null"
 	case ValueArray:
 		var sb strings.Builder
 		sb.WriteByte('[')

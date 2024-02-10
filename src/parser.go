@@ -44,6 +44,7 @@ func NewParser(l *Lexer) Parser {
 		Num:           {PrecNone, literal, nil},
 		True:          {PrecNone, literal, nil},
 		False:         {PrecNone, literal, nil},
+		Null:          {PrecNone, literal, nil},
 		Dollar:        {PrecNone, identifier, nil},
 		Ident:         {PrecNone, identifier, nil},
 		LSquare:       {PrecCall, array, computedMember},

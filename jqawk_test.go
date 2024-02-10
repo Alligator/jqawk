@@ -491,7 +491,7 @@ string rpad: sponge     sponge
 		name:     "optional chaining",
 		prog:     "{ print $.a.b.c.d.e }",
 		json:     `[{ "a": 1 }]`,
-		expected: "nil\n",
+		expected: "null\n",
 	})
 
 	test(t, testCase{
@@ -505,7 +505,7 @@ string rpad: sponge     sponge
 		name:     "implicit array creation",
 		prog:     "BEGIN { a[0] = 1; a[2] = 'hello'; print a; }",
 		json:     "[]",
-		expected: "[1, nil, \"hello\"]\n",
+		expected: "[1, null, \"hello\"]\n",
 	})
 
 	test(t, testCase{
@@ -620,6 +620,13 @@ abc
 		name:     "exit",
 		prog:     "{ print $; exit }",
 		json:     "[1, 2]",
+		expected: "1\n",
+	})
+
+	test(t, testCase{
+		name:     "null comparison",
+		prog:     "$.a != null { print $.a }",
+		json:     `[{ "a": null }, { "a": 1 }]`,
 		expected: "1\n",
 	})
 

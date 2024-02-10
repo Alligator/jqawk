@@ -188,6 +188,8 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 			return NewCell(NewValue(true)), nil
 		case False:
 			return NewCell(NewValue(false)), nil
+		case Null:
+			return NewCell(NewValue(nil)), nil
 		default:
 			panic(fmt.Errorf("unhandled literal type: %s", exp.token.Tag))
 		}
@@ -708,7 +710,7 @@ func (e *Evaluator) evalStatement(stmt Statement) error {
 				fmt.Fprint(e.stdout, " ")
 			}
 			if cell == nil {
-				fmt.Fprint(e.stdout, "nil")
+				fmt.Fprint(e.stdout, "null")
 			} else {
 				fmt.Fprintf(e.stdout, "%s", cell.Value.PrettyString(false))
 			}
