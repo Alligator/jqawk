@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -15,6 +14,7 @@ type testCase struct {
 	name          string
 	prog          string
 	json          string
+	json2         string
 	expected      string
 	expectedError string
 	args          []string
@@ -36,22 +36,19 @@ func FuzzJqawk(f *testing.F) {
 	f.Add("END { print json(1 + 2 * 3) }")
 
 	f.Fuzz(func(t *testing.T, src string) {
-		lex := lang.NewLexer(src)
-		parser := lang.NewParser(&lex)
-		rules, err := parser.Parse()
-		if err != nil {
-			if _, ok := err.(lang.SyntaxError); !ok {
-				t.Errorf("%#v", err)
-			}
+		input := "[]"
+		inputReader := strings.NewReader(input)
+		inputFiles := []lang.InputFile{
+			{Name: "<test>", Reader: inputReader},
 		}
-
 		var sb strings.Builder
-		ev := lang.NewEvaluator(rules, &lex, &sb)
-		rootValue := lang.NewValue([]interface{}{})
+		_, err := lang.EvalProgram(src, inputFiles, "", &sb)
 
-		err = ev.Eval(lang.NewCell(rootValue))
 		if err != nil {
-			if _, ok := err.(lang.RuntimeError); !ok {
+			switch err.(type) {
+			case lang.SyntaxError, lang.RuntimeError:
+				// don't fail
+			default:
 				t.Errorf("%#v", err)
 			}
 		}
@@ -70,28 +67,18 @@ func test(t *testing.T, tc testCase) {
 			}
 		}
 
-		lex := lang.NewLexer(tc.prog)
-		parser := lang.NewParser(&lex)
-
-		rules, err := parser.Parse()
-		if err != nil {
-			handleError(err)
+		inputFiles := make([]lang.InputFile, 0)
+		if tc.json != "" {
+			inputReader := strings.NewReader(tc.json)
+			inputFiles = append(inputFiles, lang.InputFile{Name: "<test1>", Reader: inputReader})
+		}
+		if tc.json2 != "" {
+			inputReader := strings.NewReader(tc.json2)
+			inputFiles = append(inputFiles, lang.InputFile{Name: "<test2>", Reader: inputReader})
 		}
 
 		var sb strings.Builder
-		ev := lang.NewEvaluator(rules, &lex, &sb)
-
-		var j interface{}
-		rootValue := lang.NewValue([]interface{}{})
-		if len(tc.json) > 0 {
-			err = json.Unmarshal([]byte(tc.json), &j)
-			if err != nil {
-				panic(err)
-			}
-			rootValue = lang.NewValue(j)
-		}
-
-		err = ev.Eval(lang.NewCell(rootValue))
+		_, err := lang.EvalProgram(tc.prog, inputFiles, "", &sb)
 		if err != nil {
 			handleError(err)
 		}
@@ -631,6 +618,30 @@ abc
 	})
 
 	test(t, testCase{
+		name:     "multiple inputs",
+		prog:     "{ print $.a }",
+		json:     `[{ "a": 1 }]`,
+		json2:    `[{ "a": 2 }]`,
+		expected: "1\n2\n",
+	})
+
+	test(t, testCase{
+		name:     "$file",
+		prog:     "{ print $file, $.a }",
+		json:     `[{ "a": 1 }]`,
+		json2:    `[{ "a": 2 }]`,
+		expected: "<test1> 1\n<test2> 2\n",
+	})
+
+	test(t, testCase{
+		name:     "BEGIN and END with multiple inputs",
+		prog:     "BEGIN { print 'hi' } END { print 'bye' }",
+		json:     `[{ "a": 1 }]`,
+		json2:    `[{ "a": 2 }]`,
+		expected: "hi\nbye\n",
+	})
+
+	test(t, testCase{
 		name: "bug: statement after block",
 		prog: `
 			{
@@ -710,16 +721,6 @@ abc
 		prog:     "BEGIN { print -1 + 2; }",
 		json:     "[]",
 		expected: "1\n",
-	})
-
-	test(t, testCase{
-		name: "bug: $ in BEGIN and END",
-		prog: `
-			BEGIN { print $ }
-			END { print $ }
-		`,
-		json:     "{}",
-		expected: "{}\n{}\n",
 	})
 
 	test(t, testCase{

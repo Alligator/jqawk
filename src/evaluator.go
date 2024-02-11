@@ -17,13 +17,16 @@ type stackFrame struct {
 }
 
 type Evaluator struct {
-	prog      Program
-	lexer     *Lexer
-	stdout    io.Writer
-	root      *Cell
-	ruleRoot  *Cell
-	stackTop  *stackFrame
-	returnVal *Value
+	prog         Program
+	lexer        *Lexer
+	stdout       io.Writer
+	root         *Cell
+	ruleRoot     *Cell
+	stackTop     *stackFrame
+	returnVal    *Value
+	beginRules   []*Rule
+	patternRules []*Rule
+	endRules     []*Rule
 }
 
 var (
@@ -40,10 +43,29 @@ func NewEvaluator(prog Program, lexer *Lexer, stdout io.Writer) Evaluator {
 		lexer:  lexer,
 		stdout: stdout,
 	}
+	e.readRules()
 	e.pushFrame("<root>")
 	addRuntimeFunctions(&e)
 	e.addProgramFunctions()
 	return e
+}
+
+func (e *Evaluator) readRules() {
+	e.beginRules = make([]*Rule, 0)
+	e.endRules = make([]*Rule, 0)
+	e.patternRules = make([]*Rule, 0)
+
+	for _, rule := range e.prog.Rules {
+		r := rule
+		switch rule.Kind {
+		case BeginRule:
+			e.beginRules = append(e.beginRules, &r)
+		case EndRule:
+			e.endRules = append(e.endRules, &r)
+		case PatternRule:
+			e.patternRules = append(e.patternRules, &r)
+		}
+	}
 }
 
 func (e *Evaluator) addProgramFunctions() {
@@ -109,6 +131,14 @@ func (e *Evaluator) getVariable(name string) (*Cell, error) {
 	cell := NewCell(Value{Tag: ValueUnknown})
 	e.stackTop.locals[name] = cell
 	return cell, nil
+}
+
+func (e *Evaluator) setGlobal(name string, cell *Cell) {
+	top := e.stackTop
+	for top.parent != nil {
+		top = top.parent
+	}
+	top.locals[name] = cell
 }
 
 func (e *Evaluator) getIdentifier(expr *ExprIdentifier) (*Cell, error) {
@@ -947,7 +977,12 @@ func EvalExpression(exprSrc string, rootValue interface{}, stdout io.Writer) (*C
 	return cell, nil
 }
 
-func EvalProgram(progSrc string, rootCell *Cell, stdout io.Writer) (*Evaluator, error) {
+type InputFile struct {
+	Name   string
+	Reader io.Reader
+}
+
+func EvalProgram(progSrc string, files []InputFile, rootSelector string, stdout io.Writer) (*Evaluator, error) {
 	lex := NewLexer(progSrc)
 	parser := NewParser(&lex)
 	prog, err := parser.Parse()
@@ -955,58 +990,64 @@ func EvalProgram(progSrc string, rootCell *Cell, stdout io.Writer) (*Evaluator, 
 		return nil, err
 	}
 	ev := NewEvaluator(prog, &lex, stdout)
-	err = ev.Eval(rootCell)
-	if err != nil {
-		return nil, err
+
+	// begin rules
+	for _, rule := range ev.beginRules {
+		ev.ruleRoot = NewCell(NewValue(nil))
+		if err := ev.evalStatement(rule.Body); err != nil {
+			if err == errExit {
+				return &ev, nil
+			}
+			return &ev, err
+		}
 	}
+
+	// for each file, run the pattern rules
+	for _, file := range files {
+		// read the json
+		var rootValue interface{}
+		b, err := io.ReadAll(file.Reader)
+		if err != nil {
+			return &ev, err
+		}
+		err = json.Unmarshal(b, &rootValue)
+		if err != nil {
+			return &ev, err
+		}
+
+		// find the root value
+		var rootCell *Cell
+		if len(rootSelector) > 0 {
+			cell, err := EvalExpression(rootSelector, rootValue, stdout)
+			if err != nil {
+				return &ev, err
+			}
+			rootCell = cell
+		} else {
+			rootCell = NewCell(NewValue(rootValue))
+		}
+
+		// run the rules
+		ev.setGlobal("$file", NewCell(NewValue(file.Name)))
+		ev.root = rootCell
+		if err := ev.evalPatternRules(ev.patternRules); err != nil {
+			if err == errExit {
+				return &ev, nil
+			}
+			return &ev, err
+		}
+	}
+
+	// end rules
+	for _, rule := range ev.endRules {
+		ev.ruleRoot = NewCell(NewValue(nil))
+		if err := ev.evalStatement(rule.Body); err != nil {
+			if err == errExit {
+				return &ev, nil
+			}
+			return &ev, err
+		}
+	}
+
 	return &ev, nil
-}
-
-func (e *Evaluator) Eval(rootCell *Cell) error {
-	e.root = rootCell
-
-	beginRules := make([]*Rule, 0)
-	endRules := make([]*Rule, 0)
-	patternRules := make([]*Rule, 0)
-
-	for _, rule := range e.prog.Rules {
-		r := rule
-		switch rule.Kind {
-		case BeginRule:
-			beginRules = append(beginRules, &r)
-		case EndRule:
-			endRules = append(endRules, &r)
-		case PatternRule:
-			patternRules = append(patternRules, &r)
-		}
-	}
-
-	for _, rule := range beginRules {
-		e.ruleRoot = e.root
-		if err := e.evalStatement(rule.Body); err != nil {
-			if err == errExit {
-				return nil
-			}
-			return err
-		}
-	}
-
-	if err := e.evalPatternRules(patternRules); err != nil {
-		if err == errExit {
-			return nil
-		}
-		return err
-	}
-
-	for _, rule := range endRules {
-		e.ruleRoot = e.root
-		if err := e.evalStatement(rule.Body); err != nil {
-			if err == errExit {
-				return nil
-			}
-			return err
-		}
-	}
-
-	return nil
 }

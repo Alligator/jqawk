@@ -203,9 +203,16 @@ If the input is an array, jqawk sets two variables in a pattern rule:
 - `$` is the current item in the array
 - `$index` is the array index of that item
 
-If the input is not an array, or the rule is a `BEGIN` and `END` rule, jqawk sets one variable:
+If the input is not an array jqawk sets one variable:
 
 - `$` is the input value
+
+## Multiple files
+
+You can pass jqawk multiple JSON files.
+The `BEGIN` and `END` rules are run before and after processing all files.
+Other rules are run for every file.
+The `$file` variable is set to the current file name.
 
 ## Modifying the JSON
 
