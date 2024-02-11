@@ -1,0 +1,2 @@
+go test fuzz v1
+string("BEGIN{$++}BEGI[702902802702702]\xff")

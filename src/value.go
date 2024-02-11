@@ -235,6 +235,12 @@ func (v *Value) GetMember(member Value) (*Cell, error) {
 		index := int(*member.Num)
 		arr := v.Array
 		if index >= len(arr) {
+			// TODO sparse arrays
+			// don't fill up to enormous numbers, just bail
+			if index > 1024*1024 {
+				return nil, fmt.Errorf("index too large to auto-fill array")
+			}
+
 			// fill the array with empty cells up to the index
 			var lastCell *Cell
 			for i := len(arr); i <= index; i++ {
