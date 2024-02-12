@@ -327,6 +327,17 @@ func (v *Value) asFloat64() float64 {
 }
 
 func (v *Value) Compare(b *Value) (int, error) {
+	// null comparisons
+	switch {
+	case v.Tag == ValueNil && b.Tag == ValueNil:
+		// both null
+		return 0, nil
+	case v.Tag == ValueNil && b.Tag != ValueNil:
+	case v.Tag != ValueNil && b.Tag == ValueNil:
+		// one is null
+		return 1, nil
+	}
+
 	// invalid cases
 	if v.Tag == ValueArray || b.Tag == ValueArray || v.Tag == ValueObj || b.Tag == ValueObj {
 		return 0, fmt.Errorf("cannot compare %s and %s", v.Tag, b.Tag)

@@ -750,6 +750,13 @@ abc
 		json:          "[]",
 		expectedError: "divide by zero",
 	})
+
+	test(t, testCase{
+		name:     "bug: null comparsion",
+		prog:     "BEGIN { a = []; print a == null }",
+		json:     "[]",
+		expected: "false\n",
+	})
 }
 
 func TestJqawkExe(t *testing.T) {
