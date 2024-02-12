@@ -307,6 +307,8 @@ func (v *Value) isTruthy() bool {
 		return *v.Num != 0.0
 	case ValueStr:
 		return len(*v.Str) > 0
+	case ValueArray, ValueObj, ValueFn, ValueNativeFn: // always truthy
+		return true
 	}
 	return false
 }

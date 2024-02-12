@@ -634,6 +634,13 @@ abc
 	})
 
 	test(t, testCase{
+		name:     "truthiness",
+		prog:     "BEGIN { print !![], !!{} }",
+		json:     "[]",
+		expected: "true true\n",
+	})
+
+	test(t, testCase{
 		name:     "BEGIN and END with multiple inputs",
 		prog:     "BEGIN { print 'hi' } END { print 'bye' }",
 		json:     `[{ "a": 1 }]`,
