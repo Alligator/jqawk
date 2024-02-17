@@ -322,6 +322,12 @@ func (v *Value) asFloat64() float64 {
 			return 1
 		}
 		return 0
+	case ValueStr:
+		num, err := strconv.ParseFloat(*v.Str, 64)
+		if err != nil {
+			return 0
+		}
+		return num
 	}
 	return 0
 }

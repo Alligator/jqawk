@@ -205,7 +205,7 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 			return NewCell(val), nil
 		case Num:
 			numStr := e.lexer.GetString(&exp.token)
-			num, err := strconv.ParseInt(numStr, 10, 64)
+			num, err := strconv.ParseFloat(numStr, 64)
 			if err != nil {
 				return nil, e.error(expr.Token(), "could not parse number")
 			}

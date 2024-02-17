@@ -138,7 +138,7 @@ func nativeJson(e *Evaluator, args []*Value, this *Value) (*Value, error) {
 	return &v, nil
 }
 
-func nativeInt(e *Evaluator, args []*Value, this *Value) (*Value, error) {
+func nativeNum(e *Evaluator, args []*Value, this *Value) (*Value, error) {
 	if err := checkArgCount(args, 1); err != nil {
 		return nil, err
 	}
@@ -148,7 +148,7 @@ func nativeInt(e *Evaluator, args []*Value, this *Value) (*Value, error) {
 		v := NewValue(int(*args[0].Num))
 		return &v, nil
 	case ValueStr:
-		n, err := strconv.ParseInt(*args[0].Str, 10, 64)
+		n, err := strconv.ParseFloat(*args[0].Str, 64)
 		if err != nil {
 			// TODO better error message
 			return nil, err
@@ -170,8 +170,8 @@ func addRuntimeFunctions(e *Evaluator) {
 		Tag:      ValueNativeFn,
 		NativeFn: nativeJson,
 	})
-	e.stackTop.locals["int"] = NewCell(Value{
+	e.stackTop.locals["num"] = NewCell(Value{
 		Tag:      ValueNativeFn,
-		NativeFn: nativeInt,
+		NativeFn: nativeNum,
 	})
 }

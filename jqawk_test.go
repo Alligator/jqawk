@@ -649,6 +649,13 @@ abc
 	})
 
 	test(t, testCase{
+		name:     "floating point",
+		prog:     "BEGIN { print 0.2 + 0.3 + num('1.0') }",
+		json:     "",
+		expected: "1.5\n",
+	})
+
+	test(t, testCase{
 		name: "bug: statement after block",
 		prog: `
 			{

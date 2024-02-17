@@ -354,8 +354,8 @@ printf(format_string, args...)
 json(arg)
   return arg converted to a pretty-printed JSON string
 
-int(arg)
-  convert arg to a number. only works on strings
+num(arg)
+  convert arg to a number (64-bit float). only works on strings
 ```
 
 ### Methods

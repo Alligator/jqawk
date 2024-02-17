@@ -195,7 +195,7 @@ func (l *Lexer) identifier() Token {
 func (l *Lexer) number() Token {
 	for !l.atEnd() {
 		r := rune(l.peek())
-		if unicode.IsDigit(r) {
+		if unicode.IsDigit(r) || r == '-' || r == '.' {
 			l.advance()
 		} else {
 			break
