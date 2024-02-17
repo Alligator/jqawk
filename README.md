@@ -2,7 +2,31 @@
 
 jqawk is an awk-inspired programming language for wrangling JSON.
 
-See below for some examples, or the test suite in [jqawk_test.go](jqawk_test.go) for more.
+## Examples
+
+In these examples, `gh.json` contains the response from https://api.github.com/users/alligator/repos
+
+```shell
+# Count the repos
+jqawk "{ count++ } END { print count }" gh.json
+
+# Find the most used language
+jqawk "$.language != null { langs[$.language]++ } END { for (k, v in langs) print v, k }" gh.json | sort
+
+# Find repos with open issues
+jqawk "$.open_issues_count > 0 { print $.name, $.open_issues_count }" gh.json
+
+# Find the year the most repos were created
+jqawk "{ years[$.created_at.split('-')[0]]++ } END { for (k, v in years) print v, k }" gh.json | sort -n | tail -1
+
+# Find the biggest repo
+jqawk "$.size > max.size { max = $ } END { print max.name }" gh.json
+
+# Remove all but the id and name properties, writing the result to stdout
+jqawk -o - "{ $ = $.pluck('id', 'name') }" gh.json
+```
+
+While you can write full programs in jqawk, it's most useful for one-liners or in a pipeline.
 
 ## Quick guide
 

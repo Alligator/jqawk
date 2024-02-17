@@ -118,6 +118,43 @@ func testExe(t *testing.T, tc testCase) {
 
 func TestJqawk(t *testing.T) {
 	test(t, testCase{
+		name: "README example",
+		prog: `
+			BEGIN {
+				print 'Pay'
+				print '----------------'
+			}
+
+			$.hours > 0 {
+				printf("%-8s %f\n", $.name, $.rate * $.hours)
+				total += $.rate * $.hours
+			}
+
+			END {
+				print '----------------'
+				print'Total   ', total
+			}
+		`,
+		json: `[
+			{ "name": "Beth", "rate": 4, "hours": 0 },
+			{ "name": "Dan", "rate": 3.75, "hours": 0 },
+			{ "name": "Kathy", "rate": 4, "hours": 10 },
+			{ "name": "Mark", "rate": 5, "hours": 20 },
+			{ "name": "Mary", "rate": 5.50, "hours": 22 },
+			{ "name": "Susie", "rate": 4.25, "hours": 18 }
+		]`,
+		expected: `Pay
+----------------
+Kathy    40
+Mark     100
+Mary     121
+Susie    76.5
+----------------
+Total    337.5
+`,
+	})
+
+	test(t, testCase{
 		name:     "begin",
 		prog:     "BEGIN { print 'hello' } BEGIN { print 'other hello' }",
 		expected: "hello\nother hello\n",
