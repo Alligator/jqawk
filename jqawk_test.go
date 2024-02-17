@@ -771,10 +771,17 @@ rhs not null
 	})
 
 	test(t, testCase{
-		name:     "bug: null comparsion",
+		name:     "bug: null comparison",
 		prog:     "BEGIN { a = []; print a == null }",
 		json:     "[]",
 		expected: "false\n",
+	})
+
+	test(t, testCase{
+		name:     "bug: create implicit arrays/objects with ++",
+		prog:     "BEGIN { a[0]++; ++b['zero']; print a, b }",
+		json:     "[]",
+		expected: "[1] {\"zero\": 1}\n",
 	})
 }
 

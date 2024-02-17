@@ -426,13 +426,16 @@ func (e *Evaluator) evalUnaryExpr(expr *ExprUnary) (*Cell, error) {
 		return NewCell(NewValue(-v)), nil
 	case PlusPlus, MinusMinus:
 		v := val.Value.asFloat64()
+		var newValue Value
 
 		switch expr.OpToken.Tag {
 		case PlusPlus:
-			val.Value = NewValue(v + 1)
+			newValue = NewValue(v + 1)
 		case MinusMinus:
-			val.Value = NewValue(v - 1)
+			newValue = NewValue(v - 1)
 		}
+
+		e.evalAssignment(expr, val, NewCell(newValue))
 
 		if expr.Postfix {
 			return NewCell(NewValue(v)), nil
@@ -655,13 +658,13 @@ func (e *Evaluator) createSpeculativeObjects(specObj *Cell) (*Cell, error) {
 	return cell, nil
 }
 
-func (e *Evaluator) evalAssignment(expr *ExprBinary, left *Cell, right *Cell) (*Cell, error) {
+func (e *Evaluator) evalAssignment(expr Expr, left *Cell, right *Cell) (*Cell, error) {
 	if left.Value.Tag == ValueNil && left.Value.ParentObj != nil {
 		// speculative object creation
 		var err error
 		left, err = e.createSpeculativeObjects(left)
 		if err != nil {
-			return nil, e.error(expr.OpToken, err.Error())
+			return nil, e.error(expr.Token(), err.Error())
 		}
 	}
 
@@ -697,7 +700,7 @@ func (e *Evaluator) evalAssignment(expr *ExprBinary, left *Cell, right *Cell) (*
 		left.Value = right.Value
 
 	default:
-		return nil, e.error(expr.OpToken, "invalid assignment")
+		return nil, e.error(expr.Token(), "invalid assignment")
 	}
 	return left, nil
 }
