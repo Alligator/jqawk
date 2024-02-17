@@ -326,7 +326,7 @@ func (e *Evaluator) evalCaseMatch(value *Cell, exprs []Expr) (bool, map[string]*
 			}
 			cmp, err := value.Value.Compare(&caseValue.Value)
 			if err != nil {
-				return false, nil, err
+				return false, nil, e.error(expr.Token(), err.Error())
 			}
 			if cmp == 0 {
 				return true, nil, nil
