@@ -386,7 +386,11 @@ func (e *Evaluator) callFunction(exp *ExprCall, fn *Cell, args []*Value) (*Cell,
 		name := e.lexer.GetString(&f.ident)
 		e.pushFrame(name)
 		for index, argName := range f.Args {
-			e.stackTop.locals[argName] = NewCell(*args[index])
+			if index > len(args)-1 {
+				e.stackTop.locals[argName] = NewCell(NewValue(nil))
+			} else {
+				e.stackTop.locals[argName] = NewCell(*args[index])
+			}
 		}
 
 		err := e.evalStatement(f.Body)
@@ -406,7 +410,7 @@ func (e *Evaluator) callFunction(exp *ExprCall, fn *Cell, args []*Value) (*Cell,
 		if retVal != nil {
 			return NewCell(*retVal), nil
 		}
-		return nil, nil
+		return NewCell(NewValue(nil)), nil
 	default:
 		return nil, e.error(exp.Token(), fmt.Sprintf("attempted to call a %s", fn.Value.Tag))
 	}
@@ -839,7 +843,7 @@ func (e *Evaluator) evalStatement(stmt Statement) error {
 		ident := e.lexer.GetString(&st.Ident.token)
 		local, err := e.getVariable(ident)
 		if err != nil {
-			return err
+			return e.error(st.Token(), err.Error())
 		}
 
 		var indexLocal *Cell
@@ -847,7 +851,7 @@ func (e *Evaluator) evalStatement(stmt Statement) error {
 			indexIdent := e.lexer.GetString(&st.IndexIdent.token)
 			indexLocal, err = e.getVariable(indexIdent)
 			if err != nil {
-				return err
+				return e.error(st.Token(), err.Error())
 			}
 		}
 

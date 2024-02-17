@@ -137,7 +137,13 @@ func getObjPrototype() *Value {
 						if err != nil {
 							return nil, err
 						}
-						_, err = newObj.SetMember(*value, NewCell(val.Value))
+
+						if val == nil {
+							_, err = newObj.SetMember(*value, NewCell(NewValue(nil)))
+						} else {
+							_, err = newObj.SetMember(*value, NewCell(val.Value))
+						}
+
 						if err != nil {
 							return nil, err
 						}

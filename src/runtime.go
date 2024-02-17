@@ -72,6 +72,9 @@ func nativePrintf(e *Evaluator, args []*Value, this *Value) (*Value, error) {
 			if numStr[0] == '0' {
 				padChar = "0"
 			}
+			if i > end-1 {
+				return nil, fmt.Errorf("expected something after width specifier")
+			}
 		}
 
 		switch fmtStr[i] {
