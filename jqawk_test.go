@@ -663,6 +663,24 @@ rhs not null
 		json:     "[]",
 		expected: "[1] {\"zero\": 1}\n",
 	},
+	{
+		name:          "bug: return outside of function",
+		prog:          "{ return }",
+		json:          "[1]",
+		expectedError: "can only return inside a function",
+	},
+	{
+		name:          "bug: break outside of loop",
+		prog:          "{ break }",
+		json:          "[1]",
+		expectedError: "can only break inside a loop",
+	},
+	{
+		name:          "bug: continue outside of loop",
+		prog:          "{ continue }",
+		json:          "[1]",
+		expectedError: "can only continue inside a loop",
+	},
 }
 
 func TestMain(m *testing.M) {

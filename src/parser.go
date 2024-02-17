@@ -11,6 +11,8 @@ type Parser struct {
 	previous        *Token
 	rules           map[TokenTag]parseRule
 	didEndStatement bool
+	inFunction      bool
+	inLoop          bool
 }
 
 type parseRule struct {
@@ -184,6 +186,9 @@ func (p *Parser) statement() (Statement, error) {
 		}
 		return &statement, nil
 	case Return:
+		if !p.inFunction {
+			return nil, p.error(p.current.Pos, "can only return inside a function")
+		}
 		if err := p.consume(Return); err != nil {
 			return nil, err
 		}
@@ -231,6 +236,10 @@ func (p *Parser) statement() (Statement, error) {
 
 		return &StatementIf{expr, body, elseBody}, nil
 	case While:
+		wasInLoop := p.inLoop
+		p.inLoop = true
+		defer func() { p.inLoop = wasInLoop }()
+
 		if err := p.consume(While); err != nil {
 			return nil, err
 		}
@@ -254,6 +263,10 @@ func (p *Parser) statement() (Statement, error) {
 
 		return &StatementWhile{expr, body}, nil
 	case For:
+		wasInLoop := p.inLoop
+		p.inLoop = true
+		defer func() { p.inLoop = wasInLoop }()
+
 		// for (
 		if err := p.consume(For); err != nil {
 			return nil, err
@@ -333,10 +346,16 @@ func (p *Parser) statement() (Statement, error) {
 		}
 		return &block, nil
 	case Break:
+		if !p.inLoop {
+			return nil, p.error(p.current.Pos, "can only break inside a loop")
+		}
 		p.consume(Break)
 		stmt := StatementBreak{*p.previous}
 		return &stmt, nil
 	case Continue:
+		if !p.inLoop {
+			return nil, p.error(p.current.Pos, "can only continue inside a loop")
+		}
 		p.consume(Continue)
 		stmt := StatementContinue{*p.previous}
 		return &stmt, nil
@@ -858,6 +877,10 @@ func (p *Parser) parseRule() (Rule, error) {
 }
 
 func (p *Parser) parseFunction() (ExprFunction, error) {
+	wasInFunction := p.inFunction
+	p.inFunction = true
+	defer func() { p.inFunction = wasInFunction }()
+
 	if err := p.consume(Function); err != nil {
 		return ExprFunction{}, err
 	}
