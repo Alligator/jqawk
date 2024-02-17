@@ -161,7 +161,8 @@ func (v *Value) String() string {
 
 // convert a value to prettified string
 func (v *Value) PrettyString(quote bool) string {
-	return v.prettyStringInteral(v, quote, false)
+	rootValues := make([]*Value, 0)
+	return v.prettyStringInteral(rootValues, quote, false)
 }
 
 func isSame(a *Value, b *Value) bool {
@@ -174,9 +175,13 @@ func isSame(a *Value, b *Value) bool {
 	return false
 }
 
-func (v *Value) prettyStringInteral(rootValue *Value, quote bool, checkCircularReference bool) string {
-	if checkCircularReference && isSame(rootValue, v) {
-		return "<circular reference>"
+func (v *Value) prettyStringInteral(rootValues []*Value, quote bool, checkCircularReference bool) string {
+	if checkCircularReference {
+		for _, rootValue := range rootValues {
+			if isSame(rootValue, v) {
+				return "<circular reference>"
+			}
+		}
 	}
 
 	switch v.Tag {
@@ -201,7 +206,7 @@ func (v *Value) prettyStringInteral(rootValue *Value, quote bool, checkCircularR
 			if index > 0 {
 				sb.WriteString(", ")
 			}
-			sb.WriteString(cell.Value.prettyStringInteral(rootValue, true, true))
+			sb.WriteString(cell.Value.prettyStringInteral(append(rootValues, v), true, true))
 		}
 		sb.WriteByte(']')
 		return sb.String()
@@ -216,7 +221,7 @@ func (v *Value) prettyStringInteral(rootValue *Value, quote bool, checkCircularR
 
 			sb.WriteString("\"" + key + "\"")
 			sb.WriteString(": ")
-			sb.WriteString(value.Value.prettyStringInteral(rootValue, true, true))
+			sb.WriteString(value.Value.prettyStringInteral(append(rootValues, v), true, true))
 			index++
 		}
 		sb.WriteByte('}')
@@ -375,12 +380,17 @@ func (v *Value) Not() *Value {
 }
 
 func (v *Value) ToGoValue() (interface{}, error) {
-	return v.toGoValueInterval(v, false)
+	rootValues := make([]*Value, 0)
+	return v.toGoValueInterval(rootValues, false)
 }
 
-func (v *Value) toGoValueInterval(rootValue *Value, checkCircularReference bool) (interface{}, error) {
-	if checkCircularReference && isSame(v, rootValue) {
-		return nil, fmt.Errorf("circular reference")
+func (v *Value) toGoValueInterval(rootValues []*Value, checkCircularReference bool) (interface{}, error) {
+	if checkCircularReference {
+		for _, rootValue := range rootValues {
+			if isSame(rootValue, v) {
+				return nil, fmt.Errorf("circular reference")
+			}
+		}
 	}
 
 	switch v.Tag {
@@ -393,7 +403,7 @@ func (v *Value) toGoValueInterval(rootValue *Value, checkCircularReference bool)
 	case ValueArray:
 		var array []interface{}
 		for _, item := range v.Array {
-			val, err := item.Value.toGoValueInterval(rootValue, true)
+			val, err := item.Value.toGoValueInterval(append(rootValues, v), true)
 			if err != nil {
 				return nil, err
 			}
@@ -402,8 +412,8 @@ func (v *Value) toGoValueInterval(rootValue *Value, checkCircularReference bool)
 		return array, nil
 	case ValueObj:
 		obj := make(map[string]interface{})
-		for k, v := range *v.Obj {
-			val, err := v.Value.toGoValueInterval(rootValue, true)
+		for k, objVal := range *v.Obj {
+			val, err := objVal.Value.toGoValueInterval(append(rootValues, v), true)
 			if err != nil {
 				return nil, err
 			}

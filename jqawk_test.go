@@ -36,7 +36,7 @@ func FuzzJqawk(f *testing.F) {
 	f.Add("END { print json(1 + 2 * 3) }")
 
 	f.Fuzz(func(t *testing.T, src string) {
-		input := "[]"
+		input := "[{ \"a\": 1 }, { \"a\": null }]"
 		inputReader := strings.NewReader(input)
 		inputFiles := []lang.InputFile{
 			{Name: "<test>", Reader: inputReader},
