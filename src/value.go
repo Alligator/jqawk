@@ -338,8 +338,7 @@ func (v *Value) Compare(b *Value) (int, error) {
 	case v.Tag == ValueNil && b.Tag == ValueNil:
 		// both null
 		return 0, nil
-	case v.Tag == ValueNil && b.Tag != ValueNil:
-	case v.Tag != ValueNil && b.Tag == ValueNil:
+	case v.Tag == ValueNil && b.Tag != ValueNil, v.Tag != ValueNil && b.Tag == ValueNil:
 		// one is null
 		return 1, nil
 	}
