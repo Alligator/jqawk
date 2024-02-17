@@ -648,15 +648,15 @@ abc
 	})
 
 	test(t, testCase{
-		name:     "null comparison",
-		prog:     `
+		name: "null comparison",
+		prog: `
 			$.a == null { print 'lhs null' }
 			$.a != null { print 'lhs not null' }
 
 			null == $.a { print 'rhs null' }
 			null != $.a { print 'rhs not null' }
 		`,
-		json:     `[{ "a": null }, { "a": "not null" }, { "a": 1 }]`,
+		json: `[{ "a": null }, { "a": "not null" }, { "a": 1 }]`,
 		expected: `lhs null
 rhs null
 lhs not null
