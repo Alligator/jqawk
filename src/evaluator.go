@@ -27,6 +27,7 @@ type Evaluator struct {
 	beginRules   []*Rule
 	patternRules []*Rule
 	endRules     []*Rule
+	fuzzing      bool
 }
 
 var (
@@ -36,6 +37,8 @@ var (
 	errNext     = errors.New("next")
 	errExit     = errors.New("exit")
 )
+
+var fuzzingLoopLimit = 1000000
 
 func NewEvaluator(prog Program, lexer *Lexer, stdout io.Writer) Evaluator {
 	e := Evaluator{
@@ -777,6 +780,7 @@ func (e *Evaluator) evalStatement(stmt Statement) error {
 			return e.evalStatement(st.ElseBody)
 		}
 	case *StatementWhile:
+		loopCount := 0
 		for {
 			cell, err := e.evalExpr(st.Expr)
 			if err != nil {
@@ -792,9 +796,17 @@ func (e *Evaluator) evalStatement(stmt Statement) error {
 			} else {
 				break
 			}
+
+			if e.fuzzing {
+				if loopCount > fuzzingLoopLimit {
+					return e.error(st.Token(), "fuzz test loop limit")
+				}
+				loopCount++
+			}
 		}
 	case *StatementFor:
 		e.evalExpr(st.PreExpr)
+		loopCount := 0
 		for {
 			cell, err := e.evalExpr(st.Expr)
 			if err != nil {
@@ -814,6 +826,13 @@ func (e *Evaluator) evalStatement(stmt Statement) error {
 				}
 			} else {
 				break
+			}
+
+			if e.fuzzing {
+				if loopCount > fuzzingLoopLimit {
+					return e.error(st.Token(), "fuzz test loop limit")
+				}
+				loopCount++
 			}
 		}
 	case *StatementForIn:
@@ -985,7 +1004,7 @@ type InputFile struct {
 	Reader io.Reader
 }
 
-func EvalProgram(progSrc string, files []InputFile, rootSelector string, stdout io.Writer) (*Evaluator, error) {
+func EvalProgram(progSrc string, files []InputFile, rootSelector string, stdout io.Writer, fuzzing bool) (*Evaluator, error) {
 	lex := NewLexer(progSrc)
 	parser := NewParser(&lex)
 	prog, err := parser.Parse()
@@ -993,6 +1012,7 @@ func EvalProgram(progSrc string, files []InputFile, rootSelector string, stdout 
 		return nil, err
 	}
 	ev := NewEvaluator(prog, &lex, stdout)
+	ev.fuzzing = fuzzing
 
 	// begin rules
 	for _, rule := range ev.beginRules {

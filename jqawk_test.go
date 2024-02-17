@@ -42,7 +42,7 @@ func FuzzJqawk(f *testing.F) {
 			{Name: "<test>", Reader: inputReader},
 		}
 		var sb strings.Builder
-		_, err := lang.EvalProgram(src, inputFiles, "", &sb)
+		_, err := lang.EvalProgram(src, inputFiles, "", &sb, true)
 
 		if err != nil {
 			switch err.(type) {
@@ -78,7 +78,7 @@ func test(t *testing.T, tc testCase) {
 		}
 
 		var sb strings.Builder
-		_, err := lang.EvalProgram(tc.prog, inputFiles, "", &sb)
+		_, err := lang.EvalProgram(tc.prog, inputFiles, "", &sb, false)
 		if err != nil {
 			handleError(err)
 		}

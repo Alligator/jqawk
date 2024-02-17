@@ -115,7 +115,7 @@ func Run(version string) (exitCode int) {
 		}
 	}
 
-	ev, err := lang.EvalProgram(progSrc, inputFiles, *rootSelector, os.Stdout)
+	ev, err := lang.EvalProgram(progSrc, inputFiles, *rootSelector, os.Stdout, false)
 	if err != nil {
 		printError(err)
 		return 1
