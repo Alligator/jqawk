@@ -111,6 +111,9 @@ func nativePrintf(e *Evaluator, args []*Value, this *Value) (*Value, error) {
 
 			sb.WriteString(argStr)
 		case 'v':
+			if len(args)-1 < argIndex {
+				return nil, fmt.Errorf("missing argument %d", argIndex)
+			}
 			sb.WriteString(args[argIndex].PrettyString(false))
 			argIndex++
 		default:
