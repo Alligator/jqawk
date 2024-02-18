@@ -13,6 +13,7 @@ import (
 type stackFrame struct {
 	name   string
 	locals map[string]*Cell
+	depth  int
 	parent *stackFrame
 }
 
@@ -39,6 +40,7 @@ var (
 )
 
 var fuzzingLoopLimit = 1000000
+var callDepthLimit = 4096
 
 func NewEvaluator(prog Program, lexer *Lexer, stdout io.Writer) Evaluator {
 	e := Evaluator{
@@ -97,13 +99,23 @@ func (e *Evaluator) error(token Token, msg string) RuntimeError {
 	}
 }
 
-func (e *Evaluator) pushFrame(name string) {
+func (e *Evaluator) pushFrame(name string) error {
 	frame := stackFrame{
 		name:   name,
 		locals: make(map[string]*Cell),
 		parent: e.stackTop,
 	}
+
+	if e.stackTop != nil {
+		frame.depth = e.stackTop.depth + 1
+	}
+
+	if frame.depth > callDepthLimit {
+		return fmt.Errorf("call depth limit exceeded")
+	}
+
 	e.stackTop = &frame
+	return nil
 }
 
 func (e *Evaluator) popFrame() error {
@@ -274,7 +286,11 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 			}
 
 			if isMatch {
-				e.pushFrame("<match>")
+				// TODO using a stack frame is weird
+				if err = e.pushFrame("<match>"); err != nil {
+					return nil, e.error(exp.Token(), err.Error())
+				}
+
 				for k, v := range bindings {
 					e.stackTop.locals[k] = v
 				}
@@ -384,7 +400,11 @@ func (e *Evaluator) callFunction(exp *ExprCall, fn *Cell, args []*Value) (*Cell,
 	case ValueFn:
 		f := fn.Value.Fn
 		name := e.lexer.GetString(&f.ident)
-		e.pushFrame(name)
+
+		if err := e.pushFrame(name); err != nil {
+			return nil, e.error(exp.Token(), err.Error())
+		}
+
 		for index, argName := range f.Args {
 			if index > len(args)-1 {
 				e.stackTop.locals[argName] = NewCell(NewValue(nil))

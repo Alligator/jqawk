@@ -1,0 +1,2 @@
+go test fuzz v1
+string("function add(A){add(0)}add(0)")
