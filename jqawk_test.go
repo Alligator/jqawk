@@ -84,7 +84,7 @@ Total    337.5
 		expected: "5\n-1\n6\n2\n0\nfalse\n1\n-3\n",
 	},
 	{
-		name: "postfix operators",
+		name: "pre/postfix operators",
 		prog: `BEGIN {
 			for (i = 0; i < 4; i++) {
 				print a++, b--, b--, ++c, --d, --d;

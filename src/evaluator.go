@@ -39,7 +39,7 @@ var (
 	errExit     = errors.New("exit")
 )
 
-var fuzzingLoopLimit = 1000000
+var fuzzingLoopLimit = 10000
 var callDepthLimit = 4096
 
 func NewEvaluator(prog Program, lexer *Lexer, stdout io.Writer) Evaluator {
