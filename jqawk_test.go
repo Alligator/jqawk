@@ -146,6 +146,12 @@ Total    337.5
 		expected: "1\n10\n100\n",
 	},
 	{
+		name:     "subscript array negative index",
+		prog:     "{ print $[-1] }",
+		json:     `[[1, 2], [10, 20], [100, 200]]`,
+		expected: "2\n20\n200\n",
+	},
+	{
 		name:     "unknown variable comparison",
 		prog:     "$ > max { max = $ } $ < min { min = $ } END { print min, max }",
 		json:     `[1, 2, 3, 4, 3, 2, 1]`,

@@ -239,6 +239,15 @@ func (v *Value) GetMember(member Value) (*Cell, error) {
 		}
 		index := int(*member.Num)
 		arr := v.Array
+
+		if index < 0 {
+			index = len(arr) + index
+			if index < 0 {
+				// walked backwards off the front of the array
+				return nil, fmt.Errorf("index out of range")
+			}
+		}
+
 		if index >= len(arr) {
 			// TODO sparse arrays
 			// don't fill up to enormous numbers, just bail
@@ -254,9 +263,6 @@ func (v *Value) GetMember(member Value) (*Cell, error) {
 			}
 			v.Array = arr
 			return lastCell, nil
-		}
-		if index < 0 {
-			return nil, fmt.Errorf("attempted to access negative array index")
 		}
 		return arr[index], nil
 	case ValueObj:

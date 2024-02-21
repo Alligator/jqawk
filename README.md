@@ -295,6 +295,7 @@ A rough jqawk language reference.
 =     assign
 
 a[x]  index
+a[-x] index backwards from the end of the array
 a.x   property
 ```
 
