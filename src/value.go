@@ -262,6 +262,12 @@ func (v *Value) GetMember(member Value) (*Cell, error) {
 				arr = append(arr, lastCell)
 			}
 			v.Array = arr
+
+			// make the last cell a spec object
+			lastCell.Value.ParentObj = v
+			fIndex := float64(index)
+			lastCell.Value.Num = &fIndex
+
 			return lastCell, nil
 		}
 		return arr[index], nil
@@ -298,8 +304,16 @@ func (v *Value) GetMember(member Value) (*Cell, error) {
 func (v *Value) SetMember(member Value, cell *Cell) (*Cell, error) {
 	switch v.Tag {
 	case ValueArray:
-		// TODO
-		return nil, fmt.Errorf("setting array members is not yet implemented")
+		if member.Tag != ValueNum {
+			return nil, fmt.Errorf("array indices must be numbers")
+		}
+
+		item, err := v.GetMember(member)
+		if err != nil {
+			return nil, err
+		}
+		item.Value = cell.Value
+		return item, nil
 	case ValueObj:
 		key := member.String()
 		(*v.Obj)[key] = cell

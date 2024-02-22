@@ -677,7 +677,16 @@ func (e *Evaluator) createSpeculativeObjects(specObj *Cell) (*Cell, error) {
 		objToSet = parent
 	}
 
-	cell, err := objToSet.SetMember(NewString(*specObj.Value.Str), specObj)
+	var cell *Cell
+	var err error
+	if specObj.Value.Str != nil {
+		cell, err = objToSet.SetMember(NewString(*specObj.Value.Str), specObj)
+	} else if specObj.Value.Num != nil {
+		cell, err = objToSet.SetMember(NewValue(*specObj.Value.Num), specObj)
+	} else {
+		panic("speculative object has no Str or Num")
+	}
+
 	if err != nil {
 		return nil, err
 	}

@@ -152,6 +152,12 @@ Total    337.5
 		expected: "2\n20\n200\n",
 	},
 	{
+		name:          "subscript array with string",
+		prog:          "{ A = []; A.A = 2; }",
+		json:          `[1]`,
+		expectedError: "array indices must be numbers",
+	},
+	{
 		name:     "unknown variable comparison",
 		prog:     "$ > max { max = $ } $ < min { min = $ } END { print min, max }",
 		json:     `[1, 2, 3, 4, 3, 2, 1]`,
@@ -406,6 +412,12 @@ string rpad: sponge     sponge
 		prog:     "BEGIN { a[0] = 1; a[2] = 'hello'; print a; }",
 		json:     "[]",
 		expected: "[1, null, \"hello\"]\n",
+	},
+	{
+		name:     "implicit object-in-array creation",
+		prog:     "BEGIN { a[0]['a'] = 1; a[2]['b'] = 'hello'; print a; }",
+		json:     "[]",
+		expected: "[{\"a\": 1}, null, {\"b\": \"hello\"}]\n",
 	},
 	{
 		name:     "groupings",
