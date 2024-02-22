@@ -440,7 +440,7 @@ func (v *Value) toGoValueInterval(rootValues []*Value, checkCircularReference bo
 			obj[k] = val
 		}
 		return obj, nil
-	case ValueNil:
+	case ValueNil, ValueUnknown:
 		return nil, nil
 	default:
 		return nil, fmt.Errorf("a %s cannot be converted to a native type", v.Tag)

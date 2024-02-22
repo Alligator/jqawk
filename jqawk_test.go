@@ -58,6 +58,30 @@ Total    337.5
 `,
 	},
 	{
+		name: "advent of code example",
+		prog: `
+			BEGIN {
+				part1 = 0
+			}
+
+			{
+				chars = []
+				for (c in $.split("")) {
+					if (c ~ "[0-9]") {
+						chars.push(c)
+					}
+				}
+				part1 += num(chars[0] + chars[-1])
+			}
+
+			END {
+				print "part 1:", part1
+			}
+		`,
+		json:     `["1abc2", "pqr3stu8vwx", "a1b2c3d4e5f", "treb7uchet"]`,
+		expected: "part 1: 142\n",
+	},
+	{
 		name:     "begin",
 		prog:     "BEGIN { print 'hello' } BEGIN { print 'other hello' }",
 		expected: "hello\nother hello\n",
