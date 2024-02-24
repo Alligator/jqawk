@@ -165,12 +165,22 @@ func (v *Value) PrettyString(quote bool) string {
 	return v.prettyStringInteral(rootValues, quote, false)
 }
 
+// check if two value slices have the same underlying array
+// borrowed from go's math library
+// https://go.dev/src/math/big/nat.go#L374
+func alias(x, y []*Cell) bool {
+	return cap(x) > 0 && cap(y) > 0 && &x[0:cap(x)][cap(x)-1] == &y[0:cap(y)][cap(y)-1]
+}
+
 func isSame(a *Value, b *Value) bool {
 	if a.Tag != b.Tag {
 		return false
 	}
-	if a.Tag == ValueObj || a.Tag == ValueArray {
+	if a.Tag == ValueObj {
 		return a.Obj == b.Obj
+	}
+	if a.Tag == ValueArray && b.Tag == ValueArray {
+		return alias(a.Array, b.Array)
 	}
 	return false
 }

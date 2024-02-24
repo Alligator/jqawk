@@ -535,8 +535,12 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (*Cell, error) {
 			// speculatively create members
 			// see createSpeculativeObjects
 			memberVal := NewValue(nil)
-			rightStr := right.Value.String()
-			memberVal.Str = &rightStr
+			if right.Value.Tag == ValueNum {
+				memberVal.Num = right.Value.Num
+			} else {
+				rightStr := right.Value.String()
+				memberVal.Str = &rightStr
+			}
 			memberVal.ParentObj = &left.Value
 			return NewCell(memberVal), nil
 		}
@@ -664,28 +668,36 @@ func (e *Evaluator) createSpeculativeObjects(specObj *Cell) (*Cell, error) {
 		return nil, fmt.Errorf("could not create this object")
 	}
 
+	var memberToSet Value
+	if specObj.Value.Str != nil {
+		memberToSet = NewString(*specObj.Value.Str)
+	} else if specObj.Value.Num != nil {
+		memberToSet = NewValue(*specObj.Value.Num)
+	} else {
+		panic("speculative object has no Str or Num")
+	}
+
 	var objToSet *Value
 	if parent.Tag == ValueNil {
 		newParent, err := e.createSpeculativeObjects(NewCell(*parent))
 		if err != nil {
 			return nil, err
 		}
-		newObj := NewObject()
+
+		var newObj Value
+		if memberToSet.Tag == ValueStr {
+			newObj = NewObject()
+		} else if memberToSet.Tag == ValueNum {
+			newObj = NewArray()
+		}
+
 		newParent.Value = newObj
 		objToSet = &newParent.Value
 	} else {
 		objToSet = parent
 	}
 
-	var cell *Cell
-	var err error
-	if specObj.Value.Str != nil {
-		cell, err = objToSet.SetMember(NewString(*specObj.Value.Str), specObj)
-	} else if specObj.Value.Num != nil {
-		cell, err = objToSet.SetMember(NewValue(*specObj.Value.Num), specObj)
-	} else {
-		panic("speculative object has no Str or Num")
-	}
+	cell, err := objToSet.SetMember(memberToSet, specObj)
 
 	if err != nil {
 		return nil, err

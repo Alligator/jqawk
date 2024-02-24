@@ -438,6 +438,12 @@ string rpad: sponge     sponge
 		expected: "[1, null, \"hello\"]\n",
 	},
 	{
+		name:     "deep implicit array creation",
+		prog:     "BEGIN { a[0][0] = 1; a[2][1] = 2; print a; }",
+		json:     "[]",
+		expected: "[[1], null, [null, 2]]\n",
+	},
+	{
 		name:     "implicit object-in-array creation",
 		prog:     "BEGIN { a[0]['a'] = 1; a[2]['b'] = 'hello'; print a; }",
 		json:     "[]",
@@ -510,9 +516,9 @@ string rpad: sponge     sponge
 	},
 	{
 		name:     "printing circular references",
-		prog:     "BEGIN { a.a=a; print a }",
+		prog:     "BEGIN { a.a=a; print a; b = []; b[0] = 1; b[1] = b; print b; }",
 		json:     "[]",
-		expected: "{\"a\": <circular reference>}\n",
+		expected: "{\"a\": <circular reference>}\n[1, <circular reference>]\n",
 	},
 	{
 		name:          "converting circular references to JSON",
