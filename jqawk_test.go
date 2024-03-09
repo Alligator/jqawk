@@ -729,6 +729,22 @@ rhs not null
 		json:          "[1]",
 		expectedError: "can only continue inside a loop",
 	},
+	{
+		name: "bug: pushing arrays to arrays",
+		prog: `
+			BEGIN { a = [] }
+			{ a.push($) }
+			END {
+				b = []
+				for (v in a) {
+					b.push([v])
+				}
+				print b
+			}
+		`,
+		json:     "[1, 2, 3]",
+		expected: "[[1], [2], [3]]\n",
+	},
 }
 
 func TestMain(m *testing.M) {

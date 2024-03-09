@@ -250,7 +250,7 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 			return nil, err
 		}
 
-		args, err := e.evalExprList(exp.Args)
+		args, err := e.evalExprList(exp.Args, true)
 		if err != nil {
 			return nil, err
 		}
@@ -265,7 +265,7 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 		}
 		return result, nil
 	case *ExprArray:
-		items, err := e.evalExprList(exp.Items)
+		items, err := e.evalExprList(exp.Items, true)
 		if err != nil {
 			return nil, err
 		}
@@ -324,7 +324,13 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 			if err != nil {
 				return nil, err
 			}
-			(*obj.Obj)[kv.Key] = value
+
+			newCell, err := copyValue(value, &Cell{})
+			if err != nil {
+				return nil, err
+			}
+
+			(*obj.Obj)[kv.Key] = newCell
 		}
 		return NewCell(obj), nil
 	default:
@@ -716,51 +722,68 @@ func (e *Evaluator) evalAssignment(expr Expr, left *Cell, right *Cell) (*Cell, e
 		}
 	}
 
-	switch right.Value.Tag {
+	cell, err := copyValue(right, left)
+	if err != nil {
+		return nil, e.error(expr.Token(), err.Error())
+	}
+	return cell, nil
+}
+
+func copyValue(from *Cell, to *Cell) (*Cell, error) {
+	switch from.Value.Tag {
 	// copy
 	case ValueNum:
-		n := *right.Value.Num
-		left.Value = Value{
+		n := *from.Value.Num
+		to.Value = Value{
 			Tag: ValueNum,
 			Num: &n,
 		}
 	case ValueBool:
-		b := *right.Value.Bool
-		left.Value = Value{
+		b := *from.Value.Bool
+		to.Value = Value{
 			Tag:  ValueBool,
 			Bool: &b,
 		}
 	case ValueNil:
-		left.Value = NewValue(nil)
+		to.Value = NewValue(nil)
 	case ValueStr:
-		s := *right.Value.Str
-		left.Value = NewString(s)
+		s := *from.Value.Str
+		to.Value = NewString(s)
 	case ValueRegex:
-		r := *right.Value.Str
+		r := *from.Value.Str
 		val := Value{
 			Tag: ValueRegex,
 			Str: &r,
 		}
-		left.Value = val
+		to.Value = val
 
 	// reference
 	case ValueArray, ValueObj, ValueUnknown:
-		left.Value = right.Value
+		to.Value = from.Value
 
 	default:
-		return nil, e.error(expr.Token(), "invalid assignment")
+		return nil, fmt.Errorf("cannot copy a %s to a %s", from.Value.Tag, to.Value.Tag)
 	}
-	return left, nil
+	return to, nil
 }
 
-func (e *Evaluator) evalExprList(exprs []Expr) ([]*Cell, error) {
+func (e *Evaluator) evalExprList(exprs []Expr, copy bool) ([]*Cell, error) {
 	evaledExprs := make([]*Cell, 0, len(exprs))
 	for _, expr := range exprs {
 		v, err := e.evalExpr(expr)
 		if err != nil {
 			return evaledExprs, err
 		}
-		evaledExprs = append(evaledExprs, v)
+
+		if copy {
+			newCell, err := copyValue(v, &Cell{})
+			if err != nil {
+				return evaledExprs, e.error(expr.Token(), err.Error())
+			}
+			evaledExprs = append(evaledExprs, newCell)
+		} else {
+			evaledExprs = append(evaledExprs, v)
+		}
 	}
 	return evaledExprs, nil
 }
@@ -776,7 +799,7 @@ func (e *Evaluator) evalStatement(stmt Statement) error {
 		}
 		return nil
 	case *StatementPrint:
-		args, err := e.evalExprList(st.Args)
+		args, err := e.evalExprList(st.Args, false)
 		if err != nil {
 			return err
 		}
