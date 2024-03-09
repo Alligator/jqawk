@@ -32,6 +32,7 @@ const (
 	Newline
 	Exit
 	Null
+	Is
 	True          // true
 	False         // false
 	LCurly        // {
@@ -187,6 +188,8 @@ func (l *Lexer) identifier() Token {
 		return l.simpleToken(Exit)
 	case "null":
 		return l.simpleToken(Null)
+	case "is":
+		return l.simpleToken(Is)
 	default:
 		return l.stringToken(Ident, l.pos-l.tokenStart)
 	}

@@ -279,6 +279,8 @@ A rough jqawk language reference.
 <=    less or equal
 >     greater
 >=    greater or equal
+is    is of type. value type names are:
+      string, bool, number, array, object, function, regex, unknown
 
 +     add
 -     subtract

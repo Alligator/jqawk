@@ -611,6 +611,21 @@ rhs not null
 		expected: "1.5\n",
 	},
 	{
+		name: "is operator",
+		prog: `
+			{
+				if ($ is string) print 'string';
+				if ($ is bool) 	 print 'bool';
+				if ($ is number) print 'number';
+				if ($ is array)  print 'array';
+				if ($ is object) print 'object';
+				if ($ is null)   print 'null';
+			}
+		`,
+		json:     "[\"1\", false, 2, [3], { \"n\": 4 }, null]",
+		expected: "string\nbool\nnumber\narray\nobject\nnull\n",
+	},
+	{
 		name: "bug: statement after block",
 		prog: `
 			{

@@ -515,6 +515,40 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (*Cell, error) {
 		return NewCell(NewValue(false)), nil
 	}
 
+	// is special-case
+	if expr.OpToken.Tag == Is {
+		switch exp := expr.Right.(type) {
+		case *ExprLiteral:
+			if exp.token.Tag == Null {
+				result := left.Value.Tag == ValueNil
+				return NewCell(NewValue(result)), nil
+			}
+		case *ExprIdentifier:
+			result := false
+			switch e.lexer.GetString(&exp.token) {
+			case "string":
+				result = left.Value.Tag == ValueStr
+			case "bool":
+				result = left.Value.Tag == ValueBool
+			case "number":
+				result = left.Value.Tag == ValueNum
+			case "array":
+				result = left.Value.Tag == ValueArray
+			case "object":
+				result = left.Value.Tag == ValueObj
+			case "function":
+				result = left.Value.Tag == ValueFn
+			case "regex":
+				result = left.Value.Tag == ValueRegex
+			case "unknown":
+				result = left.Value.Tag == ValueUnknown
+			}
+			return NewCell(NewValue(result)), nil
+		}
+
+		return nil, e.error(expr.Right.Token(), "expected a type name")
+	}
+
 	right, err := e.evalExpr(expr.Right)
 	if err != nil {
 		return nil, err
