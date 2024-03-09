@@ -813,7 +813,19 @@ func test(t *testing.T, tc testCase) {
 					t.Fatalf("expected error %q\ngot %q\n", tc.expectedError, err.Error())
 				}
 			} else {
-				panic(err)
+				switch tErr := err.(type) {
+				case lang.RuntimeError:
+					t.Logf("  %s\n", tErr.SrcLine)
+					t.Logf("  %*s\n", tErr.Col+1, "^")
+					t.Logf("syntax error on line %d: %s\n", tErr.Line, tErr.Message)
+				case lang.SyntaxError:
+					t.Logf("  %s\n", tErr.SrcLine)
+					t.Logf("  %*s\n", tErr.Col+1, "^")
+					t.Logf("syntax error on line %d: %s\n", tErr.Line, tErr.Message)
+				default:
+					t.Log(err)
+				}
+				panic("unexpected error")
 			}
 		}
 
