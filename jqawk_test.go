@@ -376,10 +376,16 @@ string rpad: sponge     sponge
 					2 => 'two',
 					_ => '?',
 				}
+
+				match ($) {
+					2 => {
+						print '2'
+					}
+				}
 			}
 		`,
 		json:     "[1, 2, 3, 4]",
-		expected: "one\ntwo\n?\n?\n",
+		expected: "one\ntwo\n2\n?\n?\n",
 	},
 	{
 		name: "match array",
