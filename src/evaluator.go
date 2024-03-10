@@ -313,7 +313,7 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 					return nil, err
 				}
 
-				return nil, nil
+				return NewCell(NewValue(nil)), nil
 			}
 		}
 		return NewCell(NewValue(nil)), nil
