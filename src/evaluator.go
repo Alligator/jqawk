@@ -325,9 +325,10 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 				return nil, err
 			}
 
-			newCell, err := copyValue(value, &Cell{})
+			cell := NewCell(Value{Tag: ValueUnknown})
+			newCell, err := copyValue(value, cell)
 			if err != nil {
-				return nil, err
+				return nil, e.error(expr.Token(), err.Error())
 			}
 
 			(*obj.Obj)[kv.Key] = newCell
