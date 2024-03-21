@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"strings"
@@ -791,8 +792,7 @@ func FuzzJqawk(f *testing.F) {
 		inputFiles := []lang.InputFile{
 			{Name: "<test>", Reader: inputReader},
 		}
-		var sb strings.Builder
-		_, err := lang.EvalProgram(src, inputFiles, "", &sb, true)
+		_, err := lang.EvalProgram(src, inputFiles, "", io.Discard, true)
 
 		if err != nil {
 			switch err.(type) {
