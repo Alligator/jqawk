@@ -388,18 +388,42 @@ num(arg)
 ### Methods
 
 ```
-string.length()           return the length
-string.upper()            return an uppercase copy of the string
-string.lower()            return a lowercase copy of the string
-string.split(separator)   split the string into substrings on a separator
+string.length()
+  return the length
 
-object.length()           return the number of keys
-object.pluck(k1, k2, ...) return a shallow copy of the object containg only the
-                          given keys
+string.upper()
+  return an uppercase copy of the string
 
-array.length()            return the length
-array.push(value)         push value to the end of the array
-array.pop()               remove and return the last value in the array
-array.popfirst()          remove and return the first value in the array
-array.contains(value)     return true if value is in the array
+string.lower()
+  return a lowercase copy of the string
+
+string.split(separator)
+  split the string into substrings on a separator
+
+
+object.length()
+  return the number of keys
+
+object.pluck(k1,
+  k2, ...) return a shallow copy of the object containing only the given keys
+
+
+array.length()
+  return the length
+
+array.push(value)
+  push value to the end of the array
+
+array.pop()
+  remove and return the last value in the array
+
+array.popfirst()
+  remove and return the first value in the array
+
+array.contains(value)
+  return true if value is in the array
+
+array.sort()
+  return a sorted copy of the array. if the array contains mixed types, all
+  values are converted to strings before sorting
 ```

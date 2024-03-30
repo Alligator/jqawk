@@ -627,6 +627,20 @@ rhs not null
 		expected: "string\nbool\nnumber\narray\nobject\nnull\n",
 	},
 	{
+		name: "array sort",
+		prog: `
+			BEGIN {
+				a = [4, 5, 3, 1, 2];
+				b = ['clown', {a: 1}, 'bee', [1], 'dog'];
+				print a.sort();  # numbers
+				print b.sort();  # strings and other things
+				print a;         # original array is unmodified
+			}
+		`,
+		json:     "[]",
+		expected: "[1, 2, 3, 4, 5]\n[{\"a\": 1}, [1], \"bee\", \"clown\", \"dog\"]\n[4, 5, 3, 1, 2]\n",
+	},
+	{
 		name: "bug: statement after block",
 		prog: `
 			{

@@ -1,6 +1,10 @@
 package lang
 
-import "strings"
+import (
+	"cmp"
+	"slices"
+	"strings"
+)
 
 var arrayPrototype *Value = nil
 var objPrototype *Value = nil
@@ -95,6 +99,40 @@ func getArrayPrototype() *Value {
 					}
 
 					retVal := NewValue(false)
+					return &retVal, nil
+				},
+			}),
+			"sort": NewCell(Value{
+				Tag: ValueNativeFn,
+				NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
+					if this == nil {
+						return nil, nil
+					}
+
+					// is this array only numbers?
+					onlyNumbers := true
+					for _, item := range this.Array {
+						if item.Value.Tag != ValueNum {
+							onlyNumbers = false
+							break
+						}
+					}
+
+					// make a clone
+					clone := make([]*Cell, len(this.Array))
+					for i, item := range this.Array {
+						clone[i] = &Cell{}
+						copyValue(item, clone[i])
+					}
+
+					slices.SortStableFunc(clone, func(a *Cell, b *Cell) int {
+						if onlyNumbers {
+							return cmp.Compare(*a.Value.Num, *b.Value.Num)
+						}
+						return cmp.Compare(a.Value.String(), b.Value.String())
+					})
+
+					retVal := NewValue(clone)
 					return &retVal, nil
 				},
 			}),
