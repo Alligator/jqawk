@@ -156,8 +156,8 @@ func nativeNum(e *Evaluator, args []*Value, this *Value) (*Value, error) {
 	case ValueStr:
 		n, err := strconv.ParseFloat(*args[0].Str, 64)
 		if err != nil {
-			// TODO better error message
-			return nil, err
+			v := NewValue(nil)
+			return &v, nil
 		}
 		v := NewValue(n)
 		return &v, nil

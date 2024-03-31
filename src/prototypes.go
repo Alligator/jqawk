@@ -55,7 +55,11 @@ func getArrayPrototype() *Value {
 						return nil, err
 					}
 
-					// TODO handle 0 length arrays
+					if len(this.Array) == 0 {
+						retVal := NewValue(nil)
+						return &retVal, nil
+					}
+
 					retVal := this.Array[len(this.Array)-1].Value
 					this.Array = this.Array[:len(this.Array)-1]
 					return &retVal, nil
@@ -71,7 +75,11 @@ func getArrayPrototype() *Value {
 						return nil, err
 					}
 
-					// TODO handle 0 length arrays
+					if len(this.Array) == 0 {
+						retVal := NewValue(nil)
+						return &retVal, nil
+					}
+
 					retVal := this.Array[0].Value
 					this.Array = this.Array[1:]
 					return &retVal, nil
