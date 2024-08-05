@@ -881,10 +881,13 @@ func testExe(t *testing.T, tc testCase) {
 	t.Run(tc.name, func(t *testing.T) {
 		cmd := exec.Command("./jqawk", tc.args...)
 		rdr := strings.NewReader(tc.json)
+		var stdErr strings.Builder
 		cmd.Stdin = rdr
+		cmd.Stderr = &stdErr
 		output, err := cmd.Output()
 		if err != nil {
-			panic(err)
+			t.Logf("stderr: %s\n", stdErr.String())
+			t.Fatal(err.Error())
 		}
 		if string(output) != tc.expected {
 			t.Fatalf("expected %q\ngot %q\n", tc.expected, string(output))
@@ -925,6 +928,13 @@ func TestJqawkExe(t *testing.T) {
     "x": 3
   }
 ]`,
+	})
+
+	testExe(t, testCase{
+		name:     "no arguments",
+		args:     []string{},
+		json:     "[]",
+		expected: "",
 	})
 }
 

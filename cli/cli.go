@@ -72,8 +72,15 @@ func Run(version string) (exitCode int) {
 		}
 		progSrc = string(file)
 	} else {
-		progSrc = flag.Arg(0)
-		filePaths = flag.Args()[1:]
+		switch len(args) {
+		case 0:
+			progSrc = ""
+		case 1:
+			progSrc = args[0]
+		default:
+			progSrc = args[0]
+			filePaths = args[1:]
+		}
 	}
 
 	readStdin := false
