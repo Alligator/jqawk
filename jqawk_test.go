@@ -568,6 +568,11 @@ abc
 
 			null == $.a { print 'rhs null' }
 			null != $.a { print 'rhs not null' }
+
+			END {
+				if (null > 0) print 'oh no'
+				if (0 < null) print 'oh no'
+			}
 		`,
 		json: `[{ "a": null }, { "a": "not null" }, { "a": 1 }]`,
 		expected: `lhs null
