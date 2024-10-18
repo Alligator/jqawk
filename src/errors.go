@@ -21,3 +21,12 @@ type RuntimeError struct {
 func (err RuntimeError) Error() string {
 	return err.Message
 }
+
+type JsonError struct {
+	Message  string
+	FileName string
+}
+
+func (err JsonError) Error() string {
+	return err.Message
+}

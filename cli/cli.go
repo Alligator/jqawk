@@ -33,6 +33,8 @@ func printError(err error) {
 		fmt.Fprintf(os.Stderr, "  %s\n", tErr.SrcLine)
 		fmt.Fprintf(os.Stderr, "  %*s\n", tErr.Col+1, "^")
 		fmt.Fprintf(os.Stderr, "runtime error on line %d: %s\n", tErr.Line, tErr.Message)
+	case lang.JsonError:
+		fmt.Fprintf(os.Stderr, "could not parse %s: %s\n", tErr.FileName, tErr.Message)
 	default:
 		fmt.Fprintln(os.Stderr, err)
 	}

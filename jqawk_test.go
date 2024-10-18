@@ -815,7 +815,32 @@ func FuzzJqawk(f *testing.F) {
 
 		if err != nil {
 			switch err.(type) {
-			case lang.SyntaxError, lang.RuntimeError:
+			case lang.SyntaxError, lang.RuntimeError, lang.JsonError:
+				// don't fail
+			default:
+				t.Errorf("%#v", err)
+			}
+		}
+	})
+}
+
+func FuzzJqawkWithJson(f *testing.F) {
+	for _, tc := range tests {
+		if tc.expectedError == "" {
+			f.Add(tc.prog, tc.json)
+		}
+	}
+
+	f.Fuzz(func(t *testing.T, src string, jsonSrc string) {
+		inputReader := strings.NewReader(jsonSrc)
+		inputFiles := []lang.InputFile{
+			{Name: "<test>", Reader: inputReader},
+		}
+		_, err := lang.EvalProgram(src, inputFiles, "", io.Discard, true)
+
+		if err != nil {
+			switch err.(type) {
+			case lang.SyntaxError, lang.RuntimeError, lang.JsonError:
 				// don't fail
 			default:
 				t.Errorf("%#v", err)
