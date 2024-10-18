@@ -128,6 +128,14 @@ someone else
 
 The argument to `-r` can be any valid expression.
 
+> [!TIP]
+> If you need a more complicated root selector, you can use a `BEGINFILE` rule and reassign `$`. This command is equivalent to the one above:
+> ```console
+> $ jqawk "BEGINFILE { $ = $.result } { print $.name }" file.json
+> alligator
+> someone else
+> ```
+
 ## Control flow
 
 jqawk provides `if`, `else`, `for`, and `while` control-flow statements:
