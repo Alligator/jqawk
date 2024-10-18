@@ -18,17 +18,19 @@ type stackFrame struct {
 }
 
 type Evaluator struct {
-	prog         Program
-	lexer        *Lexer
-	stdout       io.Writer
-	root         *Cell
-	ruleRoot     *Cell
-	stackTop     *stackFrame
-	returnVal    *Value
-	beginRules   []*Rule
-	patternRules []*Rule
-	endRules     []*Rule
-	fuzzing      bool
+	prog           Program
+	lexer          *Lexer
+	stdout         io.Writer
+	root           *Cell
+	ruleRoot       *Cell
+	stackTop       *stackFrame
+	returnVal      *Value
+	beginRules     []*Rule
+	beginFileRules []*Rule
+	patternRules   []*Rule
+	endRules       []*Rule
+	endFileRules   []*Rule
+	fuzzing        bool
 }
 
 var (
@@ -57,7 +59,9 @@ func NewEvaluator(prog Program, lexer *Lexer, stdout io.Writer) Evaluator {
 
 func (e *Evaluator) readRules() {
 	e.beginRules = make([]*Rule, 0)
+	e.beginFileRules = make([]*Rule, 0)
 	e.endRules = make([]*Rule, 0)
+	e.endFileRules = make([]*Rule, 0)
 	e.patternRules = make([]*Rule, 0)
 
 	for _, rule := range e.prog.Rules {
@@ -65,10 +69,16 @@ func (e *Evaluator) readRules() {
 		switch rule.Kind {
 		case BeginRule:
 			e.beginRules = append(e.beginRules, &r)
+		case BeginFileRule:
+			e.beginFileRules = append(e.beginFileRules, &r)
 		case EndRule:
 			e.endRules = append(e.endRules, &r)
+		case EndFileRule:
+			e.endFileRules = append(e.endFileRules, &r)
 		case PatternRule:
 			e.patternRules = append(e.patternRules, &r)
+		default:
+			panic(fmt.Errorf("unknown rule type %s", rule.Kind))
 		}
 	}
 }
@@ -1138,8 +1148,10 @@ func EvalProgram(progSrc string, files []InputFile, rootSelector string, stdout 
 		}
 		err = json.Unmarshal(b, &rootValue)
 		if err != nil {
-			return &ev, err
+			return &ev, JsonError{err.Error(), file.Name}
 		}
+
+		ev.setGlobal("$file", NewCell(NewValue(file.Name)))
 
 		// find the root value
 		var rootCell *Cell
@@ -1153,14 +1165,35 @@ func EvalProgram(progSrc string, files []InputFile, rootSelector string, stdout 
 			rootCell = NewCell(NewValue(rootValue))
 		}
 
+		// run the begin file rules
+		for _, rule := range ev.beginFileRules {
+			ev.ruleRoot = rootCell
+			if err := ev.evalStatement(rule.Body); err != nil {
+				if err == errExit {
+					return &ev, nil
+				}
+				return &ev, err
+			}
+		}
+
 		// run the rules
-		ev.setGlobal("$file", NewCell(NewValue(file.Name)))
 		ev.root = rootCell
 		if err := ev.evalPatternRules(ev.patternRules); err != nil {
 			if err == errExit {
 				return &ev, nil
 			}
 			return &ev, err
+		}
+
+		// run the end file rules
+		for _, rule := range ev.endFileRules {
+			ev.ruleRoot = rootCell
+			if err := ev.evalStatement(rule.Body); err != nil {
+				if err == errExit {
+					return &ev, nil
+				}
+				return &ev, err
+			}
 		}
 	}
 

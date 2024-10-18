@@ -851,6 +851,16 @@ func (p *Parser) parseRule() (Rule, error) {
 		if err := p.consume(End); err != nil {
 			return rule, err
 		}
+	case BeginFile:
+		rule.Kind = BeginFileRule
+		if err := p.consume(BeginFile); err != nil {
+			return rule, err
+		}
+	case EndFile:
+		rule.Kind = EndFileRule
+		if err := p.consume(EndFile); err != nil {
+			return rule, err
+		}
 	case LCurly:
 		rule.Kind = PatternRule
 	default:

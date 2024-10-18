@@ -321,6 +321,8 @@ null              null
 pattern { body }    runs when pattern is truthy
 BEGIN { body }      runs before the input is processed
 END { body}         runs after the input is processed
+BEGINFILE { body }  runs before each file is processed
+ENDFILE { body}     runs after each file is processed
 ```
 
 If the input is an array, each pattern rule runs for each item in the array.

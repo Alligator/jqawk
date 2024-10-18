@@ -19,6 +19,8 @@ type RuleKind uint8
 const (
 	BeginRule RuleKind = iota
 	EndRule
+	BeginFileRule
+	EndFileRule
 	PatternRule
 )
 
@@ -28,6 +30,10 @@ func (k RuleKind) String() string {
 		return "BeginRule"
 	case EndRule:
 		return "EndRule"
+	case BeginFileRule:
+		return "BeginFileRule"
+	case EndFileRule:
+		return "EndFileRule"
 	case PatternRule:
 		return "PatternRule"
 	default:

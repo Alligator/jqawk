@@ -646,6 +646,18 @@ rhs not null
 		expected: "[1, 2, 3, 4, 5]\n[{\"a\": 1}, [1], \"bee\", \"clown\", \"dog\"]\n[4, 5, 3, 1, 2]\n",
 	},
 	{
+		name: "beginfile endfile",
+		prog: `
+			BEGIN { print 'begin', $ }
+			BEGINFILE { print 'beginfile', $ }
+			ENDFILE { print 'endfile', $ }
+			END { print 'end', $ }
+		`,
+		json:     "123",
+		json2:    "456",
+		expected: "begin null\nbeginfile 123\nendfile 123\nbeginfile 456\nendfile 456\nend null\n",
+	},
+	{
 		name: "bug: statement after block",
 		prog: `
 			{

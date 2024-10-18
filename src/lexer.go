@@ -17,6 +17,8 @@ const (
 	Num
 	Begin
 	End
+	BeginFile
+	EndFile
 	Print
 	Function
 	Return
@@ -154,6 +156,10 @@ func (l *Lexer) identifier() Token {
 		return l.simpleToken(Begin)
 	case "END":
 		return l.simpleToken(End)
+	case "BEGINFILE":
+		return l.simpleToken(BeginFile)
+	case "ENDFILE":
+		return l.simpleToken(EndFile)
 	case "print":
 		return l.simpleToken(Print)
 	case "$":
