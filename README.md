@@ -241,10 +241,12 @@ If the input is not an array jqawk sets one variable:
 
 ## Multiple files
 
-You can pass jqawk multiple JSON files.
+You can pass jqawk multiple JSON files on the command line.
 The `BEGIN` and `END` rules are run before and after processing all files.
-Other rules are run for every file.
-The `$file` variable is set to the current file name.
+The `BEGINFILE` and `ENDFILE` rules are run at the start and end of processing each file.
+All other rules run for each value in the file.
+
+`$file` is set to the current file name.
 
 ## Modifying the JSON
 
