@@ -658,6 +658,16 @@ rhs not null
 		expected: "begin null\nbeginfile 123\nendfile 123\nbeginfile 456\nendfile 456\nend null\n",
 	},
 	{
+		name: "$ is the root value in endfile",
+		prog: `
+			BEGINFILE { $ = $.stuff }
+			{ print $ }
+			ENDFILE { print $ }
+		`,
+		json:     `{ "stuff": [1, 2, 3] }`,
+		expected: "1\n2\n3\n{\"stuff\": [1, 2, 3]}\n",
+	},
+	{
 		name: "bug: statement after block",
 		prog: `
 			{

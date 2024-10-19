@@ -1165,6 +1165,8 @@ func EvalProgram(progSrc string, files []InputFile, rootSelector string, stdout 
 			rootCell = NewCell(NewValue(rootValue))
 		}
 
+		var rootVal = rootCell.Value
+
 		// run the begin file rules
 		for _, rule := range ev.beginFileRules {
 			ev.ruleRoot = rootCell
@@ -1187,7 +1189,7 @@ func EvalProgram(progSrc string, files []InputFile, rootSelector string, stdout 
 
 		// run the end file rules
 		for _, rule := range ev.endFileRules {
-			ev.ruleRoot = rootCell
+			ev.ruleRoot = NewCell(rootVal)
 			if err := ev.evalStatement(rule.Body); err != nil {
 				if err == errExit {
 					return &ev, nil
