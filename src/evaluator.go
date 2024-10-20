@@ -234,11 +234,7 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 			if err != nil {
 				return nil, e.error(expr.Token(), "could not parse number")
 			}
-			f := float64(num)
-			return NewCell(Value{
-				Tag: ValueNum,
-				Num: &f,
-			}), nil
+			return NewCell(NewValue(num)), nil
 		case True:
 			return NewCell(NewValue(true)), nil
 		case False:
@@ -788,14 +784,16 @@ func copyValue(from *Cell, to *Cell) (*Cell, error) {
 	case ValueNum:
 		n := *from.Value.Num
 		to.Value = Value{
-			Tag: ValueNum,
-			Num: &n,
+			Tag:   ValueNum,
+			Num:   &n,
+			Proto: from.Value.Proto,
 		}
 	case ValueBool:
 		b := *from.Value.Bool
 		to.Value = Value{
-			Tag:  ValueBool,
-			Bool: &b,
+			Tag:   ValueBool,
+			Bool:  &b,
+			Proto: from.Value.Proto,
 		}
 	case ValueNil:
 		to.Value = NewValue(nil)
@@ -805,8 +803,9 @@ func copyValue(from *Cell, to *Cell) (*Cell, error) {
 	case ValueRegex:
 		r := *from.Value.Str
 		val := Value{
-			Tag: ValueRegex,
-			Str: &r,
+			Tag:   ValueRegex,
+			Str:   &r,
+			Proto: from.Value.Proto,
 		}
 		to.Value = val
 

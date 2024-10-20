@@ -668,6 +668,20 @@ rhs not null
 		expected: "1\n2\n3\n{\"stuff\": [1, 2, 3]}\n",
 	},
 	{
+		name: "num methods",
+		prog: `
+			BEGIN {
+				a = 2.5
+				print a.floor()
+				print a.ceil()
+				print a.round()
+				print (3.5).round()
+			}
+		`,
+		json:     "[]",
+		expected: "2\n3\n3\n4\n",
+	},
+	{
 		name: "bug: statement after block",
 		prog: `
 			{

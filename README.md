@@ -413,6 +413,12 @@ string.split(separator)
   split the string into substrings on a separator
 
 
+number.floor()
+number.ceil()
+number.round()
+  floor, ceil or round the given number. halves are rounded away from zero
+
+
 object.length()
   return the number of keys
 

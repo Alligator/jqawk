@@ -2,6 +2,7 @@ package lang
 
 import (
 	"cmp"
+	"math"
 	"slices"
 	"strings"
 )
@@ -9,6 +10,7 @@ import (
 var arrayPrototype *Value = nil
 var objPrototype *Value = nil
 var strPrototype *Value = nil
+var numPrototype *Value = nil
 
 func getArrayPrototype() *Value {
 	if arrayPrototype == nil {
@@ -275,4 +277,52 @@ func getStrPrototype() *Value {
 		}
 	}
 	return strPrototype
+}
+
+func getNumPrototype() *Value {
+	if numPrototype == nil {
+		proto := map[string]*Cell{
+			"floor": NewCell(Value{
+				Tag: ValueNativeFn,
+				NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
+					if this == nil || this.Tag != ValueNum {
+						v := NewValue(nil)
+						return &v, nil
+					}
+
+					result := NewValue(math.Floor(*this.Num))
+					return &result, nil
+				},
+			}),
+			"ceil": NewCell(Value{
+				Tag: ValueNativeFn,
+				NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
+					if this == nil || this.Tag != ValueNum {
+						v := NewValue(nil)
+						return &v, nil
+					}
+
+					result := NewValue(math.Ceil(*this.Num))
+					return &result, nil
+				},
+			}),
+			"round": NewCell(Value{
+				Tag: ValueNativeFn,
+				NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
+					if this == nil || this.Tag != ValueNum {
+						v := NewValue(nil)
+						return &v, nil
+					}
+
+					result := NewValue(math.Round(*this.Num))
+					return &result, nil
+				},
+			}),
+		}
+		numPrototype = &Value{
+			Tag: ValueObj,
+			Obj: &proto,
+		}
+	}
+	return numPrototype
 }

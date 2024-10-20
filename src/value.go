@@ -94,20 +94,23 @@ func NewValue(srcVal interface{}) Value {
 		}
 	case float64:
 		return Value{
-			Tag: ValueNum,
-			Num: &val,
+			Tag:   ValueNum,
+			Num:   &val,
+			Proto: getNumPrototype(),
 		}
 	case int:
 		f := float64(val)
 		return Value{
-			Tag: ValueNum,
-			Num: &f,
+			Tag:   ValueNum,
+			Num:   &f,
+			Proto: getNumPrototype(),
 		}
 	case int64:
 		f := float64(val)
 		return Value{
-			Tag: ValueNum,
-			Num: &f,
+			Tag:   ValueNum,
+			Num:   &f,
+			Proto: getNumPrototype(),
 		}
 	case string:
 		return NewString(val)
