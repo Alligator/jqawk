@@ -674,6 +674,14 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (*Cell, error) {
 			return nil, e.error(expr.Right.Token(), "a regex or a string must appear on the right hand side of ~")
 		}
 
+		if right == left {
+			// these are the same pointer
+			if expr.OpToken.Tag == BangTilde {
+				return NewCell(NewValue(false)), nil
+			}
+			return NewCell(NewValue(true)), nil
+		}
+
 		re, err := regexp.Compile(regex)
 		if err != nil {
 			return nil, e.error(expr.Right.Token(), err.Error())
