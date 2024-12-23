@@ -6,6 +6,7 @@ import (
 	"os"
 	"runtime/debug"
 	"runtime/pprof"
+	"strings"
 
 	lang "github.com/alligator/jqawk/src"
 	"github.com/mattn/go-isatty"
@@ -40,11 +41,24 @@ func printError(err error) {
 	}
 }
 
+type multiFlag []string
+
+func (m *multiFlag) String() string {
+	return strings.Join(*m, ",")
+}
+
+func (m *multiFlag) Set(value string) error {
+	*m = append(*m, value)
+	return nil
+}
+
 func Run(version string) (exitCode int) {
+	var rValues multiFlag
+
 	dbgAst := flag.Bool("dbg-ast", false, "print the AST and exit")
 	dbgLex := flag.Bool("dbg-lex", false, "print tokens and exit")
 	progFile := flag.String("f", "", "the program file to run")
-	rootSelector := flag.String("r", "", "root selector")
+	flag.Var(&rValues, "r", "root selector. can be specified multiple times")
 	profile := flag.Bool("profile", false, "record a CPU profile")
 	outfile := flag.String("o", "", "the file to write JSON to")
 	showVersion := flag.Bool("version", false, "print version information")
@@ -94,12 +108,12 @@ func Run(version string) (exitCode int) {
 
 	// debug args
 	if *dbgAst {
-		debugAst(progSrc, *rootSelector)
+		debugAst(progSrc, rValues)
 		return 0
 	}
 
 	if *dbgLex {
-		debugLex(progSrc, *rootSelector)
+		debugLex(progSrc, rValues)
 		return 0
 	}
 
@@ -124,7 +138,7 @@ func Run(version string) (exitCode int) {
 		}
 	}
 
-	ev, err := lang.EvalProgram(progSrc, inputFiles, *rootSelector, os.Stdout, false)
+	ev, err := lang.EvalProgram(progSrc, inputFiles, rValues, os.Stdout, false)
 	if err != nil {
 		printError(err)
 		return 1

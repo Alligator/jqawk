@@ -847,7 +847,7 @@ func FuzzJqawk(f *testing.F) {
 		inputFiles := []lang.InputFile{
 			{Name: "<test>", Reader: inputReader},
 		}
-		_, err := lang.EvalProgram(src, inputFiles, "", io.Discard, true)
+		_, err := lang.EvalProgram(src, inputFiles, nil, io.Discard, true)
 
 		if err != nil {
 			switch err.(type) {
@@ -872,7 +872,7 @@ func FuzzJqawkWithJson(f *testing.F) {
 		inputFiles := []lang.InputFile{
 			{Name: "<test>", Reader: inputReader},
 		}
-		_, err := lang.EvalProgram(src, inputFiles, "", io.Discard, true)
+		_, err := lang.EvalProgram(src, inputFiles, nil, io.Discard, true)
 
 		if err != nil {
 			switch err.(type) {
@@ -920,7 +920,7 @@ func test(t *testing.T, tc testCase) {
 		}
 
 		var sb strings.Builder
-		_, err := lang.EvalProgram(tc.prog, inputFiles, "", &sb, false)
+		_, err := lang.EvalProgram(tc.prog, inputFiles, nil, &sb, false)
 		if err != nil {
 			handleError(err)
 		}
@@ -980,6 +980,13 @@ func TestJqawkExe(t *testing.T) {
 		args:     []string{"-r", "$[0]", "{ print }"},
 		json:     `[[2, 3], [0, 1]]`,
 		expected: "2\n3\n",
+	})
+
+	testExe(t, testCase{
+		name:     "root selector (multiple)",
+		args:     []string{"-r", "$.a", "-r", "$.b", "{ print }"},
+		json:     `{ "a": [2, 3], "b": [0, 1] }`,
+		expected: "2\n3\n0\n1\n",
 	})
 
 	testExe(t, testCase{

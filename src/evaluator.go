@@ -1124,7 +1124,7 @@ type InputFile struct {
 	Reader io.Reader
 }
 
-func EvalProgram(progSrc string, files []InputFile, rootSelector string, stdout io.Writer, fuzzing bool) (*Evaluator, error) {
+func EvalProgram(progSrc string, files []InputFile, rootSelectors []string, stdout io.Writer, fuzzing bool) (*Evaluator, error) {
 	lex := NewLexer(progSrc)
 	parser := NewParser(&lex)
 	prog, err := parser.Parse()
@@ -1160,48 +1160,52 @@ func EvalProgram(progSrc string, files []InputFile, rootSelector string, stdout 
 
 		ev.setGlobal("$file", NewCell(NewValue(file.Name)))
 
-		// find the root value
-		var rootCell *Cell
-		if len(rootSelector) > 0 {
-			cell, err := EvalExpression(rootSelector, rootValue, stdout)
-			if err != nil {
-				return &ev, err
+		// find the root value(s)
+		rootCells := make([]*Cell, 0)
+		if len(rootSelectors) > 0 {
+			for _, rootSelector := range rootSelectors {
+				cell, err := EvalExpression(rootSelector, rootValue, stdout)
+				if err != nil {
+					return &ev, err
+				}
+				rootCells = append(rootCells, cell)
 			}
-			rootCell = cell
 		} else {
-			rootCell = NewCell(NewValue(rootValue))
+			rootCells = append(rootCells, NewCell(NewValue(rootValue)))
 		}
 
-		var rootVal = rootCell.Value
+		for _, rootCell := range rootCells {
+			var rootVal = rootCell.Value
 
-		// run the begin file rules
-		for _, rule := range ev.beginFileRules {
-			ev.ruleRoot = rootCell
-			if err := ev.evalStatement(rule.Body); err != nil {
+			// run the begin file rules
+			for _, rule := range ev.beginFileRules {
+				ev.ruleRoot = rootCell
+				if err := ev.evalStatement(rule.Body); err != nil {
+					if err == errExit {
+						return &ev, nil
+					}
+					return &ev, err
+				}
+			}
+
+			// run the rules
+			ev.root = rootCell
+			if err := ev.evalPatternRules(ev.patternRules); err != nil {
 				if err == errExit {
 					return &ev, nil
 				}
 				return &ev, err
 			}
-		}
 
-		// run the rules
-		ev.root = rootCell
-		if err := ev.evalPatternRules(ev.patternRules); err != nil {
-			if err == errExit {
-				return &ev, nil
-			}
-			return &ev, err
-		}
-
-		// run the end file rules
-		for _, rule := range ev.endFileRules {
-			ev.ruleRoot = NewCell(rootVal)
-			if err := ev.evalStatement(rule.Body); err != nil {
-				if err == errExit {
-					return &ev, nil
+			// run the end file rules
+			for _, rule := range ev.endFileRules {
+				ev.ruleRoot = NewCell(rootVal)
+				if err := ev.evalStatement(rule.Body); err != nil {
+					if err == errExit {
+						return &ev, nil
+					}
+					return &ev, err
 				}
-				return &ev, err
 			}
 		}
 	}

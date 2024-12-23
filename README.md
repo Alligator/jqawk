@@ -126,7 +126,7 @@ alligator
 someone else
 ```
 
-The argument to `-r` can be any valid expression.
+The argument to `-r` can be any valid expression. The flag can also be provided multiple times, in which case each root selector is run for each file.
 
 > [!TIP]
 > If you need a more complicated root selector, you can use a `BEGINFILE` rule and reassign `$`. This command is equivalent to the one above:
