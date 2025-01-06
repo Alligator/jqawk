@@ -1147,64 +1147,63 @@ func EvalProgram(progSrc string, files []InputFile, rootSelectors []string, stdo
 
 	// for each file, run the pattern rules
 	for _, file := range files {
-		// read the json
-		var rootValue interface{}
-		b, err := io.ReadAll(file.Reader)
-		if err != nil {
-			return &ev, err
-		}
-		err = json.Unmarshal(b, &rootValue)
-		if err != nil {
-			return &ev, JsonError{err.Error(), file.Name}
-		}
-
-		ev.setGlobal("$file", NewCell(NewValue(file.Name)))
-
-		// find the root value(s)
-		rootCells := make([]*Cell, 0)
-		if len(rootSelectors) > 0 {
-			for _, rootSelector := range rootSelectors {
-				cell, err := EvalExpression(rootSelector, rootValue, stdout)
-				if err != nil {
-					return &ev, err
-				}
-				rootCells = append(rootCells, cell)
+		// for each json value
+		d := json.NewDecoder(file.Reader)
+		for d.More() {
+			var rootValue any
+			err := d.Decode(&rootValue)
+			if err != nil {
+				return &ev, JsonError{err.Error(), file.Name}
 			}
-		} else {
-			rootCells = append(rootCells, NewCell(NewValue(rootValue)))
-		}
 
-		for _, rootCell := range rootCells {
-			var rootVal = rootCell.Value
+			ev.setGlobal("$file", NewCell(NewValue(file.Name)))
 
-			// run the begin file rules
-			for _, rule := range ev.beginFileRules {
-				ev.ruleRoot = rootCell
-				if err := ev.evalStatement(rule.Body); err != nil {
+			// find the root value(s)
+			rootCells := make([]*Cell, 0)
+			if len(rootSelectors) > 0 {
+				for _, rootSelector := range rootSelectors {
+					cell, err := EvalExpression(rootSelector, rootValue, stdout)
+					if err != nil {
+						return &ev, err
+					}
+					rootCells = append(rootCells, cell)
+				}
+			} else {
+				rootCells = append(rootCells, NewCell(NewValue(rootValue)))
+			}
+
+			for _, rootCell := range rootCells {
+				var rootVal = rootCell.Value
+
+				// run the begin file rules
+				for _, rule := range ev.beginFileRules {
+					ev.ruleRoot = rootCell
+					if err := ev.evalStatement(rule.Body); err != nil {
+						if err == errExit {
+							return &ev, nil
+						}
+						return &ev, err
+					}
+				}
+
+				// run the rules
+				ev.root = rootCell
+				if err := ev.evalPatternRules(ev.patternRules); err != nil {
 					if err == errExit {
 						return &ev, nil
 					}
 					return &ev, err
 				}
-			}
 
-			// run the rules
-			ev.root = rootCell
-			if err := ev.evalPatternRules(ev.patternRules); err != nil {
-				if err == errExit {
-					return &ev, nil
-				}
-				return &ev, err
-			}
-
-			// run the end file rules
-			for _, rule := range ev.endFileRules {
-				ev.ruleRoot = NewCell(rootVal)
-				if err := ev.evalStatement(rule.Body); err != nil {
-					if err == errExit {
-						return &ev, nil
+				// run the end file rules
+				for _, rule := range ev.endFileRules {
+					ev.ruleRoot = NewCell(rootVal)
+					if err := ev.evalStatement(rule.Body); err != nil {
+						if err == errExit {
+							return &ev, nil
+						}
+						return &ev, err
 					}
-					return &ev, err
 				}
 			}
 		}

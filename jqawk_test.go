@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -682,6 +684,12 @@ rhs not null
 		expected: "2\n3\n3\n4\n",
 	},
 	{
+		name:     "jsonl",
+		prog:     "{ print $ }",
+		json:     "[1, 2]\n[3, 4]",
+		expected: "1\n2\n3\n4\n",
+	},
+	{
 		name: "bug: statement after block",
 		prog: `
 			{
@@ -1009,6 +1017,63 @@ func TestJqawkExe(t *testing.T) {
 		json:     "[]",
 		expected: "",
 	})
+}
+
+func TestJqawkStreamingJson(t *testing.T) {
+	// this is a special-case of the exe tests. it streams json to jqawk on stdin
+	// and expects a stream of output on stdout.
+	//
+	// this is for jsonl-style newline separated json values.
+	cmd := exec.Command("./jqawk", "BEGINFILE { sum = 0 } { sum += $ } ENDFILE { print sum }")
+
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		t.Fatalf("error opening stdin: %s\n", err)
+	}
+
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		t.Fatalf("error opening stdout: %s\n", err)
+	}
+	br := bufio.NewReader(stdout)
+
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		t.Fatalf("error opening stderr: %s\n", err)
+	}
+
+	defer func() {
+		scanner := bufio.NewScanner(stderr)
+		for scanner.Scan() {
+			t.Logf("stderr: %s\n", scanner.Text())
+		}
+	}()
+
+	err = cmd.Start()
+	if err != nil {
+		t.Fatalf("error starting command: %s\n", err)
+	}
+
+	writeStdinAndExpectOutput := func(input string, expected string) {
+		io.WriteString(stdin, input)
+		str, err := br.ReadString('\n')
+		if err != nil && !errors.Is(err, io.EOF) {
+			t.Fatalf("error reading stdout: %s\n", err)
+		}
+		if str != expected {
+			t.Fatalf("expected %q\ngot %q\n", expected, str)
+		}
+	}
+
+	writeStdinAndExpectOutput("[1, 2, 3]\n", "6\n")
+	writeStdinAndExpectOutput("[2, 3, 4]\n", "9\n")
+
+	stdin.Close()
+
+	err = cmd.Wait()
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestJqawkOneTrueAwk(t *testing.T) {
