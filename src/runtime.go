@@ -68,6 +68,12 @@ func nativePrintf(e *Evaluator, args []*Value, this *Value) (*Value, error) {
 			if err != nil {
 				return nil, fmt.Errorf("invalid width specifier")
 			}
+
+			// arbitrary limit
+			if num > 65536 || num < -65536 {
+				return nil, fmt.Errorf("width specifier too large")
+			}
+
 			i = numEnd
 			if numStr[0] == '0' {
 				padChar = "0"
