@@ -77,7 +77,7 @@ func NewParser(l *Lexer) Parser {
 		MinusMinus:    {PrecPostfix, unary, postfix},
 		LCurly:        {PrecNone, object, nil},
 		Percent:       {PrecMultiplication, nil, binary},
-		Is:            {PrecComparison, nil, binary},
+		Is:            {PrecComparison, nil, is},
 	}
 	return p
 }
@@ -766,6 +766,26 @@ func binary(p *Parser, left Expr) (Expr, error) {
 			OpToken: opToken,
 		}, nil
 	}
+}
+
+func is(p *Parser, left Expr) (Expr, error) {
+	if err := p.consume(Is); err != nil {
+		return nil, err
+	}
+	opToken := p.previous
+
+	err := p.consume(Ident, Function, Null)
+	if err != nil {
+		return nil, err
+	}
+	rhs := p.previous
+
+	ident := ExprIdentifier{*rhs}
+	return &ExprBinary{
+		Left:    left,
+		Right:   &ident,
+		OpToken: *opToken,
+	}, nil
 }
 
 func (p *Parser) rewriteCompundAssingment(left Expr, right Expr, opToken Token) (Expr, error) {

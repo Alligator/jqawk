@@ -641,6 +641,8 @@ rhs not null
 	{
 		name: "is operator",
 		prog: `
+			function fn() {}
+
 			{
 				if ($ is string) print 'string';
 				if ($ is bool) 	 print 'bool';
@@ -649,9 +651,15 @@ rhs not null
 				if ($ is object) print 'object';
 				if ($ is null)   print 'null';
 			}
+
+			END {
+				if (fn is function) print 'function';
+				if (/123/ is regex) print 'regex';
+				if (x is unknown)   print 'unknown';
+			}
 		`,
 		json:     "[\"1\", false, 2, [3], { \"n\": 4 }, null]",
-		expected: "string\nbool\nnumber\narray\nobject\nnull\n",
+		expected: "string\nbool\nnumber\narray\nobject\nnull\nfunction\nregex\nunknown\n",
 	},
 	{
 		name: "array sort",

@@ -525,14 +525,20 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (*Cell, error) {
 	// is special-case
 	if expr.OpToken.Tag == Is {
 		switch exp := expr.Right.(type) {
-		case *ExprLiteral:
-			if exp.token.Tag == Null {
-				result := left.Value.Tag == ValueNil
-				return NewCell(NewValue(result)), nil
-			}
 		case *ExprIdentifier:
 			result := false
-			switch e.lexer.GetString(&exp.token) {
+
+			switch exp.token.Tag {
+			case Function:
+				result = left.Value.Tag == ValueFn
+				return NewCell(NewValue(result)), nil
+			case Null:
+				result = left.Value.Tag == ValueNil
+				return NewCell(NewValue(result)), nil
+			}
+
+			s := e.lexer.GetString(&exp.token)
+			switch s {
 			case "string":
 				result = left.Value.Tag == ValueStr
 			case "bool":
@@ -543,8 +549,6 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (*Cell, error) {
 				result = left.Value.Tag == ValueArray
 			case "object":
 				result = left.Value.Tag == ValueObj
-			case "function":
-				result = left.Value.Tag == ValueFn
 			case "regex":
 				result = left.Value.Tag == ValueRegex
 			case "unknown":
