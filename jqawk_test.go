@@ -104,6 +104,12 @@ Total    337.5
 			print 6 / 2 - 1 * 3
 			print '';
 
+			print 3 < 4;
+			print 3 <= 3;
+			print 3 > 2;
+			print 3 >= 3;
+			print '';
+
 			print false && true;
 			print false || true;
 			print '';
@@ -118,6 +124,11 @@ Total    337.5
 6
 2
 0
+
+true
+true
+true
+true
 
 false
 true
