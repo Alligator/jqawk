@@ -743,7 +743,7 @@ rhs not null
 		expected: "one\ntwo\tthree\\four\n",
 	},
 	{
-		name:          "invalud escape chars",
+		name:          "invalid escape chars",
 		prog:          `BEGIN { print '\z' }`,
 		json:          "[]",
 		expectedError: "unknown escape char 'z'",
