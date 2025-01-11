@@ -952,61 +952,71 @@ func FuzzJqawkWithJson(f *testing.F) {
 	})
 }
 
+func testInternal(t testing.TB, tc testCase) {
+	handleError := func(err error) {
+		if len(tc.expectedError) > 0 {
+			if err.Error() != tc.expectedError {
+				t.Fatalf("expected error %q\ngot %q\n", tc.expectedError, err.Error())
+			}
+		} else {
+			switch tErr := err.(type) {
+			case lang.RuntimeError:
+				t.Logf("  %s\n", tErr.SrcLine)
+				t.Logf("  %*s\n", tErr.Col+1, "^")
+				t.Logf("syntax error on line %d: %s\n", tErr.Line, tErr.Message)
+			case lang.SyntaxError:
+				t.Logf("  %s\n", tErr.SrcLine)
+				t.Logf("  %*s\n", tErr.Col+1, "^")
+				t.Logf("syntax error on line %d: %s\n", tErr.Line, tErr.Message)
+			default:
+				t.Log(err)
+			}
+			panic("unexpected error")
+		}
+	}
+
+	inputFiles := make([]lang.InputFile, 0)
+	if tc.json != "" {
+		inputReader := strings.NewReader(tc.json)
+		inputFiles = append(inputFiles, lang.InputFile{Name: "<test1>", Reader: inputReader})
+	}
+	if tc.json2 != "" {
+		inputReader := strings.NewReader(tc.json2)
+		inputFiles = append(inputFiles, lang.InputFile{Name: "<test2>", Reader: inputReader})
+	}
+
+	var sb strings.Builder
+	_, err := lang.EvalProgram(tc.prog, inputFiles, nil, &sb, false)
+	if err != nil {
+		handleError(err)
+	}
+
+	if sb.String() != tc.expected {
+		actualLines := strings.Split(sb.String(), "\n")
+		expectedLines := strings.Split(tc.expected, "\n")
+		for i, line := range actualLines {
+			if len(expectedLines) < i {
+				fmt.Printf("\x1b[92m+ %s\x1b[0m\n", line)
+			} else if len(expectedLines) > i && line != expectedLines[i] {
+				fmt.Printf("\x1b[91m- %s\x1b[0m\n", expectedLines[i])
+				fmt.Printf("\x1b[92m+ %s\x1b[0m\n", line)
+			} else {
+				fmt.Printf("  %s\n", line)
+			}
+		}
+		t.Fatalf("unexpected result")
+	}
+}
+
 func test(t *testing.T, tc testCase) {
 	t.Run(tc.name, func(t *testing.T) {
-		handleError := func(err error) {
-			if len(tc.expectedError) > 0 {
-				if err.Error() != tc.expectedError {
-					t.Fatalf("expected error %q\ngot %q\n", tc.expectedError, err.Error())
-				}
-			} else {
-				switch tErr := err.(type) {
-				case lang.RuntimeError:
-					t.Logf("  %s\n", tErr.SrcLine)
-					t.Logf("  %*s\n", tErr.Col+1, "^")
-					t.Logf("syntax error on line %d: %s\n", tErr.Line, tErr.Message)
-				case lang.SyntaxError:
-					t.Logf("  %s\n", tErr.SrcLine)
-					t.Logf("  %*s\n", tErr.Col+1, "^")
-					t.Logf("syntax error on line %d: %s\n", tErr.Line, tErr.Message)
-				default:
-					t.Log(err)
-				}
-				panic("unexpected error")
-			}
-		}
+		testInternal(t, tc)
+	})
+}
 
-		inputFiles := make([]lang.InputFile, 0)
-		if tc.json != "" {
-			inputReader := strings.NewReader(tc.json)
-			inputFiles = append(inputFiles, lang.InputFile{Name: "<test1>", Reader: inputReader})
-		}
-		if tc.json2 != "" {
-			inputReader := strings.NewReader(tc.json2)
-			inputFiles = append(inputFiles, lang.InputFile{Name: "<test2>", Reader: inputReader})
-		}
-
-		var sb strings.Builder
-		_, err := lang.EvalProgram(tc.prog, inputFiles, nil, &sb, false)
-		if err != nil {
-			handleError(err)
-		}
-
-		if sb.String() != tc.expected {
-			actualLines := strings.Split(sb.String(), "\n")
-			expectedLines := strings.Split(tc.expected, "\n")
-			for i, line := range actualLines {
-				if len(expectedLines) < i {
-					fmt.Printf("\x1b[92m+ %s\x1b[0m\n", line)
-				} else if len(expectedLines) > i && line != expectedLines[i] {
-					fmt.Printf("\x1b[91m- %s\x1b[0m\n", expectedLines[i])
-					fmt.Printf("\x1b[92m+ %s\x1b[0m\n", line)
-				} else {
-					fmt.Printf("  %s\n", line)
-				}
-			}
-			t.Fatalf("unexpected result")
-		}
+func bench(b *testing.B, tc testCase) {
+	b.Run(tc.name, func(b *testing.B) {
+		testInternal(b, tc)
 	})
 }
 
@@ -1031,6 +1041,12 @@ func testExe(t *testing.T, tc testCase) {
 func TestJqawk(t *testing.T) {
 	for _, tc := range tests {
 		test(t, tc)
+	}
+}
+
+func BenchmarkJqawk(b *testing.B) {
+	for _, tc := range tests {
+		bench(b, tc)
 	}
 }
 
