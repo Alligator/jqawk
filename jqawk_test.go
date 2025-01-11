@@ -102,13 +102,30 @@ Total    337.5
 			print 2 * 3
 			print 6 / 3
 			print 6 / 2 - 1 * 3
+			print '';
 
+			print false && true;
+			print false || true;
+			print '';
+			
 			obj = { a: 1 }
 			print !obj.a
 			print -obj.a + 2
 			print -(obj.a + 2)
 		}`,
-		expected: "5\n-1\n6\n2\n0\nfalse\n1\n-3\n",
+		expected: `5
+-1
+6
+2
+0
+
+false
+true
+
+false
+1
+-3
+`,
 	},
 	{
 		name: "pre/postfix operators",
@@ -150,9 +167,12 @@ Total    337.5
 	{
 		name: "unary operators",
 		prog: `BEGIN {
-			print !0, !1
+			print !false, !true;
+			n = -3
+			p = 3
+			print +n, -p;
 		}`,
-		expected: "true false\n",
+		expected: "true false\n-3 -3\n",
 	},
 	{
 		name:     "dot",
