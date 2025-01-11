@@ -756,13 +756,13 @@ rhs not null
 	{
 		name:          "bug: unclosed regexes",
 		prog:          "$ ~ /abc",
-		json:          "[]",
+		json:          "[1]",
 		expectedError: "unexpected EOF while reading regex",
 	},
 	{
 		name:          "bug: unclosed strings",
 		prog:          "$ ~ 'abc",
-		json:          "[]",
+		json:          "[1]",
 		expectedError: "unexpected EOF while reading string",
 	},
 	{
@@ -825,13 +825,13 @@ rhs not null
 	},
 	{
 		name:          "bug: divide by 0",
-		prog:          "{ print 0 / 0 }",
+		prog:          "BEGIN { print 0 / 0 }",
 		json:          "[]",
 		expectedError: "divide by zero",
 	},
 	{
 		name:          "bug: modulo by 0",
-		prog:          "{ print 0 % 0 }",
+		prog:          "BEGIN { print 0 % 0 }",
 		json:          "[]",
 		expectedError: "divide by zero",
 	},
