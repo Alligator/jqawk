@@ -690,6 +690,18 @@ rhs not null
 		expected: "1\n2\n3\n4\n",
 	},
 	{
+		name:     "escape chars",
+		prog:     `BEGIN { print 'one\ntwo\tthree\\four' }`,
+		json:     "[]",
+		expected: "one\ntwo\tthree\\four\n",
+	},
+	{
+		name:          "invalud escape chars",
+		prog:          `BEGIN { print '\z' }`,
+		json:          "[]",
+		expectedError: "unknown escape char 'z'",
+	},
+	{
 		name: "bug: statement after block",
 		prog: `
 			{
