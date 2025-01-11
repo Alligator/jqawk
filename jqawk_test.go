@@ -387,9 +387,15 @@ string rpad: sponge     sponge
 					print i, x;
 				}
 			}
+
+			END {
+				for (c, i in 'bye') {
+					print i, c;
+				}
+			}
 		`,
 		json:     "[[1, 2], [3, 4]]",
-		expected: "1\n2\n0 1\n1 2\n3\n4\n0 3\n1 4\n",
+		expected: "1\n2\n0 1\n1 2\n3\n4\n0 3\n1 4\n0 b\n1 y\n2 e\n",
 	},
 	{
 		name: "for in object",
