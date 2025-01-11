@@ -102,6 +102,7 @@ Total    337.5
 			print 2 * 3
 			print 6 / 3
 			print 6 / 2 - 1 * 3
+			print 4 % 3
 			print '';
 
 			print 3 < 4;
@@ -124,6 +125,7 @@ Total    337.5
 6
 2
 0
+1
 
 true
 true
