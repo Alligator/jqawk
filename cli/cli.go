@@ -123,10 +123,7 @@ func Run(version string) (exitCode int) {
 	inputFiles := make([]lang.InputFile, 0)
 	for _, filePath := range filePaths {
 		if readStdin {
-			inputFiles = append(inputFiles, lang.InputFile{
-				Name:   "<stdin>",
-				Reader: os.Stdin,
-			})
+			inputFiles = append(inputFiles, lang.NewStreamingInputFile("<stdin>", os.Stdin))
 		} else {
 			fp, err := os.Open(filePath)
 			if err != nil {
@@ -134,10 +131,7 @@ func Run(version string) (exitCode int) {
 				return 1
 			}
 			defer fp.Close()
-			inputFiles = append(inputFiles, lang.InputFile{
-				Name:   filePath,
-				Reader: fp,
-			})
+			inputFiles = append(inputFiles, lang.NewStreamingInputFile(filePath, fp))
 		}
 	}
 

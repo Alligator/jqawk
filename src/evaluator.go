@@ -1123,11 +1123,6 @@ func EvalExpression(exprSrc string, rootValue interface{}, stdout io.Writer) (*C
 	return cell, nil
 }
 
-type InputFile struct {
-	Name   string
-	Reader io.Reader
-}
-
 func EvalProgram(progSrc string, files []InputFile, rootSelectors []string, stdout io.Writer, fuzzing bool) (*Evaluator, error) {
 	lex := NewLexer(progSrc)
 	parser := NewParser(&lex)
@@ -1152,15 +1147,15 @@ func EvalProgram(progSrc string, files []InputFile, rootSelectors []string, stdo
 	// for each file, run the pattern rules
 	for _, file := range files {
 		// for each json value
-		d := json.NewDecoder(file.Reader)
+		d := json.NewDecoder(file.NewReader())
 		for d.More() {
 			var rootValue any
 			err := d.Decode(&rootValue)
 			if err != nil {
-				return &ev, JsonError{err.Error(), file.Name}
+				return &ev, JsonError{err.Error(), file.Name()}
 			}
 
-			ev.setGlobal("$file", NewCell(NewValue(file.Name)))
+			ev.setGlobal("$file", NewCell(NewValue(file.Name())))
 
 			// find the root value(s)
 			rootCells := make([]*Cell, 0)

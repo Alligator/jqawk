@@ -18,16 +18,24 @@ func RunRepl(version string, files []lang.InputFile, rootSelectors []string) int
 	}
 	defer rl.Close()
 
-	// read each file into memory and give them a reader on the string
-	stringReaders := make([]*strings.Reader, 0)
-	for _, file := range files {
-		bytes, err := io.ReadAll(file.Reader)
-		if err != nil {
-			return 1
+	// convert each streaming input file into a buffered input file
+	bufferedFiles := make([]lang.InputFile, len(files))
+	for i, file := range files {
+		if sif, ok := file.(*lang.StreamingInputFile); ok {
+			if file.Name() == "<stdin>" {
+				fmt.Fprintln(os.Stderr, "cannot read from stdin in interactive mode")
+				return 1
+			}
+
+			bytes, err := io.ReadAll(sif.NewReader())
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "error opening file: %s\n", err.Error())
+				return 1
+			}
+			bufferedFiles[i] = lang.NewBufferedInputFile(file.Name(), bytes)
+		} else {
+			bufferedFiles[i] = file
 		}
-		reader := strings.NewReader(string(bytes))
-		file.Reader = reader
-		stringReaders = append(stringReaders, reader)
 	}
 
 	fmt.Printf("jqawk %s (revision %s)\n", version, getCommit())
@@ -35,20 +43,16 @@ func RunRepl(version string, files []lang.InputFile, rootSelectors []string) int
 	for {
 		line, err := rl.Readline()
 		if err != nil {
-			break
+			fmt.Fprintf(os.Stderr, "readline error: %s\n", err.Error())
+			return 1
 		}
 		line = strings.TrimSpace(line)
 
-		_, err = lang.EvalProgram(line, files, rootSelectors, os.Stdout, false)
+		_, err = lang.EvalProgram(line, bufferedFiles, rootSelectors, os.Stdout, false)
 		if err != nil {
 			printError(err)
 		}
 		fmt.Println("")
-
-		// reset all the file readers
-		for _, reader := range stringReaders {
-			reader.Seek(0, 0)
-		}
 	}
 
 	return 0

@@ -272,6 +272,10 @@ $ jqawk -o - "{ $.name_length = $.name.length() }" example.json
 ]
 ```
 
+## Interactive REPL
+
+The `-i` flag will start the interactive REPL. The REPL can only be run with files, not JSON read from stdin.
+
 ## Language reference
 
 A rough jqawk language reference.
