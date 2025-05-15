@@ -62,6 +62,7 @@ func Run(version string) (exitCode int) {
 	profile := flag.Bool("profile", false, "record a CPU profile")
 	outfile := flag.String("o", "", "the file to write JSON to")
 	showVersion := flag.Bool("version", false, "print version information")
+	interactive := flag.Bool("i", false, "start interactive REPL")
 	flag.Parse()
 
 	if *showVersion {
@@ -87,6 +88,8 @@ func Run(version string) (exitCode int) {
 			return 1
 		}
 		progSrc = string(file)
+	} else if *interactive {
+		filePaths = args
 	} else {
 		switch len(args) {
 		case 0:
@@ -120,10 +123,7 @@ func Run(version string) (exitCode int) {
 	inputFiles := make([]lang.InputFile, 0)
 	for _, filePath := range filePaths {
 		if readStdin {
-			inputFiles = append(inputFiles, lang.InputFile{
-				Name:   "<stdin>",
-				Reader: os.Stdin,
-			})
+			inputFiles = append(inputFiles, lang.NewStreamingInputFile("<stdin>", os.Stdin))
 		} else {
 			fp, err := os.Open(filePath)
 			if err != nil {
@@ -131,11 +131,12 @@ func Run(version string) (exitCode int) {
 				return 1
 			}
 			defer fp.Close()
-			inputFiles = append(inputFiles, lang.InputFile{
-				Name:   filePath,
-				Reader: fp,
-			})
+			inputFiles = append(inputFiles, lang.NewStreamingInputFile(filePath, fp))
 		}
+	}
+
+	if *interactive {
+		return RunRepl(version, inputFiles, rValues)
 	}
 
 	ev, err := lang.EvalProgram(progSrc, inputFiles, rValues, os.Stdout, false)

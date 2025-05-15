@@ -912,7 +912,7 @@ func FuzzJqawk(f *testing.F) {
 		input := "[{ \"a\": 1 }, { \"a\": null }]"
 		inputReader := strings.NewReader(input)
 		inputFiles := []lang.InputFile{
-			{Name: "<test>", Reader: inputReader},
+			lang.NewStreamingInputFile("<test>", inputReader),
 		}
 		_, err := lang.EvalProgram(src, inputFiles, nil, io.Discard, true)
 
@@ -937,7 +937,7 @@ func FuzzJqawkWithJson(f *testing.F) {
 	f.Fuzz(func(t *testing.T, src string, jsonSrc string) {
 		inputReader := strings.NewReader(jsonSrc)
 		inputFiles := []lang.InputFile{
-			{Name: "<test>", Reader: inputReader},
+			lang.NewStreamingInputFile("<test>", inputReader),
 		}
 		_, err := lang.EvalProgram(src, inputFiles, nil, io.Discard, true)
 
@@ -978,11 +978,11 @@ func testInternal(t testing.TB, tc testCase) {
 	inputFiles := make([]lang.InputFile, 0)
 	if tc.json != "" {
 		inputReader := strings.NewReader(tc.json)
-		inputFiles = append(inputFiles, lang.InputFile{Name: "<test1>", Reader: inputReader})
+		inputFiles = append(inputFiles, lang.NewStreamingInputFile("<test1>", inputReader))
 	}
 	if tc.json2 != "" {
 		inputReader := strings.NewReader(tc.json2)
-		inputFiles = append(inputFiles, lang.InputFile{Name: "<test2>", Reader: inputReader})
+		inputFiles = append(inputFiles, lang.NewStreamingInputFile("<test2>", inputReader))
 	}
 
 	var sb strings.Builder
