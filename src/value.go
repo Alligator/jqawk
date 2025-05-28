@@ -1,6 +1,8 @@
 package lang
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -42,6 +44,7 @@ type Value struct {
 	Bool      *bool
 	Array     []*Cell
 	Obj       *map[string]*Cell
+	ObjKeys   []string
 	NativeFn  func(*Evaluator, []*Value, *Value) (*Value, error)
 	Fn        *ExprFunction
 	Proto     *Value
@@ -227,7 +230,8 @@ func (v *Value) prettyStringInteral(rootValues []*Value, quote bool, checkCircul
 		var sb strings.Builder
 		sb.WriteByte('{')
 		index := 0
-		for key, value := range *v.Obj {
+		for _, key := range v.ObjKeys {
+			value := (*v.Obj)[key]
 			if index > 0 {
 				sb.WriteString(", ")
 			}
@@ -330,6 +334,7 @@ func (v *Value) SetMember(member Value, cell *Cell) (*Cell, error) {
 	case ValueObj:
 		key := member.String()
 		(*v.Obj)[key] = cell
+		v.ObjKeys = append(v.ObjKeys, key)
 		return cell, nil
 	default:
 		// TODO?
@@ -413,6 +418,73 @@ func (v *Value) Not() *Value {
 		notValue = NewValue(true)
 	}
 	return &notValue
+}
+
+func (v *Value) MarshalJSON() ([]byte, error) {
+	seen := make([]*Value, 0)
+	var buf bytes.Buffer
+	err := v.marshalAndDetectCircularReferences(&buf, seen)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
+func (v *Value) marshalAndDetectCircularReferences(w *bytes.Buffer, seen []*Value) error {
+	var b []byte
+	var err error
+
+	for _, seenVal := range seen {
+		if isSame(seenVal, v) {
+			return fmt.Errorf("circular reference")
+		}
+	}
+	seen = append(seen, v)
+
+	switch v.Tag {
+	case ValueStr:
+		b, err = json.Marshal(v.Str)
+	case ValueBool:
+		b, err = json.Marshal(v.Bool)
+	case ValueNum:
+		b, err = json.Marshal(v.Num)
+	case ValueNil, ValueUnknown:
+		b, err = json.Marshal(nil)
+	case ValueArray:
+		b, err = json.Marshal(v.Array)
+	case ValueObj:
+		w.WriteString("{ ")
+		for i, key := range v.ObjKeys {
+			if i > 0 {
+				w.WriteString(", ")
+			}
+
+			keyJson, err := json.Marshal(key)
+			if err != nil {
+				return err
+			}
+
+			w.Write(keyJson)
+			w.WriteString(": ")
+
+			val := (*v.Obj)[key].Value
+			err = val.marshalAndDetectCircularReferences(w, seen)
+			if err != nil {
+				return err
+			}
+		}
+		w.WriteString(" }")
+		return nil
+	default:
+		return fmt.Errorf("unhandled tag %v", v.Tag)
+	}
+
+	if err != nil {
+		return err
+	}
+
+	w.Write(b)
+	return nil
 }
 
 func (v *Value) ToGoValue() (interface{}, error) {

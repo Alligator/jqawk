@@ -338,6 +338,7 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 			}
 
 			(*obj.Obj)[kv.Key] = newCell
+			obj.ObjKeys = append(obj.ObjKeys, kv.Key)
 		}
 		return NewCell(obj), nil
 	default:
@@ -1105,14 +1106,14 @@ func (e *Evaluator) GetRootJson() (string, error) {
 	return string(bytes), nil
 }
 
-func EvalExpression(exprSrc string, rootValue interface{}, stdout io.Writer) (*Cell, error) {
+func EvalExpression(exprSrc string, rootValue Value, stdout io.Writer) (*Cell, error) {
 	lex := NewLexer(exprSrc)
 	parser := NewParser(&lex)
 	expr, err := parser.ParseExpression()
 	if err != nil {
 		return nil, err
 	}
-	rootCell := NewCell(NewValue(rootValue))
+	rootCell := NewCell(rootValue)
 	ev := NewEvaluator(Program{}, &lex, stdout)
 	ev.root = rootCell
 	ev.ruleRoot = rootCell
@@ -1147,11 +1148,13 @@ func EvalProgram(progSrc string, files []InputFile, rootSelectors []string, stdo
 	// for each file, run the pattern rules
 	for _, file := range files {
 		// for each json value
-		d := json.NewDecoder(file.NewReader())
-		for d.More() {
-			var rootValue any
-			err := d.Decode(&rootValue)
+		jp := newJsonParser(file.NewReader())
+		for {
+			rootValue, err := jp.next()
 			if err != nil {
+				if err == io.EOF {
+					break
+				}
 				return &ev, JsonError{err.Error(), file.Name()}
 			}
 
@@ -1168,7 +1171,7 @@ func EvalProgram(progSrc string, files []InputFile, rootSelectors []string, stdo
 					rootCells = append(rootCells, cell)
 				}
 			} else {
-				rootCells = append(rootCells, NewCell(NewValue(rootValue)))
+				rootCells = append(rootCells, NewCell(rootValue))
 			}
 
 			for _, rootCell := range rootCells {

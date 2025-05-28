@@ -749,6 +749,17 @@ rhs not null
 		expectedError: "unknown escape char 'z'",
 	},
 	{
+		name: "maintain key order",
+		prog: `{ print $; print json($) }`,
+		json: `[{ "b": 3, "a": 4 }]`,
+		expected: `{"b": 3, "a": 4}
+{
+  "b": 3,
+  "a": 4
+}
+`,
+	},
+	{
 		name: "bug: statement after block",
 		prog: `
 			{

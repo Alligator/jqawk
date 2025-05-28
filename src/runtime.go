@@ -136,14 +136,12 @@ func nativeJson(e *Evaluator, args []*Value, this *Value) (*Value, error) {
 		return nil, err
 	}
 
-	val, err := args[0].ToGoValue()
+	bytes, err := json.MarshalIndent(args[0], "", "  ")
 	if err != nil {
+		if marshalerErr, ok := err.(*json.MarshalerError); ok {
+			return nil, fmt.Errorf("error creating JSON: %s", marshalerErr.Unwrap().Error())
+		}
 		return nil, fmt.Errorf("error creating JSON: %s", err.Error())
-	}
-
-	bytes, err := json.MarshalIndent(val, "", "  ")
-	if err != nil {
-		return nil, err
 	}
 
 	v := NewValue(string(bytes))
