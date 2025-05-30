@@ -835,8 +835,7 @@ func assign(p *Parser, left Expr) (Expr, error) {
 		}
 	}
 
-	_, err := p.advance()
-	if err != nil {
+	if err := p.consume(Equal); err != nil {
 		return nil, err
 	}
 	opToken := *p.previous
@@ -846,16 +845,11 @@ func assign(p *Parser, left Expr) (Expr, error) {
 		return nil, err
 	}
 
-	switch opToken.Tag {
-	case PlusEqual, MinusEqual, MultiplyEqual, DivideEqual:
-		return p.rewriteCompundAssingment(left, expr, opToken)
-	default:
-		return &ExprBinary{
-			Left:    left,
-			Right:   expr,
-			OpToken: opToken,
-		}, nil
-	}
+	return &ExprBinary{
+		Left:    left,
+		Right:   expr,
+		OpToken: opToken,
+	}, nil
 }
 
 func (p *Parser) parseRule() (Rule, error) {
