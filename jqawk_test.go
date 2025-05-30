@@ -218,6 +218,12 @@ false
 		expectedError: "array indices must be numbers",
 	},
 	{
+		name:     "subscript string",
+		prog:     "{ print $[0], $[-1] }",
+		json:     `["hello"]`,
+		expected: "h o\n",
+	},
+	{
 		name:     "unknown variable comparison",
 		prog:     "$ > max { max = $ } $ < min { min = $ } END { print min, max }",
 		json:     `[1, 2, 3, 4, 3, 2, 1]`,

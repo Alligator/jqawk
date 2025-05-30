@@ -306,6 +306,16 @@ func (v *Value) GetMember(member Value) (*Cell, error) {
 			return v.Proto.GetMember(member)
 		}
 		index := int(*member.Num)
+		str := *v.Str
+
+		if index < 0 {
+			index = len(str) + index
+			if index < 0 {
+				// walked backwards off the front of the array
+				return nil, fmt.Errorf("index out of range")
+			}
+		}
+
 		if index < 0 || index >= len(*v.Str) {
 			return NewCell(NewValue(nil)), nil
 		}
