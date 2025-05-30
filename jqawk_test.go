@@ -588,12 +588,14 @@ string rpad: sponge     sponge
 				print "aBc".upper()
 				print "aBc".lower()
 				print "aBc".split("B")
+				print "aBc".length()
 			}
 		`,
 		json: "[]",
 		expected: `ABC
 abc
 ["a", "c"]
+3
 `,
 	},
 	{
@@ -647,9 +649,9 @@ rhs not null
 	},
 	{
 		name:     "truthiness",
-		prog:     "BEGIN { print !![], !!{} }",
+		prog:     "BEGIN { print !![], !!{}, !!0, !!1, !!'', !!'abc' }",
 		json:     "[]",
-		expected: "true true\n",
+		expected: "true true false true false true\n",
 	},
 	{
 		name:     "BEGIN and END with multiple inputs",
@@ -764,6 +766,26 @@ rhs not null
   "b": 3,
   "a": 4
 }
+`,
+	},
+	{
+		name: "array methods",
+		prog: `
+			BEGIN {
+				a = [1, 2]
+				a.push(3)
+				a.push(4)
+				print a, a.length()
+				print a.pop(), a
+				print a.popfirst(), a
+				print a.contains(1), a.contains(2)
+			}
+		`,
+		json: "[]",
+		expected: `[1, 2, 3, 4] 4
+4 [1, 2, 3]
+1 [2, 3]
+false true
 `,
 	},
 	{
