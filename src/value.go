@@ -440,6 +440,10 @@ func (v *Value) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+func (c *Cell) MarshalJSON() ([]byte, error) {
+	return c.Value.MarshalJSON()
+}
+
 func (v *Value) marshalAndDetectCircularReferences(w *bytes.Buffer, seen []*Value) error {
 	var b []byte
 	var err error
@@ -495,52 +499,4 @@ func (v *Value) marshalAndDetectCircularReferences(w *bytes.Buffer, seen []*Valu
 
 	w.Write(b)
 	return nil
-}
-
-func (v *Value) ToGoValue() (interface{}, error) {
-	rootValues := make([]*Value, 0)
-	return v.toGoValueInterval(rootValues, false)
-}
-
-func (v *Value) toGoValueInterval(rootValues []*Value, checkCircularReference bool) (interface{}, error) {
-	if checkCircularReference {
-		for _, rootValue := range rootValues {
-			if isSame(rootValue, v) {
-				return nil, fmt.Errorf("circular reference")
-			}
-		}
-	}
-
-	switch v.Tag {
-	case ValueStr:
-		return *v.Str, nil
-	case ValueBool:
-		return *v.Bool, nil
-	case ValueNum:
-		return *v.Num, nil
-	case ValueArray:
-		var array []interface{}
-		for _, item := range v.Array {
-			val, err := item.Value.toGoValueInterval(append(rootValues, v), true)
-			if err != nil {
-				return nil, err
-			}
-			array = append(array, val)
-		}
-		return array, nil
-	case ValueObj:
-		obj := make(map[string]interface{})
-		for k, objVal := range *v.Obj {
-			val, err := objVal.Value.toGoValueInterval(append(rootValues, v), true)
-			if err != nil {
-				return nil, err
-			}
-			obj[k] = val
-		}
-		return obj, nil
-	case ValueNil, ValueUnknown:
-		return nil, nil
-	default:
-		return nil, fmt.Errorf("a %s cannot be converted to a native type", v.Tag)
-	}
 }

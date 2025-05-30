@@ -1098,12 +1098,7 @@ func (e *Evaluator) evalPatternRules(patternRules []*Rule) error {
 }
 
 func (e *Evaluator) GetRootJson() (string, error) {
-	val, err := e.root.Value.ToGoValue()
-	if err != nil {
-		return "", err
-	}
-
-	bytes, err := json.MarshalIndent(val, "", "  ")
+	bytes, err := json.MarshalIndent(&e.root.Value, "", "  ")
 	if err != nil {
 		return "", err
 	}
