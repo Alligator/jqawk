@@ -433,8 +433,8 @@ number.round()
 object.length()
   return the number of keys
 
-object.pluck(k1,
-  k2, ...) return a shallow copy of the object containing only the given keys
+object.pluck(k1, k2, ...)
+  return a shallow copy of the object containing only the given keys
 
 
 array.length()
