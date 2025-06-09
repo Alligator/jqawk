@@ -199,6 +199,17 @@ func getObjPrototype() *Value {
 					return &newObj, nil
 				},
 			}),
+			"pairs": NewCell(Value{
+				Tag: ValueNativeFn,
+				NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
+					newArray := NewArray()
+					for _, key := range this.ObjKeys {
+						pair := []*Cell{NewCell(NewValue(key)), (*this.Obj)[key]}
+						newArray.Array = append(newArray.Array, NewCell(NewValue(pair)))
+					}
+					return &newArray, nil
+				},
+			}),
 		}
 		objPrototype = &Value{
 			Tag: ValueObj,

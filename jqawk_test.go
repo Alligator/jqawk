@@ -789,6 +789,12 @@ false true
 `,
 	},
 	{
+		name:     "object.pairs",
+		prog:     "{ print $.pairs() }",
+		json:     `[{ "a": 1, "b": "two" }]`,
+		expected: "[[\"a\", 1], [\"b\", \"two\"]]\n",
+	},
+	{
 		name: "bug: statement after block",
 		prog: `
 			{
