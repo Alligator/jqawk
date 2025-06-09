@@ -208,7 +208,7 @@ Use `!~` to invert the match.
 
 ## Functions
 
-Functions can be defined at the same level as rules:
+Functions can be defined both inside and outside of rules:
 
 ```awk
 function pay(rate, hours) {
@@ -216,9 +216,12 @@ function pay(rate, hours) {
 }
 
 {
-  print $.name, pay($.rate, $.hours)
-}
-```
+  function get_name(emp) {
+    return emp.name
+  }
+
+  print get_name($), pay($.rate, $.hours)
+}```
 
 ```shellsession
 $ jqawk -f prog.jqawk emp.json
@@ -228,6 +231,18 @@ Kathy 40
 Mark 100
 Mary 121
 Susie 76.5
+```
+
+They are also first-class, and can be assigned to variables and passed as parameters:
+
+```awk
+BEGIN {
+  myfunc = function() {
+    print 'hello'
+  }
+
+  myfunc()
+}
 ```
 
 ## `$` Variables
@@ -452,7 +467,14 @@ array.popfirst()
 array.contains(value)
   return true if value is in the array
 
-array.sort()
-  return a sorted copy of the array. if the array contains mixed types, all
-  values are converted to strings before sorting
+array.sort(fn)
+  return a sorted copy of the array.
+
+  with no fn given the array is sorted by string value or numerically if all
+  the values are nunbers.
+
+  with fn(a, b) provided, the array is sorted according to fn's return value:
+    -1 means a < b
+     0 means a == b
+     1 means a > b
 ```

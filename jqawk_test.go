@@ -309,13 +309,23 @@ string rpad: sponge     sponge
 			function log(a) { print a }
 
 			BEGIN {
-				print add(3, 4);
-				log("hello");
-				empty_return(5, 6);
+				function in_rule() {
+					print 'in rule'
+				}
+
+				first_class = function() {
+					print 'first class'
+				}
+
+				print add(3, 4)
+				log("hello")
+				empty_return(5, 6)
+				in_rule()
+				first_class()
 			}
 		`,
 		json:     "[]",
-		expected: "7\nhello\n5\n",
+		expected: "7\nhello\n5\nin rule\nfirst class\n",
 	},
 	{
 		name: "if",

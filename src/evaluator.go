@@ -265,9 +265,9 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 			argVals = append(argVals, &argCell.Value)
 		}
 
-		result, err := e.callFunction(exp, fn, argVals)
+		result, err := e.callFunction(fn, argVals)
 		if err != nil {
-			return nil, err
+			return nil, e.error(exp.Token(), err.Error())
 		}
 		return result, nil
 	case *ExprArray:
@@ -341,6 +341,15 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 			obj.ObjKeys = append(obj.ObjKeys, kv.Key)
 		}
 		return NewCell(obj), nil
+	case *ExprFunction:
+		val := Value{
+			Tag: ValueFn,
+			Fn:  exp,
+		}
+		name := e.lexer.GetString(&exp.ident)
+		cell := NewCell(val)
+		e.stackTop.locals[name] = cell
+		return cell, nil
 	default:
 		return nil, e.error(exp.Token(), "expected an expression")
 	}
@@ -400,12 +409,12 @@ func (e *Evaluator) evalCaseMatch(value *Cell, exprs []Expr) (bool, map[string]*
 	return false, nil, nil
 }
 
-func (e *Evaluator) callFunction(exp *ExprCall, fn *Cell, args []*Value) (*Cell, error) {
+func (e *Evaluator) callFunction(fn *Cell, args []*Value) (*Cell, error) {
 	switch fn.Value.Tag {
 	case ValueNativeFn:
 		result, err := fn.Value.NativeFn(e, args, fn.Value.Binding)
 		if err != nil {
-			return nil, e.error(exp.Token(), err.Error())
+			return nil, err
 		}
 		if result != nil {
 			return NewCell(*result), nil
@@ -416,7 +425,7 @@ func (e *Evaluator) callFunction(exp *ExprCall, fn *Cell, args []*Value) (*Cell,
 		name := e.lexer.GetString(&f.ident)
 
 		if err := e.pushFrame(name); err != nil {
-			return nil, e.error(exp.Token(), err.Error())
+			return nil, err
 		}
 
 		for index, argName := range f.Args {
@@ -446,7 +455,7 @@ func (e *Evaluator) callFunction(exp *ExprCall, fn *Cell, args []*Value) (*Cell,
 		}
 		return NewCell(NewValue(nil)), nil
 	default:
-		return nil, e.error(exp.Token(), fmt.Sprintf("attempted to call a %s", fn.Value.Tag))
+		return nil, fmt.Errorf("attempted to call a %s", fn.Value.Tag)
 	}
 }
 
@@ -815,7 +824,7 @@ func copyValue(from *Cell, to *Cell) (*Cell, error) {
 		to.Value = val
 
 	// reference
-	case ValueArray, ValueObj, ValueUnknown:
+	case ValueArray, ValueObj, ValueUnknown, ValueFn:
 		to.Value = from.Value
 
 	default:

@@ -2,6 +2,7 @@ package lang
 
 import (
 	"cmp"
+	"fmt"
 	"math"
 	"slices"
 	"strings"
@@ -119,6 +120,41 @@ func getArrayPrototype() *Value {
 						return nil, nil
 					}
 
+					// make a clone
+					clone := make([]*Cell, len(this.Array))
+					for i, item := range this.Array {
+						clone[i] = &Cell{}
+						copyValue(item, clone[i])
+					}
+
+					// is there a sort func?
+					if len(v) == 1 {
+						if v[0].Tag != ValueFn {
+							return nil, fmt.Errorf("expected a function")
+						}
+						sortFunc := v[0]
+
+						var err error
+						slices.SortStableFunc(clone, func(a *Cell, b *Cell) int {
+							if err != nil {
+								return 0
+							}
+							args := []*Value{&a.Value, &b.Value}
+							var result *Cell
+							result, err = e.callFunction(NewCell(*sortFunc), args)
+
+							if result.Value.Tag == ValueNum {
+								return int(*result.Value.Num)
+							}
+
+							return 0
+						})
+
+						if err != nil {
+							return nil, err
+						}
+					}
+
 					// is this array only numbers?
 					onlyNumbers := true
 					for _, item := range this.Array {
@@ -126,13 +162,6 @@ func getArrayPrototype() *Value {
 							onlyNumbers = false
 							break
 						}
-					}
-
-					// make a clone
-					clone := make([]*Cell, len(this.Array))
-					for i, item := range this.Array {
-						clone[i] = &Cell{}
-						copyValue(item, clone[i])
 					}
 
 					slices.SortStableFunc(clone, func(a *Cell, b *Cell) int {

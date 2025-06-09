@@ -78,6 +78,7 @@ func NewParser(l *Lexer) Parser {
 		LCurly:        {PrecNone, object, nil},
 		Percent:       {PrecMultiplication, nil, binary},
 		Is:            {PrecComparison, nil, is},
+		Function:      {PrecNone, function, nil},
 	}
 	return p
 }
@@ -852,6 +853,14 @@ func assign(p *Parser, left Expr) (Expr, error) {
 	}, nil
 }
 
+func function(p *Parser) (Expr, error) {
+	fn, err := p.parseFunction()
+	if err != nil {
+		return nil, err
+	}
+	return &fn, nil
+}
+
 func (p *Parser) parseRule() (Rule, error) {
 	rule := Rule{}
 	switch p.current.Tag {
@@ -910,8 +919,8 @@ func (p *Parser) parseFunction() (ExprFunction, error) {
 		return ExprFunction{}, err
 	}
 
-	if err := p.consume(Ident); err != nil {
-		return ExprFunction{}, err
+	if p.current.Tag == Ident {
+		p.consume(Ident)
 	}
 
 	identToken := *p.previous
