@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"slices"
+	"strconv"
 	"strings"
 )
 
@@ -356,6 +357,51 @@ func getNumPrototype() *Value {
 
 					result := NewValue(math.Round(*this.Num))
 					return &result, nil
+				},
+			}),
+			"format": NewCell(Value{
+				Tag: ValueNativeFn,
+				NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
+					thousandsSep := ","
+					decimalSep := "."
+					if len(v) == 2 {
+						thousandsSep = v[0].String()
+						decimalSep = v[1].String()
+					} else if len(v) == 1 {
+						return nil, fmt.Errorf("expected a thousands and decimal separator")
+					}
+
+					numStr := strconv.FormatFloat(*this.Num, 'f', -1, 64)
+					parts := strings.Split(numStr, ".")
+
+					var sb strings.Builder
+					if len(parts[0]) <= 3 {
+						sb.WriteString(parts[0])
+					} else {
+						charsUntilSep := len(parts[0]) % 3
+						if charsUntilSep == 0 {
+							charsUntilSep = 3
+						}
+
+						for _, r := range parts[0] {
+							if charsUntilSep == 0 {
+								sb.WriteString(thousandsSep)
+								charsUntilSep = 2
+							} else {
+								charsUntilSep--
+							}
+
+							sb.WriteRune(r)
+						}
+					}
+
+					if len(parts) == 2 {
+						sb.WriteString(decimalSep)
+						sb.WriteString(parts[1])
+					}
+
+					val := NewValue(sb.String())
+					return &val, nil
 				},
 			}),
 		}

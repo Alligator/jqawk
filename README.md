@@ -444,6 +444,10 @@ number.ceil()
 number.round()
   floor, ceil or round the given number. halves are rounded away from zero
 
+number.format(thousandsSeparator, decimalSeparator)
+  format a number with thousands and decimal separators. if no separators
+  are given ',' is used for thousands and '.' is used for decimals
+
 
 object.length()
   return the number of keys
