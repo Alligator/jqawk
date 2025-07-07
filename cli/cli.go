@@ -23,24 +23,6 @@ func getCommit() string {
 	return "dev"
 }
 
-func printError(err error) {
-	// TODO re-use this in the tests
-	switch tErr := err.(type) {
-	case lang.SyntaxError:
-		fmt.Fprintf(os.Stderr, "  %s\n", tErr.SrcLine)
-		fmt.Fprintf(os.Stderr, "  %*s\n", tErr.Col+1, "^")
-		fmt.Fprintf(os.Stderr, "syntax error on line %d: %s\n", tErr.Line, tErr.Message)
-	case lang.RuntimeError:
-		fmt.Fprintf(os.Stderr, "  %s\n", tErr.SrcLine)
-		fmt.Fprintf(os.Stderr, "  %*s\n", tErr.Col+1, "^")
-		fmt.Fprintf(os.Stderr, "runtime error on line %d: %s\n", tErr.Line, tErr.Message)
-	case lang.JsonError:
-		fmt.Fprintf(os.Stderr, "could not parse %s: %s\n", tErr.FileName, tErr.Message)
-	default:
-		fmt.Fprintln(os.Stderr, err)
-	}
-}
-
 type multiFlag []string
 
 func (m *multiFlag) String() string {
@@ -141,7 +123,7 @@ func Run(version string) (exitCode int) {
 
 	ev, err := lang.EvalProgram(progSrc, inputFiles, rValues, os.Stdout, false)
 	if err != nil {
-		printError(err)
+		lang.PrintError(err)
 		return 1
 	}
 

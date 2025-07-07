@@ -50,7 +50,7 @@ func RunRepl(version string, files []lang.InputFile, rootSelectors []string) int
 
 		_, err = lang.EvalProgram(line, bufferedFiles, rootSelectors, os.Stdout, false)
 		if err != nil {
-			printError(err)
+			lang.PrintError(err)
 		}
 		fmt.Println("")
 	}

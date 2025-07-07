@@ -996,7 +996,7 @@ func FuzzJqawk(f *testing.F) {
 
 		if err != nil {
 			switch err.(type) {
-			case lang.SyntaxError, lang.RuntimeError, lang.JsonError:
+			case lang.SyntaxError, lang.RuntimeError, lang.JsonError, lang.ErrorGroup:
 				// don't fail
 			default:
 				t.Errorf("%#v", err)
@@ -1021,7 +1021,7 @@ func FuzzJqawkWithJson(f *testing.F) {
 
 		if err != nil {
 			switch err.(type) {
-			case lang.SyntaxError, lang.RuntimeError, lang.JsonError:
+			case lang.SyntaxError, lang.RuntimeError, lang.JsonError, lang.ErrorGroup:
 				// don't fail
 			default:
 				t.Errorf("%#v", err)
@@ -1037,18 +1037,26 @@ func testInternal(t testing.TB, tc testCase) {
 				t.Fatalf("expected error %q\ngot %q\n", tc.expectedError, err.Error())
 			}
 		} else {
-			switch tErr := err.(type) {
-			case lang.RuntimeError:
-				t.Logf("  %s\n", tErr.SrcLine)
-				t.Logf("  %*s\n", tErr.Col+1, "^")
-				t.Logf("syntax error on line %d: %s\n", tErr.Line, tErr.Message)
-			case lang.SyntaxError:
-				t.Logf("  %s\n", tErr.SrcLine)
-				t.Logf("  %*s\n", tErr.Col+1, "^")
-				t.Logf("syntax error on line %d: %s\n", tErr.Line, tErr.Message)
-			default:
-				t.Log(err)
+			var printError func(err error)
+			printError = func(err error) {
+				switch tErr := err.(type) {
+				case lang.RuntimeError:
+					t.Logf("  %s\n", tErr.SrcLine)
+					t.Logf("  %*s\n", tErr.Col+1, "^")
+					t.Logf("runtime error on line %d: %s\n", tErr.Line, tErr.Message)
+				case lang.SyntaxError:
+					t.Logf("  %s\n", tErr.SrcLine)
+					t.Logf("  %*s\n", tErr.Col+1, "^")
+					t.Logf("syntax error on line %d: %s\n", tErr.Line, tErr.Message)
+				case lang.ErrorGroup:
+					for _, err2 := range tErr.Errors {
+						printError(err2)
+					}
+				default:
+					t.Log(err)
+				}
 			}
+			printError(err)
 			panic("unexpected error")
 		}
 	}

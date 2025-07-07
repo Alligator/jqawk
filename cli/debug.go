@@ -25,7 +25,8 @@ func debugAst(prog string, rootSelectors []string) {
 	parser := lang.NewParser(&lex)
 	program, err := parser.Parse()
 	if err != nil {
-		panic(err)
+		lang.PrintError(err)
+		return
 	}
 	ast.Print(nil, program)
 }
