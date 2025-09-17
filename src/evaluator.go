@@ -85,10 +85,13 @@ func (e *Evaluator) readRules() {
 
 func (e *Evaluator) addProgramFunctions() {
 	for _, fn := range e.prog.Functions {
-		f := fn
+		f := FnWithContext{
+			Expr:    &fn,
+			Context: e.stackTop,
+		}
 		val := Value{
 			Tag: ValueFn,
-			Fn:  &f,
+			Fn:  f,
 		}
 		name := e.lexer.GetString(&fn.ident)
 		e.stackTop.locals[name] = NewCell(val)
@@ -342,9 +345,13 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 		}
 		return NewCell(obj), nil
 	case *ExprFunction:
+		fn := FnWithContext{
+			Expr:    exp,
+			Context: e.stackTop,
+		}
 		val := Value{
 			Tag: ValueFn,
-			Fn:  exp,
+			Fn:  fn,
 		}
 		name := e.lexer.GetString(&exp.ident)
 		cell := NewCell(val)
@@ -409,6 +416,26 @@ func (e *Evaluator) evalCaseMatch(value *Cell, exprs []Expr) (bool, map[string]*
 	return false, nil, nil
 }
 
+func (e *Evaluator) swapStackTop(newStackTop *stackFrame) *stackFrame {
+	oldStackTop := e.stackTop
+
+	// copy
+	newFrame := stackFrame{
+		name:   newStackTop.name,
+		locals: make(map[string]*Cell, len(oldStackTop.locals)),
+		depth:  oldStackTop.depth,
+		parent: newStackTop.parent,
+	}
+
+	for k, v := range newStackTop.locals {
+		newFrame.locals[k] = v
+	}
+
+	e.stackTop = &newFrame
+
+	return oldStackTop
+}
+
 func (e *Evaluator) callFunction(fn *Cell, args []*Value) (*Cell, error) {
 	switch fn.Value.Tag {
 	case ValueNativeFn:
@@ -422,13 +449,17 @@ func (e *Evaluator) callFunction(fn *Cell, args []*Value) (*Cell, error) {
 		return NewCell(NewValue(nil)), nil
 	case ValueFn:
 		f := fn.Value.Fn
-		name := e.lexer.GetString(&f.ident)
+		name := e.lexer.GetString(&f.Expr.ident)
+
+		oldStackTop := e.swapStackTop(f.Context)
 
 		if err := e.pushFrame(name); err != nil {
 			return nil, err
 		}
 
-		for index, argName := range f.Args {
+		e.stackTop.locals[name] = fn
+
+		for index, argName := range f.Expr.Args {
 			if index > len(args)-1 {
 				e.stackTop.locals[argName] = NewCell(NewValue(nil))
 			} else {
@@ -436,7 +467,8 @@ func (e *Evaluator) callFunction(fn *Cell, args []*Value) (*Cell, error) {
 			}
 		}
 
-		err := e.evalStatement(f.Body)
+		err := e.evalStatement(f.Expr.Body)
+
 		var retVal *Value
 		if err == errReturn {
 			retVal = e.returnVal
@@ -449,6 +481,7 @@ func (e *Evaluator) callFunction(fn *Cell, args []*Value) (*Cell, error) {
 		if err := e.popFrame(); err != nil {
 			return nil, err
 		}
+		e.stackTop = oldStackTop
 
 		if retVal != nil {
 			return NewCell(*retVal), nil

@@ -827,6 +827,39 @@ false true
 		expected: "[[\"a\", 1], [\"b\", \"two\"]]\n",
 	},
 	{
+		name: "closures",
+		prog: `
+			function outer() {
+				a = 3;
+				return function() {
+					return a;
+				}
+			}
+
+			BEGIN {
+				print outer()()
+			}
+		`,
+		expected: "3\n",
+	},
+	{
+		name: "recursion",
+		prog: `
+			function fib(a) {
+				if (a == 1 || a == 2) {
+					return 1;
+				}
+				return fib(a - 1) + fib(a - 2);
+			}
+
+			BEGIN {
+				print fib(8);
+			}
+		`,
+		json:     "",
+		expected: "21\n",
+	},
+	{
 		name: "bug: statement after block",
 		prog: `
 			{

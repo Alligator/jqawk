@@ -46,10 +46,15 @@ type Value struct {
 	Obj       *map[string]*Cell
 	ObjKeys   []string
 	NativeFn  func(*Evaluator, []*Value, *Value) (*Value, error)
-	Fn        *ExprFunction
+	Fn        FnWithContext
 	Proto     *Value
 	Binding   *Value
 	ParentObj *Value
+}
+
+type FnWithContext struct {
+	Expr    *ExprFunction
+	Context *stackFrame
 }
 
 func NewValue(srcVal interface{}) Value {
