@@ -221,7 +221,8 @@ function pay(rate, hours) {
   }
 
   print get_name($), pay($.rate, $.hours)
-}```
+}
+```
 
 ```shellsession
 $ jqawk -f prog.jqawk emp.json
@@ -247,7 +248,7 @@ BEGIN {
 
 ## `$` Variables
 
-If the input is an array, jqawk sets two variables in a pattern rule:
+If the input is an array, jqawk sets two variables:
 
 - `$` is the current item in the array
 - `$index` is the array index of that item
@@ -256,10 +257,6 @@ and, if the input is an object:
 
 - `$` is the value of the current key/value pair
 - `$key` is the key
-
-If the input is not an array jqawk sets one variable:
-
-- `$` is the input value
 
 ## Multiple files
 
