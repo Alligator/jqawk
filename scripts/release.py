@@ -1,9 +1,11 @@
 # release script
 # usage:
-#   1. create and push a tag
-#   2. python scripts/release.py
-#   3. create a release on github
-#   4. upload the files in ./build
+#   1. update the version in jqawk.go
+#   2. push a version commit
+#   3. create and push a tag
+#   4. python scripts/release.py
+#   5. create a release on github
+#   6. upload the files in ./build
 
 import subprocess
 import os
