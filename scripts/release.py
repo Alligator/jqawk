@@ -57,7 +57,7 @@ def build_target(target):
     env['GOOS'] = plat
     env['GOARCH'] = arch
 
-    subprocess.run(['go', 'build', '-o', os.path.join('build', binary), '.'], shell=True, check=True, env=env)
+    subprocess.run(['go', 'build', '-o', os.path.join('build', binary), '.'], check=True, env=env)
     if plat == 'windows':
         create_zip(binary, os.path.join('build', f'jqawk-{version}-{plat}-{arch}'))
     else:
