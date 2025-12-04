@@ -1152,7 +1152,19 @@ func testExe(t *testing.T, tc testCase) {
 			t.Fatal(err.Error())
 		}
 		if string(output) != tc.expected {
-			t.Fatalf("expected %q\ngot %q\n", tc.expected, string(output))
+			actualLines := strings.Split(string(output), "\n")
+			expectedLines := strings.Split(tc.expected, "\n")
+			for i, line := range actualLines {
+				if len(expectedLines) < i {
+					fmt.Printf("\x1b[92m+ %s\x1b[0m\n", line)
+				} else if len(expectedLines) > i && line != expectedLines[i] {
+					fmt.Printf("\x1b[91m- %s\x1b[0m\n", expectedLines[i])
+					fmt.Printf("\x1b[92m+ %s\x1b[0m\n", line)
+				} else {
+					fmt.Printf("  %s\n", line)
+				}
+			}
+			t.Fatalf("unexpected result")
 		}
 	})
 }
