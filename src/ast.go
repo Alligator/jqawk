@@ -78,6 +78,7 @@ type ObjectKeyValue struct {
 type ExprUnary struct {
 	Expr    Expr
 	OpToken Token
+	Target  AssignTarget // ++ and -- only
 	Postfix bool
 }
 
@@ -104,6 +105,12 @@ type ExprMatch struct {
 	Cases []MatchCase
 }
 
+type ExprAssign struct {
+	token  Token
+	Target AssignTarget
+	Value  Expr
+}
+
 type MatchCase struct {
 	Exprs []Expr
 	Body  Statement
@@ -118,6 +125,7 @@ func (*ExprBinary) exprNode()     {}
 func (*ExprCall) exprNode()       {}
 func (*ExprFunction) exprNode()   {}
 func (*ExprMatch) exprNode()      {}
+func (*ExprAssign) exprNode()     {}
 
 func (expr *ExprLiteral) Token() Token    { return expr.token }
 func (expr *ExprIdentifier) Token() Token { return expr.token }
@@ -128,6 +136,7 @@ func (expr *ExprBinary) Token() Token     { return expr.Left.Token() }
 func (expr *ExprCall) Token() Token       { return expr.Func.Token() }
 func (expr *ExprFunction) Token() Token   { return expr.ident }
 func (expr *ExprMatch) Token() Token      { return expr.token }
+func (expr *ExprAssign) Token() Token     { return expr.token }
 
 func (expr *ExprLiteral) String() string    { return "literal" }
 func (expr *ExprIdentifier) String() string { return "identifier" }
@@ -138,6 +147,17 @@ func (expr *ExprBinary) String() string     { return "<binary expression>" }
 func (expr *ExprCall) String() string       { return "<call expression>" }
 func (expr *ExprFunction) String() string   { return "function" }
 func (expr *ExprMatch) String() string      { return "match" }
+func (expr *ExprAssign) String() string     { return "<assignment expression>" }
+
+type AssignTarget struct {
+	Obj  Expr
+	Path []PathSeg
+}
+
+type PathSeg struct {
+	Field Token
+	Expr  Expr
+}
 
 type StatementBlock struct {
 	token Token

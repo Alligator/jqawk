@@ -2,6 +2,7 @@ package lang
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 )
 
@@ -73,8 +74,8 @@ func NewParser(l *Lexer) Parser {
 		PipePipe:      {PrecLogical, nil, binary},
 		Match:         {PrecNone, match, nil},
 		Bang:          {PrecUnary, unary, nil},
-		PlusPlus:      {PrecPostfix, unary, postfix},
-		MinusMinus:    {PrecPostfix, unary, postfix},
+		PlusPlus:      {PrecPostfix, unaryAssign, postfixAssign},
+		MinusMinus:    {PrecPostfix, unaryAssign, postfixAssign},
 		LCurly:        {PrecNone, object, nil},
 		Percent:       {PrecMultiplication, nil, binary},
 		Is:            {PrecComparison, nil, is},
@@ -174,7 +175,7 @@ func (p *Parser) block() (StatementBlock, error) {
 		}
 
 		if !p.atStatementEnd() {
-			return StatementBlock{}, p.error(p.current.Pos, "unexpected end of input")
+			errors = append(errors, p.error(p.current.Pos, "unexpected end of input"))
 		}
 	}
 	if err := p.consume(RCurly); err != nil {
@@ -460,10 +461,10 @@ func (p *Parser) expressionWithPrec(prec Precedence) (Expr, error) {
 		return nil, err
 	}
 
-	for prec <= p.rule(p.current.Tag).prec {
+	for {
 		infixRule := p.rule(p.current.Tag)
-		if infixRule.infix == nil {
-			return nil, p.error(p.current.Pos, fmt.Sprintf("unknown operator %s", p.current.Tag))
+		if infixRule.infix == nil || prec > infixRule.prec {
+			break
 		}
 		lhs, err = infixRule.infix(p, lhs)
 		if err != nil {
@@ -755,15 +756,46 @@ func unary(p *Parser) (Expr, error) {
 	}, nil
 }
 
-func postfix(p *Parser, left Expr) (Expr, error) {
+func unaryAssign(p *Parser) (Expr, error) {
 	_, err := p.advance()
 	if err != nil {
 		return nil, err
 	}
 	opToken := *p.previous
 
+	expr, err := p.expressionWithPrec(PrecUnary)
+	if err != nil {
+		return nil, err
+	}
+
+	target, err := p.buildAssignTarget(expr)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ExprUnary{
+		Expr:    expr,
+		Target:  target,
+		OpToken: opToken,
+		Postfix: false,
+	}, nil
+}
+
+func postfixAssign(p *Parser, left Expr) (Expr, error) {
+	_, err := p.advance()
+	if err != nil {
+		return nil, err
+	}
+	opToken := *p.previous
+
+	target, err := p.buildAssignTarget(left)
+	if err != nil {
+		return nil, err
+	}
+
 	return &ExprUnary{
 		Expr:    left,
+		Target:  target,
 		OpToken: opToken,
 		Postfix: true,
 	}, nil
@@ -829,52 +861,77 @@ func (p *Parser) rewriteCompundAssingment(left Expr, right Expr, opToken Token) 
 		panic(fmt.Errorf("attempted compound assignment with %s", opToken.Tag))
 	}
 
-	equalOp := Token{
-		Tag: Equal,
-		Pos: opToken.Pos,
-	}
-	op := Token{
-		Tag: opTag,
-		Pos: opToken.Pos,
-		Len: opToken.Len,
-	}
-
-	return &ExprBinary{
-		Left: left,
-		Right: &ExprBinary{
-			Left:    left,
-			Right:   right,
-			OpToken: op,
-		},
-		OpToken: equalOp,
-	}, nil
-}
-
-func assign(p *Parser, left Expr) (Expr, error) {
-	switch e := left.(type) {
-	case *ExprLiteral, *ExprArray, *ExprObject:
-		return nil, p.error(left.Token().Pos, "invalid assignment")
-	case *ExprBinary:
-		if e.OpToken.Tag != Dot && e.OpToken.Tag != LSquare {
-			return nil, p.error(left.Token().Pos, "invalid assignment")
-		}
-	}
-
-	if err := p.consume(Equal); err != nil {
-		return nil, err
-	}
-	opToken := *p.previous
-
-	expr, err := p.expressionWithPrec(p.rule(opToken.Tag).prec)
+	target, err := p.buildAssignTarget(left)
 	if err != nil {
 		return nil, err
 	}
 
-	return &ExprBinary{
+	value := &ExprBinary{
 		Left:    left,
-		Right:   expr,
-		OpToken: opToken,
+		Right:   right,
+		OpToken: Token{Tag: opTag, Pos: opToken.Pos, Len: opToken.Len},
+	}
+
+	return &ExprAssign{
+		token:  Token{Tag: Equal, Pos: opToken.Pos, Len: opToken.Len},
+		Target: target,
+		Value:  value,
 	}, nil
+}
+
+func (p *Parser) buildAssignTarget(expr Expr) (AssignTarget, error) {
+	if _, ok := expr.(*ExprUnary); ok {
+		return AssignTarget{}, p.error(expr.Token().Pos, "invalid assignment target")
+	}
+
+	if b, ok := expr.(*ExprIdentifier); ok {
+		return AssignTarget{Obj: &ExprIdentifier{b.token}}, nil
+	}
+
+	path := make([]PathSeg, 0)
+	curr := expr
+	for {
+		b, ok := curr.(*ExprBinary)
+		if !ok {
+			break
+		}
+
+		switch b.OpToken.Tag {
+		case Dot:
+			path = append(path, PathSeg{Field: b.Right.Token()})
+			curr = b.Left
+		case LSquare:
+			path = append(path, PathSeg{Expr: b.Right})
+			curr = b.Left
+		default:
+			return AssignTarget{}, p.error(b.OpToken.Pos, "invalid assignment target")
+		}
+	}
+	slices.Reverse(path)
+	return AssignTarget{curr, path}, nil
+}
+
+func assign(p *Parser, left Expr) (Expr, error) {
+	if err := p.consume(Equal); err != nil {
+		return nil, err
+	}
+	opToken := p.previous
+
+	expr := ExprAssign{token: *opToken}
+
+	target, err := p.buildAssignTarget(left)
+	if err != nil {
+		return nil, err
+	}
+	expr.Target = target
+
+	val, err := p.expressionWithPrec(PrecAssign - 1)
+	if err != nil {
+		return nil, err
+	}
+	expr.Value = val
+
+	return &expr, nil
 }
 
 func function(p *Parser) (Expr, error) {

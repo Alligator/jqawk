@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -253,45 +254,34 @@ func (v *Value) prettyStringInteral(rootValues []*Value, quote bool, checkCircul
 	}
 }
 
+func getArrayIndex(index float64, array []*Cell) (int, bool) {
+	i := int(index)
+	if i < 0 {
+		i = len(array) + i
+		if i < 0 {
+			// walked backwards off the front of the array
+			return i, false
+		}
+	}
+
+	if i >= len(array) {
+		return i, false
+	}
+
+	return i, true
+}
+
 func (v *Value) GetMember(member Value) (*Cell, error) {
 	switch v.Tag {
 	case ValueArray:
 		if member.Tag != ValueNum && v.Proto != nil {
 			return v.Proto.GetMember(member)
 		}
-		index := int(*member.Num)
+		index, ok := getArrayIndex(*member.Num, v.Array)
+		if !ok {
+			return NewCell(Value{Tag: ValueUnknown}), nil
+		}
 		arr := v.Array
-
-		if index < 0 {
-			index = len(arr) + index
-			if index < 0 {
-				// walked backwards off the front of the array
-				return nil, fmt.Errorf("index out of range")
-			}
-		}
-
-		if index >= len(arr) {
-			// TODO sparse arrays
-			// don't fill up to enormous numbers, just bail
-			if index > 1024*1024 {
-				return nil, fmt.Errorf("index too large to auto-fill array")
-			}
-
-			// fill the array with empty cells up to the index
-			var lastCell *Cell
-			for i := len(arr); i <= index; i++ {
-				lastCell = NewCell(NewValue(nil))
-				arr = append(arr, lastCell)
-			}
-			v.Array = arr
-
-			// make the last cell a spec object
-			lastCell.Value.ParentObj = v
-			fIndex := float64(index)
-			lastCell.Value.Num = &fIndex
-
-			return lastCell, nil
-		}
 		return arr[index], nil
 	case ValueObj:
 		if member.Tag != ValueNum && member.Tag != ValueStr {
@@ -340,6 +330,27 @@ func (v *Value) SetMember(member Value, cell *Cell) (*Cell, error) {
 			return nil, fmt.Errorf("array indices must be numbers")
 		}
 
+		index, ok := getArrayIndex(*member.Num, v.Array)
+		if !ok {
+			if index < 0 {
+				return nil, fmt.Errorf("index out of range")
+			}
+
+			// past the end of the array
+			if index > 1024*1024 {
+				return nil, fmt.Errorf("index too large to auto-fill array")
+			}
+
+			var lastCell *Cell
+			for i := len(v.Array); i <= index; i++ {
+				lastCell = NewCell(NewValue(nil))
+				v.Array = append(v.Array, lastCell)
+			}
+			lastCell.Value = cell.Value
+
+			return lastCell, nil
+		}
+
 		item, err := v.GetMember(member)
 		if err != nil {
 			return nil, err
@@ -349,7 +360,9 @@ func (v *Value) SetMember(member Value, cell *Cell) (*Cell, error) {
 	case ValueObj:
 		key := member.String()
 		(*v.Obj)[key] = cell
-		v.ObjKeys = append(v.ObjKeys, key)
+		if !slices.Contains(v.ObjKeys, key) {
+			v.ObjKeys = append(v.ObjKeys, key)
+		}
 		return cell, nil
 	default:
 		// TODO?

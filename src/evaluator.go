@@ -357,9 +357,64 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 		cell := NewCell(val)
 		e.stackTop.locals[name] = cell
 		return cell, nil
-	default:
-		return nil, e.error(exp.Token(), "expected an expression")
+	case *ExprAssign:
+		val, err := e.evalExpr(exp.Value)
+		if err != nil {
+			return nil, err
+		}
+		cell, _, err := e.assignToTarget(exp.Target, val)
+		if err != nil {
+			return nil, err
+		}
+		return cell, nil
 	}
+	return nil, e.error(expr.Token(), "expected an expression")
+}
+
+func (e *Evaluator) assignToTarget(target AssignTarget, value *Cell) (*Cell, Value, error) {
+	curr, err := e.evalExpr(target.Obj)
+	if err != nil {
+		return nil, Value{}, err
+	}
+
+	for _, seg := range target.Path {
+		// get key
+		var key *Cell
+		var tok Token
+		if seg.Expr != nil {
+			key, err = e.evalExpr(seg.Expr)
+			if err != nil {
+				return nil, Value{}, err
+			}
+			tok = seg.Expr.Token()
+		} else {
+			str := e.lexer.GetString(&seg.Field)
+			key = NewCell(NewString(str))
+			tok = seg.Field
+		}
+
+		// base doesn't exist, create it
+		if curr.Value.Tag == ValueUnknown {
+			switch key.Value.Tag {
+			case ValueNum:
+				curr.Value = NewArray()
+			case ValueStr:
+				curr.Value = NewObject()
+			default:
+				// FIXME token
+				return nil, Value{}, e.error(tok, "invalid assignment target")
+			}
+		}
+
+		newVal, err := curr.Value.SetMember(key.Value, NewCell(Value{Tag: ValueUnknown}))
+		if err != nil {
+			return nil, Value{}, e.error(tok, err.Error())
+		}
+		curr = newVal
+	}
+	oldValue := value.Value
+	curr.Value = value.Value
+	return curr, oldValue, nil
 }
 
 func (e *Evaluator) evalCaseMatch(value *Cell, exprs []Expr) (bool, map[string]*Cell, error) {
@@ -518,12 +573,16 @@ func (e *Evaluator) evalUnaryExpr(expr *ExprUnary) (*Cell, error) {
 			newValue = NewValue(v - 1)
 		}
 
-		e.evalAssignment(expr, val, NewCell(newValue))
+		oldValue := val.Value
+		cell, _, err := e.assignToTarget(expr.Target, NewCell(newValue))
+		if err != nil {
+			return nil, err
+		}
 
 		if expr.Postfix {
-			return NewCell(NewValue(v)), nil
+			return NewCell(NewValue(oldValue.asFloat64())), nil
 		}
-		return NewCell(val.Value), nil
+		return NewCell(cell.Value), nil
 	default:
 		return nil, e.error(expr.OpToken, fmt.Sprintf("unknown operator %s", expr.OpToken.Tag))
 	}
@@ -626,17 +685,7 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (*Cell, error) {
 		}
 
 		if member == nil {
-			// speculatively create members
-			// see createSpeculativeObjects
-			memberVal := NewValue(nil)
-			if right.Value.Tag == ValueNum {
-				memberVal.Num = right.Value.Num
-			} else {
-				rightStr := right.Value.String()
-				memberVal.Str = &rightStr
-			}
-			memberVal.ParentObj = &left.Value
-			return NewCell(memberVal), nil
+			return NewCell(NewValue(nil)), nil
 		}
 		member.Value.Binding = &left.Value
 
@@ -741,88 +790,9 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (*Cell, error) {
 			return NewCell(*v.Not()), nil
 		}
 		return NewCell(v), nil
-	case Equal:
-		return e.evalAssignment(expr, left, right)
 	default:
 		return nil, e.error(expr.OpToken, fmt.Sprintf("unknown operator %s", expr.OpToken.Tag))
 	}
-}
-
-func (e *Evaluator) createSpeculativeObjects(specObj *Cell) (*Cell, error) {
-	// Speculative objects are how jqawk implements two features:
-	//
-	// 1. Optional chaining, where "a.b.c.d" should evaluate to nil if a is an
-	//  	object but has no "b" property
-	//
-	// 2. Implicit member creation, where "a.b.c.d = 4" should create all the
-	// 		intervening objects
-	//
-	// To support both, b, c, and d are created as speculative objects, a special
-	// class of nil value with ParentObj and Str properties. If a speculative
-	// object is assigned to, we create it. If not, it's just a nil.
-	//
-	// ParentObj points to the object this value should be set on, Str is the key.
-	// ParentObj could also be a speculative object, so this function recursively
-	// create parents.
-	parent := specObj.Value.ParentObj
-
-	if parent.Tag == ValueNil && parent.ParentObj == nil {
-		return nil, fmt.Errorf("could not create this object")
-	}
-
-	var memberToSet Value
-	if specObj.Value.Str != nil {
-		memberToSet = NewString(*specObj.Value.Str)
-	} else if specObj.Value.Num != nil {
-		memberToSet = NewValue(*specObj.Value.Num)
-	} else {
-		panic("speculative object has no Str or Num")
-	}
-
-	var objToSet *Value
-	if parent.Tag == ValueNil {
-		newParent, err := e.createSpeculativeObjects(NewCell(*parent))
-		if err != nil {
-			return nil, err
-		}
-
-		var newObj Value
-		if memberToSet.Tag == ValueStr {
-			newObj = NewObject()
-		} else if memberToSet.Tag == ValueNum {
-			newObj = NewArray()
-		}
-
-		newParent.Value = newObj
-		objToSet = &newParent.Value
-	} else {
-		objToSet = parent
-	}
-
-	cell, err := objToSet.SetMember(memberToSet, specObj)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return cell, nil
-}
-
-func (e *Evaluator) evalAssignment(expr Expr, left *Cell, right *Cell) (*Cell, error) {
-	if left.Value.Tag == ValueNil && left.Value.ParentObj != nil {
-		// speculative object creation
-		var err error
-		left, err = e.createSpeculativeObjects(left)
-		if err != nil {
-			return nil, e.error(expr.Token(), err.Error())
-		}
-	}
-
-	cell, err := copyValue(right, left)
-	if err != nil {
-		return nil, e.error(expr.Token(), err.Error())
-	}
-	return cell, nil
 }
 
 func copyValue(from *Cell, to *Cell) (*Cell, error) {
@@ -968,8 +938,8 @@ func (e *Evaluator) evalStatement(stmt Statement) error {
 				if loopCount > fuzzingLoopLimit {
 					return e.error(st.Token(), "fuzz test loop limit")
 				}
-				loopCount++
 			}
+			loopCount++
 		}
 	case *StatementFor:
 		e.evalExpr(st.PreExpr)
