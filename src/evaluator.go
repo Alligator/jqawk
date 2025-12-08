@@ -662,6 +662,70 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (*Cell, error) {
 		return nil, e.error(expr.Right.Token(), "expected a type name")
 	}
 
+	rng, ok := expr.Right.(*ExprRange)
+	if ok && expr.OpToken.Tag == LSquare {
+		if left.Value.Tag != ValueArray && left.Value.Tag != ValueStr {
+			return nil, e.error(rng.Start.Token(), fmt.Sprintf("cannot slice a %s", left.Value.Tag))
+		}
+
+		start := NewCell(NewValue(0))
+		if rng.Start != nil {
+			start, err = e.evalExpr(rng.Start)
+			if err != nil {
+				return nil, err
+			}
+			if start.Value.Tag != ValueNum {
+				return nil, e.error(rng.Start.Token(), "slice start and end must be numbers")
+			}
+		}
+
+		var end *Cell = nil
+		if rng.End != nil {
+			end, err = e.evalExpr(rng.End)
+			if err != nil {
+				return nil, err
+			}
+			if end.Value.Tag != ValueNum {
+				return nil, e.error(rng.End.Token(), "slice start and end must be numbers")
+			}
+		}
+
+		if left.Value.Tag == ValueArray {
+			slice := NewArray()
+			starti := int(*start.Value.Num)
+			endi := len(left.Value.Array)
+			if end != nil {
+				endi = int(*end.Value.Num)
+			}
+
+			for i := starti; i < endi; i++ {
+				fmt.Print(i, " ")
+				cell, err := left.Value.GetMember(NewValue(i))
+				if err != nil {
+					return nil, err
+				}
+				newCell := NewCell(NewValue(nil))
+				slice.Array = append(slice.Array, newCell)
+				_, err = copyValue(cell, newCell)
+				if err != nil {
+					return nil, err
+				}
+			}
+			return NewCell(slice), nil
+		}
+
+		if left.Value.Tag == ValueStr {
+			starti := int(*start.Value.Num)
+			endi := len(*left.Value.Str)
+			if end != nil {
+				endi = int(*end.Value.Num)
+			}
+
+			str := (*left.Value.Str)[starti:endi]
+			return NewCell(NewString(str)), nil
+		}
+	}
+
 	right, err := e.evalExpr(expr.Right)
 	if err != nil {
 		return nil, err

@@ -564,7 +564,7 @@ func computedMember(p *Parser, left Expr) (Expr, error) {
 		return nil, err
 	}
 
-	expr, err := p.expression()
+	expr, err := p.rangeExpression()
 	if err != nil {
 		return nil, err
 	}
@@ -578,6 +578,35 @@ func computedMember(p *Parser, left Expr) (Expr, error) {
 		Right:   expr,
 		OpToken: *opToken,
 	}, nil
+}
+
+func (p *Parser) rangeExpression() (Expr, error) {
+	expr := ExprRange{}
+	var start Expr
+	var err error
+
+	if p.current.Tag != Colon {
+		start, err = p.expression()
+		if err != nil {
+			return nil, err
+		}
+		expr.Start = start
+	}
+
+	if p.current.Tag != Colon {
+		// not a range
+		return start, nil
+	}
+
+	p.consume(Colon)
+	if p.current.Tag != RSquare {
+		end, err := p.expression()
+		if err != nil {
+			return nil, err
+		}
+		expr.End = end
+	}
+	return &expr, nil
 }
 
 func member(p *Parser, left Expr) (Expr, error) {

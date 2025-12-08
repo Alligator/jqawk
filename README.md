@@ -302,36 +302,37 @@ A rough jqawk language reference.
 ### Operators
 
 ```
-!     unary not
-&&    logical and
-||    logical or
+!      unary not
+&&     logical and
+||     logical or
 
-==    equal
-!=    not equal
-<     less
-<=    less or equal
->     greater
->=    greater or equal
-is    is of type. value type names are:
-      string, bool, number, array, object, function, regex, unknown
+==     equal
+!=     not equal
+<      less
+<=     less or equal
+>      greater
+>=     greater or equal
+is     is of type. value type names are:
+       string, bool, number, array, object, function, regex, unknown
 
-+     add
--     subtract
-/     divide
-*     multiply
-%     modulo
++      add
+-      subtract
+/      divide
+*      multiply
+%      modulo
 
-++    pre/postfix increment
---    pre/postfix decrement
+++     pre/postfix increment
+--     pre/postfix decrement
 
-~     regex match
-!~    regex not match
+~      regex match
+!~     regex not match
 
-=     assign
+=      assign
 
-a[x]  index
-a[-x] index backwards from the end of the array
-a.x   property
+a[x]   index
+a[-x]  index backwards from the end of the array
+a[x:y] slice
+a.x    property
 ```
 
 ### Literals

@@ -111,6 +111,11 @@ type ExprAssign struct {
 	Value  Expr
 }
 
+type ExprRange struct {
+	Start Expr
+	End   Expr
+}
+
 type MatchCase struct {
 	Exprs []Expr
 	Body  Statement
@@ -126,6 +131,7 @@ func (*ExprCall) exprNode()       {}
 func (*ExprFunction) exprNode()   {}
 func (*ExprMatch) exprNode()      {}
 func (*ExprAssign) exprNode()     {}
+func (*ExprRange) exprNode()      {}
 
 func (expr *ExprLiteral) Token() Token    { return expr.token }
 func (expr *ExprIdentifier) Token() Token { return expr.token }
@@ -137,6 +143,7 @@ func (expr *ExprCall) Token() Token       { return expr.Func.Token() }
 func (expr *ExprFunction) Token() Token   { return expr.ident }
 func (expr *ExprMatch) Token() Token      { return expr.token }
 func (expr *ExprAssign) Token() Token     { return expr.token }
+func (expr *ExprRange) Token() Token      { return expr.Start.Token() }
 
 func (expr *ExprLiteral) String() string    { return "literal" }
 func (expr *ExprIdentifier) String() string { return "identifier" }
@@ -148,6 +155,7 @@ func (expr *ExprCall) String() string       { return "<call expression>" }
 func (expr *ExprFunction) String() string   { return "function" }
 func (expr *ExprMatch) String() string      { return "match" }
 func (expr *ExprAssign) String() string     { return "<assignment expression>" }
+func (expr *ExprRange) String() string      { return "<range expression>" }
 
 type AssignTarget struct {
 	Obj  Expr

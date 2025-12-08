@@ -860,6 +860,12 @@ false true
 		expected: "21\n",
 	},
 	{
+		name:     "slice",
+		prog:     `{ print $[1:2], $[:1], $[2:] }`,
+		json:     "[[1, 2, 3, 4], \"1234\"]",
+		expected: "[2] [1] [3, 4]\n2 1 34\n",
+	},
+	{
 		name: "bug: statement after block",
 		prog: `
 			{
