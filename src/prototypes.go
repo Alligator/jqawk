@@ -378,6 +378,18 @@ func getNumPrototype() *Value {
 					return &result, nil
 				},
 			}),
+			"abs": NewCell(Value{
+				Tag: ValueNativeFn,
+				NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
+					if this == nil || this.Tag != ValueNum {
+						v := NewValue(nil)
+						return &v, nil
+					}
+
+					result := NewValue(math.Abs(*this.Num))
+					return &result, nil
+				},
+			}),
 			"format": NewCell(Value{
 				Tag: ValueNativeFn,
 				NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {

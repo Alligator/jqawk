@@ -748,6 +748,8 @@ rhs not null
 				print (3.5).round()
 				print (10).mod(8)
 				print (-10).mod(8)
+				print (10).abs()
+				print (-10).abs()
 				for (i = 1; i < 10000000; i *= 10) {
 					print i.format(), (i + 0.23).format()
 					print (i + 0.23).format('.', ',')
@@ -761,6 +763,8 @@ rhs not null
 4
 2
 6
+10
+10
 1 1.23
 1,23
 10 10.23
