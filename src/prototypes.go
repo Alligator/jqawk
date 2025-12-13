@@ -359,6 +359,25 @@ func getNumPrototype() *Value {
 					return &result, nil
 				},
 			}),
+			"mod": NewCell(Value{
+				Tag: ValueNativeFn,
+				NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
+					arg, err := checkArg(v, 0, ValueNum)
+					if err != nil {
+						return nil, err
+					}
+
+					if this == nil || this.Tag != ValueNum {
+						v := NewValue(nil)
+						return &v, nil
+					}
+
+					a := *this.Num
+					b := *arg.Num
+					result := NewValue(math.Mod((math.Mod(a, b) + b), b))
+					return &result, nil
+				},
+			}),
 			"format": NewCell(Value{
 				Tag: ValueNativeFn,
 				NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {

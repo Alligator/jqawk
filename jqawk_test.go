@@ -103,6 +103,7 @@ Total    337.5
 			print 6 / 3
 			print 6 / 2 - 1 * 3
 			print 4 % 3
+			print -4 % 3
 			print '';
 
 			print 3 < 4;
@@ -126,6 +127,7 @@ Total    337.5
 2
 0
 1
+-1
 
 true
 true
@@ -744,6 +746,8 @@ rhs not null
 				print a.ceil()
 				print a.round()
 				print (3.5).round()
+				print (10).mod(8)
+				print (-10).mod(8)
 				for (i = 1; i < 10000000; i *= 10) {
 					print i.format(), (i + 0.23).format()
 					print (i + 0.23).format('.', ',')
@@ -755,6 +759,8 @@ rhs not null
 3
 3
 4
+2
+6
 1 1.23
 1,23
 10 10.23
