@@ -442,6 +442,13 @@ number.ceil()
 number.round()
   floor, ceil or round the given number. halves are rounded away from zero
 
+number.abs()
+  return tbe absolute value of the number
+
+number.mod(n)
+  return the number wrapped into the range [0, n]. unlike the modulo
+  operator, the result is never negative
+
 number.format(thousandsSeparator, decimalSeparator)
   format a number with thousands and decimal separators. if no separators
   are given ',' is used for thousands and '.' is used for decimals
