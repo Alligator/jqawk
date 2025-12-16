@@ -699,7 +699,6 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (*Cell, error) {
 			}
 
 			for i := starti; i < endi; i++ {
-				fmt.Print(i, " ")
 				cell, err := left.Value.GetMember(NewValue(i))
 				if err != nil {
 					return nil, err
