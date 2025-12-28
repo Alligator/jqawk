@@ -271,7 +271,7 @@ func getArrayIndex(index float64, array []*Cell) (int, bool) {
 	return i, true
 }
 
-func (v *Value) GetMember(member Value) (*Cell, error) {
+func (v *Value) GetMember(member Value) (*Cell, bool, error) {
 	switch v.Tag {
 	case ValueArray:
 		if member.Tag != ValueNum && v.Proto != nil {
@@ -279,23 +279,23 @@ func (v *Value) GetMember(member Value) (*Cell, error) {
 		}
 		index, ok := getArrayIndex(*member.Num, v.Array)
 		if !ok {
-			return NewCell(Value{Tag: ValueUnknown}), nil
+			return NewCell(NewValue(nil)), false, nil
 		}
 		arr := v.Array
-		return arr[index], nil
+		return arr[index], true, nil
 	case ValueObj:
 		if member.Tag != ValueNum && member.Tag != ValueStr {
-			return nil, fmt.Errorf("objects can only by indexed with numbers or strings, got %s", member.Tag)
+			return nil, false, fmt.Errorf("objects can only by indexed with numbers or strings, got %s", member.Tag)
 		}
 		key := member.String()
 		value, present := (*v.Obj)[key]
 		if present {
-			return value, nil
+			return value, true, nil
 		}
 		if v.Proto != nil {
 			return v.Proto.GetMember(member)
 		}
-		return nil, nil
+		return NewCell(NewValue(nil)), false, nil
 	case ValueStr:
 		if member.Tag != ValueNum {
 			return v.Proto.GetMember(member)
@@ -307,19 +307,19 @@ func (v *Value) GetMember(member Value) (*Cell, error) {
 			index = len(str) + index
 			if index < 0 {
 				// walked backwards off the front of the array
-				return nil, fmt.Errorf("index out of range")
+				return nil, false, fmt.Errorf("index out of range")
 			}
 		}
 
 		if index < 0 || index >= len(*v.Str) {
-			return NewCell(NewValue(nil)), nil
+			return NewCell(NewValue(nil)), false, nil
 		}
-		return NewCell(NewString(string((*v.Str)[index]))), nil
+		return NewCell(NewString(string((*v.Str)[index]))), true, nil
 	default:
 		if v.Proto != nil {
 			return v.Proto.GetMember(member)
 		}
-		return nil, nil
+		return nil, false, nil
 	}
 }
 
@@ -351,7 +351,7 @@ func (v *Value) SetMember(member Value, cell *Cell) (*Cell, error) {
 			return lastCell, nil
 		}
 
-		item, err := v.GetMember(member)
+		item, _, err := v.GetMember(member)
 		if err != nil {
 			return nil, err
 		}

@@ -1016,6 +1016,21 @@ false true
 		json:     "[1, 2, 3]",
 		expected: "[[1], [2], [3]]\n",
 	},
+	{
+		name: "bug: 2d arrays",
+		prog: `
+			BEGIN {
+				a = []
+				for (x = 0; x < 3; x++) {
+					for (y = 0; y < 3; y++) {
+						a[x][y] = 0
+					}
+				}
+				print a
+			}
+		`,
+		expected: "[[0, 0, 0], [0, 0, 0], [0, 0, 0]]\n",
+	},
 }
 
 func TestMain(m *testing.M) {

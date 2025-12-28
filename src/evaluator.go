@@ -377,7 +377,7 @@ func (e *Evaluator) assignToTarget(target AssignTarget, value *Cell) (*Cell, Val
 		return nil, Value{}, err
 	}
 
-	for _, seg := range target.Path {
+	for i, seg := range target.Path {
 		// get key
 		var key *Cell
 		var tok Token
@@ -406,11 +406,31 @@ func (e *Evaluator) assignToTarget(target AssignTarget, value *Cell) (*Cell, Val
 			}
 		}
 
-		newVal, err := curr.Value.SetMember(key.Value, NewCell(Value{Tag: ValueUnknown}))
+		if i == len(target.Path)-1 {
+			// last segment, assign the value
+			oldValue, _, _ := curr.Value.GetMember(key.Value)
+
+			newVal, err := curr.Value.SetMember(key.Value, value)
+			if err != nil {
+				return nil, Value{}, e.error(tok, err.Error())
+			}
+			return newVal, oldValue.Value, nil
+		}
+
+		// intermediate segment, get next child
+		child, present, err := curr.Value.GetMember(key.Value)
 		if err != nil {
 			return nil, Value{}, e.error(tok, err.Error())
 		}
-		curr = newVal
+
+		if !present {
+			child, err = curr.Value.SetMember(key.Value, NewCell(Value{Tag: ValueUnknown}))
+			if err != nil {
+				return nil, Value{}, e.error(tok, err.Error())
+			}
+		}
+
+		curr = child
 	}
 	oldValue := value.Value
 	curr.Value = value.Value
@@ -699,7 +719,7 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (*Cell, error) {
 			}
 
 			for i := starti; i < endi; i++ {
-				cell, err := left.Value.GetMember(NewValue(i))
+				cell, _, err := left.Value.GetMember(NewValue(i))
 				if err != nil {
 					return nil, err
 				}
@@ -742,7 +762,7 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (*Cell, error) {
 			}
 		}
 
-		member, err := left.Value.GetMember(right.Value)
+		member, _, err := left.Value.GetMember(right.Value)
 		if err != nil {
 			return nil, e.error(expr.Left.Token(), err.Error())
 		}

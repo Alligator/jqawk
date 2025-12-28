@@ -211,7 +211,7 @@ func getObjPrototype() *Value {
 				NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
 					newObj := NewObject()
 					for _, value := range v {
-						val, err := this.GetMember(*value)
+						val, _, err := this.GetMember(*value)
 						if err != nil {
 							return nil, err
 						}
