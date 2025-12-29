@@ -1037,6 +1037,11 @@ false true
 		`,
 		expected: "[[0, 0, 0], [0, 0, 0], [0, 0, 0]]\n",
 	},
+	{
+		name:     "bug: crash on indexing unknown",
+		prog:     "BEGIN { a[a.a] = 0; print a }",
+		expected: "{\"\": 0}\n",
+	},
 }
 
 func TestMain(m *testing.M) {

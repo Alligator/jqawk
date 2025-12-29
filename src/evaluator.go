@@ -414,7 +414,11 @@ func (e *Evaluator) assignToTarget(target AssignTarget, value *Cell) (*Cell, Val
 			if err != nil {
 				return nil, Value{}, e.error(tok, err.Error())
 			}
-			return newVal, oldValue.Value, nil
+
+			if oldValue != nil {
+				return newVal, oldValue.Value, nil
+			}
+			return newVal, Value{}, nil
 		}
 
 		// intermediate segment, get next child
