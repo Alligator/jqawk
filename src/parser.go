@@ -599,6 +599,7 @@ func (p *Parser) rangeExpression() (Expr, error) {
 	}
 
 	p.consume(Colon)
+	expr.token = *p.previous
 	if p.current.Tag != RSquare {
 		end, err := p.expression()
 		if err != nil {

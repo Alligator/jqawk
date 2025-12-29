@@ -112,6 +112,7 @@ type ExprAssign struct {
 }
 
 type ExprRange struct {
+	token Token
 	Start Expr
 	End   Expr
 }
@@ -143,7 +144,7 @@ func (expr *ExprCall) Token() Token       { return expr.Func.Token() }
 func (expr *ExprFunction) Token() Token   { return expr.ident }
 func (expr *ExprMatch) Token() Token      { return expr.token }
 func (expr *ExprAssign) Token() Token     { return expr.token }
-func (expr *ExprRange) Token() Token      { return expr.Start.Token() }
+func (expr *ExprRange) Token() Token      { return expr.token }
 
 func (expr *ExprLiteral) String() string    { return "literal" }
 func (expr *ExprIdentifier) String() string { return "identifier" }
