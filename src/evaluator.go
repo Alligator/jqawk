@@ -685,7 +685,7 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (*Cell, error) {
 	rng, ok := expr.Right.(*ExprRange)
 	if ok && expr.OpToken.Tag == LSquare {
 		if left.Value.Tag != ValueArray && left.Value.Tag != ValueStr {
-			return nil, e.error(rng.Start.Token(), fmt.Sprintf("cannot slice a %s", left.Value.Tag))
+			return nil, e.error(rng.Token(), fmt.Sprintf("cannot slice a %s", left.Value.Tag))
 		}
 
 		start := NewCell(NewValue(0))
@@ -712,10 +712,16 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (*Cell, error) {
 
 		if left.Value.Tag == ValueArray {
 			slice := NewArray()
-			starti := int(*start.Value.Num)
+			starti, startok := getArrayIndex(*start.Value.Num, len(left.Value.Array))
+
 			endi := len(left.Value.Array)
+			endok := true
 			if end != nil {
-				endi = int(*end.Value.Num)
+				endi, endok = getArrayIndex(*end.Value.Num, len(left.Value.Array))
+			}
+
+			if !startok || !endok {
+				return nil, e.error(rng.Token(), "index out of range")
 			}
 
 			for i := starti; i < endi; i++ {
@@ -734,10 +740,15 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (*Cell, error) {
 		}
 
 		if left.Value.Tag == ValueStr {
-			starti := int(*start.Value.Num)
+			starti, startok := getArrayIndex(*start.Value.Num, len(*left.Value.Str))
 			endi := len(*left.Value.Str)
+			endok := true
 			if end != nil {
-				endi = int(*end.Value.Num)
+				endi, endok = getArrayIndex(*end.Value.Num, len(*left.Value.Str))
+			}
+
+			if !startok || !endok {
+				return nil, e.error(rng.Token(), "index out of range")
 			}
 
 			str := (*left.Value.Str)[starti:endi]

@@ -254,17 +254,17 @@ func (v *Value) prettyStringInteral(rootValues []*Value, quote bool, checkCircul
 	}
 }
 
-func getArrayIndex(index float64, array []*Cell) (int, bool) {
+func getArrayIndex(index float64, length int) (int, bool) {
 	i := int(index)
 	if i < 0 {
-		i = len(array) + i
+		i = length + i
 		if i < 0 {
 			// walked backwards off the front of the array
 			return i, false
 		}
 	}
 
-	if i >= len(array) {
+	if i >= length {
 		return i, false
 	}
 
@@ -277,7 +277,7 @@ func (v *Value) GetMember(member Value) (*Cell, bool, error) {
 		if member.Tag != ValueNum && v.Proto != nil {
 			return v.Proto.GetMember(member)
 		}
-		index, ok := getArrayIndex(*member.Num, v.Array)
+		index, ok := getArrayIndex(*member.Num, len(v.Array))
 		if !ok {
 			return NewCell(NewValue(nil)), false, nil
 		}
@@ -330,7 +330,7 @@ func (v *Value) SetMember(member Value, cell *Cell) (*Cell, error) {
 			return nil, fmt.Errorf("array indices must be numbers")
 		}
 
-		index, ok := getArrayIndex(*member.Num, v.Array)
+		index, ok := getArrayIndex(*member.Num, len(v.Array))
 		if !ok {
 			if index < 0 {
 				return nil, fmt.Errorf("index out of range")
