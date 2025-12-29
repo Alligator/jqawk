@@ -876,6 +876,12 @@ false true
 		expected: "[2] [1] [3, 4] [1, 2, 3]\n2 1 34 123\n",
 	},
 	{
+		name:          "invalid slice",
+		prog:          `{ print $[2:1] }`,
+		json:          "[[1, 2, 3, 4]",
+		expectedError: "index out of range",
+	},
+	{
 		name: "bug: statement after block",
 		prog: `
 			{

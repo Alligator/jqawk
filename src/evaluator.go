@@ -724,6 +724,10 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (*Cell, error) {
 				return nil, e.error(rng.Token(), "index out of range")
 			}
 
+			if starti > endi {
+				return nil, e.error(rng.Token(), "index out of range")
+			}
+
 			for i := starti; i < endi; i++ {
 				cell, _, err := left.Value.GetMember(NewValue(i))
 				if err != nil {
@@ -748,6 +752,10 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (*Cell, error) {
 			}
 
 			if !startok || !endok {
+				return nil, e.error(rng.Token(), "index out of range")
+			}
+
+			if starti > endi {
 				return nil, e.error(rng.Token(), "index out of range")
 			}
 
