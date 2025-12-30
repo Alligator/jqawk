@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -48,6 +49,7 @@ type Value struct {
 	ObjKeys   []string
 	NativeFn  func(*Evaluator, []*Value, *Value) (*Value, error)
 	Fn        FnWithContext
+	Regexp    *regexp.Regexp
 	Proto     *Value
 	Binding   *Value
 	ParentObj *Value

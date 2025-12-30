@@ -434,7 +434,8 @@ string.lower()
   return a lowercase copy of the string
 
 string.split(separator)
-  split the string into substrings on a separator
+  split the string into substrings on a separator. the separator may be a
+  string or a regex literal
 
 
 number.floor()

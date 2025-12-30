@@ -278,13 +278,23 @@ func getStrPrototype() *Value {
 						return &v, nil
 					}
 
-					str, err := checkArg(v, 0, ValueStr)
+					arg, err := checkArg(v, 0, ValueStr, ValueRegex)
 					if err != nil {
 						return nil, err
 					}
 
-					splits := NewValue(strings.Split(*this.Str, *str.Str))
-					return &splits, nil
+					if arg.Tag == ValueStr {
+						splits := NewValue(strings.Split(*this.Str, *arg.Str))
+						return &splits, nil
+					}
+
+					if arg.Tag == ValueRegex {
+						re := arg.Regexp
+						splits := NewValue(re.Split(*this.Str, -1))
+						return &splits, nil
+					}
+
+					return nil, nil
 				},
 			}),
 			"lower": NewCell(Value{

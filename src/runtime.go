@@ -3,22 +3,35 @@ package lang
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"unicode"
 )
 
-func checkArg(args []*Value, index int, tag ValueTag) (*Value, error) {
+func checkArg(args []*Value, index int, tags ...ValueTag) (*Value, error) {
 	if len(args)-1 < index {
 		return nil, fmt.Errorf("missing argument %d", index)
 	}
 
 	arg := args[index]
-	if arg.Tag != tag {
-		return nil, fmt.Errorf("expected argument %d to have type %s", index, tag)
+	if slices.Contains(tags, arg.Tag) {
+		return arg, nil
 	}
 
-	return arg, nil
+	if len(tags) == 1 {
+		return nil, fmt.Errorf("expected argument %d to have type %s", index, tags[0])
+	}
+
+	var sb strings.Builder
+	for i, tag := range tags {
+		sb.WriteString(tag.String())
+		if i < len(tags)-1 {
+			sb.WriteString(", ")
+		}
+	}
+
+	return nil, fmt.Errorf("expected argument %d to be one of %s", index, sb.String())
 }
 
 func checkArgCount(args []*Value, expectedCount int) error {

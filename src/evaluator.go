@@ -226,9 +226,13 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 			return cell, nil
 		case Regex:
 			str := e.lexer.GetString(&exp.token)
+			re, err := regexp.Compile(str)
+			if err != nil {
+				return nil, e.error(expr.Token(), err.Error())
+			}
 			val := Value{
-				Tag: ValueRegex,
-				Str: &str,
+				Tag:    ValueRegex,
+				Regexp: re,
 			}
 			return NewCell(val), nil
 		case Num:
@@ -862,12 +866,15 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (*Cell, error) {
 		}
 	case Tilde, BangTilde:
 		str := left.Value.String()
-		var regex string
+		var re *regexp.Regexp
 		switch right.Value.Tag {
 		case ValueStr:
-			regex = *right.Value.Str
+			re, err = regexp.Compile(*right.Value.Str)
+			if err != nil {
+				return nil, e.error(expr.Right.Token(), err.Error())
+			}
 		case ValueRegex:
-			regex = *right.Value.Str
+			re = right.Value.Regexp
 		default:
 			return nil, e.error(expr.Right.Token(), "a regex or a string must appear on the right hand side of ~")
 		}
@@ -878,11 +885,6 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (*Cell, error) {
 				return NewCell(NewValue(false)), nil
 			}
 			return NewCell(NewValue(true)), nil
-		}
-
-		re, err := regexp.Compile(regex)
-		if err != nil {
-			return nil, e.error(expr.Right.Token(), err.Error())
 		}
 
 		var v Value
@@ -924,11 +926,10 @@ func copyValue(from *Cell, to *Cell) (*Cell, error) {
 		s := *from.Value.Str
 		to.Value = NewString(s)
 	case ValueRegex:
-		r := *from.Value.Str
 		val := Value{
-			Tag:   ValueRegex,
-			Str:   &r,
-			Proto: from.Value.Proto,
+			Tag:    ValueRegex,
+			Regexp: from.Value.Regexp,
+			Proto:  from.Value.Proto,
 		}
 		to.Value = val
 
