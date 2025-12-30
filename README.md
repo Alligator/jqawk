@@ -437,6 +437,9 @@ string.split(separator)
   split the string into substrings on a separator. the separator may be a
   string or a regex literal
 
+strings.trim()
+  return the string with leading and trailing whitespace removed
+
 
 number.floor()
 number.ceil()

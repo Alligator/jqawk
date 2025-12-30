@@ -321,6 +321,18 @@ func getStrPrototype() *Value {
 					return &upper, nil
 				},
 			}),
+			"trim": NewCell(Value{
+				Tag: ValueNativeFn,
+				NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
+					if this == nil || this.Tag != ValueStr {
+						v := NewValue(0)
+						return &v, nil
+					}
+
+					trimmed := NewValue(strings.TrimSpace(*this.Str))
+					return &trimmed, nil
+				},
+			}),
 		}
 		strPrototype = &Value{
 			Tag: ValueObj,

@@ -601,6 +601,8 @@ string rpad: sponge     sponge
 				print "aBc".lower()
 				print "aBc".split("B")
 				print "aBc".length()
+				print "aBCd".split(/BC/)
+				print "  aBc ".trim()
 			}
 		`,
 		json: "[]",
@@ -608,6 +610,8 @@ string rpad: sponge     sponge
 abc
 ["a", "c"]
 3
+["a", "d"]
+aBc
 `,
 	},
 	{
