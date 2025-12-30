@@ -194,6 +194,46 @@ Susie      4.25       18
 --------------------------------
 ```
 
+## Match expressions
+
+With a match expression you can test a variable against a set of values:
+
+```awk
+BEGIN {
+  a = 10
+  print match(a) {
+    10 => 'ten',
+    20 => 'twenty',
+  }
+
+  # the body can be a block
+  match(a) {
+    100, 200, 300 => {
+      print 'one, two or three hundred'
+    },
+    a => {
+      print 'default case', a
+    },
+  }
+
+  # arrays can also be destructured
+  b = [1, 2, 3]
+  match(b) {
+    [1, x, y] => {
+      print x
+      print y
+    }
+  }
+}```
+
+```shellsessions
+$ jqawk -f match.jqawk
+ten
+default case 10
+2
+3
+```
+
 ## Regex
 
 Regex literals can be matched against with the `~` operator:
