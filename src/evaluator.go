@@ -314,6 +314,9 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 					if err != nil {
 						return nil, err
 					}
+					if err := e.popFrame(); err != nil {
+						return nil, err
+					}
 					return val, nil
 				default:
 					err := e.evalStatement(body)
