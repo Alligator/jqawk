@@ -300,8 +300,14 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 
 		result, err := e.callFunction(fn, argVals)
 		if err != nil {
-			return nil, e.error(exp.Token(), err.Error())
+			switch err.(type) {
+			case SyntaxError, RuntimeError:
+				return nil, err
+			default:
+				return nil, e.error(exp.Token(), err.Error())
+			}
 		}
+
 		return result, nil
 	case *ExprArray:
 		items, err := e.evalExprList(exp.Items, true)
