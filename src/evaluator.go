@@ -10,10 +10,15 @@ import (
 	"strings"
 )
 
+type scope struct {
+	parent   *scope
+	bindings map[string]*Cell
+}
+
 type stackFrame struct {
 	name   string
-	locals map[string]*Cell
 	depth  int
+	scope  *scope
 	parent *stackFrame
 }
 
@@ -86,15 +91,15 @@ func (e *Evaluator) readRules() {
 func (e *Evaluator) addProgramFunctions() {
 	for _, fn := range e.prog.Functions {
 		f := FnWithContext{
-			Expr:    &fn,
-			Context: e.stackTop,
+			Expr:  &fn,
+			Scope: e.stackTop.scope,
 		}
 		val := Value{
 			Tag: ValueFn,
 			Fn:  f,
 		}
 		name := e.lexer.GetString(&fn.ident)
-		e.stackTop.locals[name] = NewCell(val)
+		e.stackTop.scope.bindings[name] = NewCell(val)
 	}
 }
 
@@ -113,13 +118,18 @@ func (e *Evaluator) error(token Token, msg string) RuntimeError {
 }
 
 func (e *Evaluator) pushFrame(name string) error {
+	scope := scope{
+		bindings: make(map[string]*Cell),
+	}
+
 	frame := stackFrame{
 		name:   name,
-		locals: make(map[string]*Cell),
+		scope:  &scope,
 		parent: e.stackTop,
 	}
 
 	if e.stackTop != nil {
+		scope.parent = e.stackTop.scope
 		frame.depth = e.stackTop.depth + 1
 	}
 
@@ -128,6 +138,22 @@ func (e *Evaluator) pushFrame(name string) error {
 	}
 
 	e.stackTop = &frame
+	return nil
+}
+
+func (e *Evaluator) pushScope() {
+	scope := scope{
+		bindings: make(map[string]*Cell),
+		parent:   e.stackTop.scope,
+	}
+	e.stackTop.scope = &scope
+}
+
+func (e *Evaluator) popScope() error {
+	if e.stackTop.scope.parent == nil {
+		panic(fmt.Errorf("attempt to pop root scope"))
+	}
+	e.stackTop.scope = e.stackTop.scope.parent
 	return nil
 }
 
@@ -140,11 +166,11 @@ func (e *Evaluator) popFrame() error {
 }
 
 func (e *Evaluator) getVariable(name string) (*Cell, error) {
-	frame := e.stackTop
-	for frame != nil {
-		cell, present := frame.locals[name]
+	scope := e.stackTop.scope
+	for scope != nil {
+		cell, present := scope.bindings[name]
 		if !present {
-			frame = frame.parent
+			scope = scope.parent
 			continue
 		}
 		return cell, nil
@@ -157,7 +183,7 @@ func (e *Evaluator) getVariable(name string) (*Cell, error) {
 	}
 	// other variables get created in the current scope
 	cell := NewCell(Value{Tag: ValueUnknown})
-	e.stackTop.locals[name] = cell
+	e.stackTop.scope.bindings[name] = cell
 	return cell, nil
 }
 
@@ -166,7 +192,7 @@ func (e *Evaluator) setGlobal(name string, cell *Cell) {
 	for top.parent != nil {
 		top = top.parent
 	}
-	top.locals[name] = cell
+	top.scope.bindings[name] = cell
 }
 
 func (e *Evaluator) getIdentifier(expr *ExprIdentifier) (*Cell, error) {
@@ -299,13 +325,10 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 			}
 
 			if isMatch {
-				// TODO using a stack frame is weird
-				if err = e.pushFrame("<match>"); err != nil {
-					return nil, e.error(exp.Token(), err.Error())
-				}
+				e.pushScope()
 
 				for k, v := range bindings {
-					e.stackTop.locals[k] = v
+					e.stackTop.scope.bindings[k] = v
 				}
 
 				switch body := matchCase.Body.(type) {
@@ -314,7 +337,7 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 					if err != nil {
 						return nil, err
 					}
-					if err := e.popFrame(); err != nil {
+					if err := e.popScope(); err != nil {
 						return nil, err
 					}
 					return val, nil
@@ -325,7 +348,7 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 					}
 				}
 
-				if err := e.popFrame(); err != nil {
+				if err := e.popScope(); err != nil {
 					return nil, err
 				}
 
@@ -353,8 +376,8 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 		return NewCell(obj), nil
 	case *ExprFunction:
 		fn := FnWithContext{
-			Expr:    exp,
-			Context: e.stackTop,
+			Expr:  exp,
+			Scope: e.stackTop.scope,
 		}
 		val := Value{
 			Tag: ValueFn,
@@ -362,7 +385,7 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 		}
 		name := e.lexer.GetString(&exp.ident)
 		cell := NewCell(val)
-		e.stackTop.locals[name] = cell
+		e.stackTop.scope.bindings[name] = cell
 		return cell, nil
 	case *ExprAssign:
 		val, err := e.evalExpr(exp.Value)
@@ -502,26 +525,6 @@ func (e *Evaluator) evalCaseMatch(value *Cell, exprs []Expr) (bool, map[string]*
 	return false, nil, nil
 }
 
-func (e *Evaluator) swapStackTop(newStackTop *stackFrame) *stackFrame {
-	oldStackTop := e.stackTop
-
-	// copy
-	newFrame := stackFrame{
-		name:   newStackTop.name,
-		locals: make(map[string]*Cell, len(oldStackTop.locals)),
-		depth:  oldStackTop.depth,
-		parent: newStackTop.parent,
-	}
-
-	for k, v := range newStackTop.locals {
-		newFrame.locals[k] = v
-	}
-
-	e.stackTop = &newFrame
-
-	return oldStackTop
-}
-
 func (e *Evaluator) callFunction(fn *Cell, args []*Value) (*Cell, error) {
 	switch fn.Value.Tag {
 	case ValueNativeFn:
@@ -537,19 +540,18 @@ func (e *Evaluator) callFunction(fn *Cell, args []*Value) (*Cell, error) {
 		f := fn.Value.Fn
 		name := e.lexer.GetString(&f.Expr.ident)
 
-		oldStackTop := e.swapStackTop(f.Context)
-
 		if err := e.pushFrame(name); err != nil {
 			return nil, err
 		}
+		e.stackTop.scope.parent = f.Scope
 
-		e.stackTop.locals[name] = fn
+		e.stackTop.scope.bindings[name] = fn
 
 		for index, argName := range f.Expr.Args {
 			if index > len(args)-1 {
-				e.stackTop.locals[argName] = NewCell(NewValue(nil))
+				e.stackTop.scope.bindings[argName] = NewCell(NewValue(nil))
 			} else {
-				e.stackTop.locals[argName] = NewCell(*args[index])
+				e.stackTop.scope.bindings[argName] = NewCell(*args[index])
 			}
 		}
 
@@ -567,7 +569,6 @@ func (e *Evaluator) callFunction(fn *Cell, args []*Value) (*Cell, error) {
 		if err := e.popFrame(); err != nil {
 			return nil, err
 		}
-		e.stackTop = oldStackTop
 
 		if retVal != nil {
 			return NewCell(*retVal), nil
@@ -1154,6 +1155,20 @@ func (e *Evaluator) evalStatement(stmt Statement) error {
 		return errNext
 	case *StatementExit:
 		return errExit
+	case *StatementLet:
+		ident := e.lexer.GetString(&st.Ident.token)
+		_, present := e.stackTop.scope.bindings[ident]
+		if present {
+			return e.error(st.Token(), fmt.Sprintf("variable '%s' already declared", ident))
+		}
+
+		value, err := e.evalExpr(st.Value)
+		if err != nil {
+			return err
+		}
+
+		e.stackTop.scope.bindings[ident] = value
+		return nil
 	default:
 		return e.error(st.Token(), fmt.Sprintf("expected a statement but found %T", st))
 	}
@@ -1195,7 +1210,7 @@ func (e *Evaluator) evalPatternRules(patternRules []*Rule) error {
 	case ValueArray:
 		for i, item := range e.root.Value.Array {
 			e.ruleRoot = item
-			e.stackTop.locals["$index"] = NewCell(NewValue(i))
+			e.stackTop.scope.bindings["$index"] = NewCell(NewValue(i))
 			if err := e.evalRules(patternRules); err != nil {
 				return err
 			}
@@ -1204,7 +1219,7 @@ func (e *Evaluator) evalPatternRules(patternRules []*Rule) error {
 		for _, key := range e.root.Value.ObjKeys {
 			val := (*e.root.Value.Obj)[key]
 			e.ruleRoot = val
-			e.stackTop.locals["$key"] = NewCell(NewValue(key))
+			e.stackTop.scope.bindings["$key"] = NewCell(NewValue(key))
 			if err := e.evalRules(patternRules); err != nil {
 				return err
 			}

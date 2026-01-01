@@ -886,6 +886,28 @@ false true
 		expectedError: "index out of range",
 	},
 	{
+		name: "scoping",
+		prog: `
+			function fn() {
+				let a = 3;
+				b = 4;
+			}
+
+			BEGIN {
+				a = 1;
+				if (true) {
+					b = 2;
+				}
+				print a, b;
+				fn();
+				print a;
+				print b;
+			}
+		`,
+		json:     "",
+		expected: "1 2\n1\n4\n",
+	},
+	{
 		name: "bug: statement after block",
 		prog: `
 			{

@@ -56,8 +56,8 @@ type Value struct {
 }
 
 type FnWithContext struct {
-	Expr    *ExprFunction
-	Context *stackFrame
+	Expr  *ExprFunction
+	Scope *scope
 }
 
 func NewValue(srcVal interface{}) Value {

@@ -227,6 +227,11 @@ type StatementForIn struct {
 	Body       Statement
 }
 
+type StatementLet struct {
+	Ident *ExprIdentifier
+	Value Expr
+}
+
 func (*StatementBlock) statementNode()    {}
 func (*StatementPrint) statementNode()    {}
 func (*StatementExpr) statementNode()     {}
@@ -239,6 +244,7 @@ func (*StatementIf) statementNode()       {}
 func (*StatementWhile) statementNode()    {}
 func (*StatementFor) statementNode()      {}
 func (*StatementForIn) statementNode()    {}
+func (*StatementLet) statementNode()      {}
 
 func (stmt *StatementBlock) Token() Token    { return stmt.token }
 func (stmt *StatementPrint) Token() Token    { return stmt.token }
@@ -252,3 +258,4 @@ func (stmt *StatementIf) Token() Token       { return stmt.Expr.Token() }
 func (stmt *StatementWhile) Token() Token    { return stmt.Expr.Token() }
 func (stmt *StatementFor) Token() Token      { return stmt.Expr.Token() }
 func (stmt *StatementForIn) Token() Token    { return stmt.Ident.Token() }
+func (stmt *StatementLet) Token() Token      { return stmt.Ident.Token() }
