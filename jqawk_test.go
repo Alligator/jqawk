@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -9,6 +10,7 @@ import (
 	"os/exec"
 	"strings"
 	"testing"
+	"time"
 
 	lang "github.com/alligator/jqawk/src"
 )
@@ -1118,7 +1120,9 @@ func FuzzJqawkWithJson(f *testing.F) {
 		inputFiles := []lang.InputFile{
 			lang.NewStreamingInputFile("<test>", inputReader),
 		}
-		_, err := lang.EvalProgram(src, inputFiles, nil, io.Discard, true)
+		ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+		defer cancel()
+		_, err := lang.EvalProgramContext(src, inputFiles, nil, io.Discard, true, ctx)
 
 		if err != nil {
 			switch err.(type) {

@@ -1,6 +1,7 @@
 package lang
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -36,6 +37,7 @@ type Evaluator struct {
 	endRules       []*Rule
 	endFileRules   []*Rule
 	fuzzing        bool
+	ctx            context.Context
 }
 
 var (
@@ -975,6 +977,10 @@ func (e *Evaluator) evalExprList(exprs []Expr, copy bool) ([]*Cell, error) {
 }
 
 func (e *Evaluator) evalStatement(stmt Statement) error {
+	if err := e.checkContext(); err != nil {
+		return err
+	}
+
 	switch st := stmt.(type) {
 	case *StatementBlock:
 		for _, s := range st.Body {
@@ -1248,6 +1254,18 @@ func (e *Evaluator) GetRootJson() (string, error) {
 	return string(bytes), nil
 }
 
+func (e *Evaluator) checkContext() error {
+	if e.ctx == nil {
+		return nil
+	}
+
+	if err := e.ctx.Err(); err != nil {
+		return RuntimeError{Message: err.Error()}
+	}
+
+	return nil
+}
+
 func EvalExpression(exprSrc string, rootValue Value, stdout io.Writer) (*Cell, error) {
 	lex := NewLexer(exprSrc)
 	parser := NewParser(&lex)
@@ -1274,6 +1292,22 @@ func EvalProgram(progSrc string, files []InputFile, rootSelectors []string, stdo
 		return nil, err
 	}
 	ev := NewEvaluator(prog, &lex, stdout)
+	return evalProgramInternal(ev, files, rootSelectors, stdout, fuzzing)
+}
+
+func EvalProgramContext(progSrc string, files []InputFile, rootSelectors []string, stdout io.Writer, fuzzing bool, ctx context.Context) (*Evaluator, error) {
+	lex := NewLexer(progSrc)
+	parser := NewParser(&lex)
+	prog, err := parser.Parse()
+	if err != nil {
+		return nil, err
+	}
+	ev := NewEvaluator(prog, &lex, stdout)
+	ev.ctx = ctx
+	return evalProgramInternal(ev, files, rootSelectors, stdout, fuzzing)
+}
+
+func evalProgramInternal(ev Evaluator, files []InputFile, rootSelectors []string, stdout io.Writer, fuzzing bool) (*Evaluator, error) {
 	ev.fuzzing = fuzzing
 
 	// begin rules
