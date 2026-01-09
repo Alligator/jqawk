@@ -884,7 +884,7 @@ false true
 	{
 		name:          "invalid slice",
 		prog:          `{ print $[2:1] }`,
-		json:          "[[1, 2, 3, 4]",
+		json:          "[[1, 2, 3, 4]]",
 		expectedError: "index out of range",
 	},
 	{
