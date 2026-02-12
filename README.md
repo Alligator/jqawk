@@ -65,7 +65,7 @@ The body `{ print $.name }` prints the `name` property.
 
 If you know awk, this should be familiar.
 
-If the input is an array, each rule will run for each item in the array, with `$` set to that item. If the input is an object, each rule will run for each key/value pair in the object, with `$` set to the value, and `$key` set to the value.
+If the input is an array, each rule will run for each item in the array, with `$` set to that item.
 
 If the input is any other type, each rule is run once with `$` set to the input.
 
@@ -293,10 +293,9 @@ If the input is an array, jqawk sets two variables:
 - `$` is the current item in the array
 - `$index` is the array index of that item
 
-and, if the input is an object:
+and, if the input is anything else:
 
-- `$` is the value of the current key/value pair
-- `$key` is the key
+- `$` is the root value
 
 ## Multiple files
 

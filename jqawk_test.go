@@ -359,9 +359,9 @@ string rpad: sponge     sponge
 	},
 	{
 		name:     "root object",
-		prog:     "{ printf('%s: %s\n', $key, $) }",
+		prog:     "{ print $.name }",
 		json:     `{ "name": "alligator", "location": "uk" }`,
-		expected: "name: alligator\nlocation: uk\n",
+		expected: "alligator\n",
 	},
 	{
 		name:     "root number",

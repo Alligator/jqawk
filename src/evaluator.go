@@ -1228,13 +1228,9 @@ func (e *Evaluator) evalPatternRules(patternRules []*Rule) error {
 			}
 		}
 	case ValueObj:
-		for _, key := range e.root.Value.ObjKeys {
-			val := (*e.root.Value.Obj)[key]
-			e.ruleRoot = val
-			e.stackTop.scope.bindings["$key"] = NewCell(NewValue(key))
-			if err := e.evalRules(patternRules); err != nil {
-				return err
-			}
+		e.ruleRoot = e.root
+		if err := e.evalRules(patternRules); err != nil {
+			return err
 		}
 	default:
 		e.ruleRoot = e.root
