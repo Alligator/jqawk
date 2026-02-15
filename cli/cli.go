@@ -6,6 +6,7 @@ import (
 	"os"
 	"runtime/debug"
 	"runtime/pprof"
+	"sort"
 	"strings"
 
 	lang "github.com/alligator/jqawk/src"
@@ -34,6 +35,37 @@ func (m *multiFlag) Set(value string) error {
 	return nil
 }
 
+func usage(fs *flag.FlagSet) func() {
+	return func() {
+		fmt.Fprint(fs.Output(), "usage: jqawk [flags] <file>...\n\n")
+
+		var flags []*flag.Flag
+		fs.VisitAll(func(f *flag.Flag) {
+			flags = append(flags, f)
+		})
+
+		// lexicographic but single char flags come first
+		sort.Slice(flags, func(a, b int) bool {
+			if len(flags[a].Name) == 1 {
+				if len(flags[b].Name) == 1 {
+					return flags[a].Name < flags[b].Name
+				}
+				return true
+			}
+
+			return flags[a].Name < flags[b].Name
+		})
+
+		for _, f := range flags {
+			if len(f.Name) == 1 {
+				fmt.Fprintf(fs.Output(), "  -%-11s %s\n", f.Name, f.Usage)
+			} else {
+				fmt.Fprintf(fs.Output(), "  --%-10s %s\n", f.Name, f.Usage)
+			}
+		}
+	}
+}
+
 func Run(version string) (exitCode int) {
 	var rValues multiFlag
 
@@ -45,6 +77,9 @@ func Run(version string) (exitCode int) {
 	outfile := flag.String("o", "", "the file to write JSON to")
 	showVersion := flag.Bool("version", false, "print version information")
 	interactive := flag.Bool("i", false, "start interactive REPL")
+
+	flag.Usage = usage(flag.CommandLine)
+
 	flag.Parse()
 
 	if *showVersion {
