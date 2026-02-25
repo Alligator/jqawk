@@ -161,6 +161,20 @@ func nativeJson(e *Evaluator, args []*Value, this *Value) (*Value, error) {
 	return &v, nil
 }
 
+func nativeParseJson(e *Evaluator, args []*Value, this *Value) (*Value, error) {
+	s, err := checkArg(args, 0, ValueStr)
+	if err != nil {
+		return nil, err
+	}
+
+	jp := newJsonParser(strings.NewReader(*s.Str))
+	val, err := jp.next()
+	if err != nil {
+		return nil, err
+	}
+	return &val, err
+}
+
 func nativeNum(e *Evaluator, args []*Value, this *Value) (*Value, error) {
 	if err := checkArgCount(args, 1); err != nil {
 		return nil, err
@@ -196,5 +210,9 @@ func addRuntimeFunctions(e *Evaluator) {
 	e.stackTop.scope.bindings["num"] = NewCell(Value{
 		Tag:      ValueNativeFn,
 		NativeFn: nativeNum,
+	})
+	e.stackTop.scope.bindings["parseJson"] = NewCell(Value{
+		Tag:      ValueNativeFn,
+		NativeFn: nativeParseJson,
 	})
 }

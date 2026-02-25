@@ -456,6 +456,9 @@ printf(format_string, args...)
 json(arg)
   return arg converted to a pretty-printed JSON string
 
+parseJson(string)
+  return the string parsed as a JSON value
+
 num(arg)
   convert arg to a number (64-bit float). only works on strings
 ```

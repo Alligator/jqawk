@@ -910,6 +910,15 @@ false true
 		expected: "1 2\n1\n4\n",
 	},
 	{
+		name: "parseJson",
+		prog: "{ b = parseJson($.json); print b.name; }",
+		json: `[
+			{ "json": "{ \"name\": \"beep\" }" },
+			{ "json": "{ \"name\": \"boop\" }" }
+		]`,
+		expected: "beep\nboop\n",
+	},
+	{
 		name: "bug: statement after block",
 		prog: `
 			{
