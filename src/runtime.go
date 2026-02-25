@@ -199,20 +199,20 @@ func nativeNum(e *Evaluator, args []*Value, this *Value) (*Value, error) {
 }
 
 func addRuntimeFunctions(e *Evaluator) {
-	e.stackTop.scope.bindings["printf"] = NewCell(Value{
+	e.setGlobal("printf", NewCell(Value{
 		Tag:      ValueNativeFn,
 		NativeFn: nativePrintf,
-	})
-	e.stackTop.scope.bindings["json"] = NewCell(Value{
+	}))
+	e.setGlobal("json", NewCell(Value{
 		Tag:      ValueNativeFn,
 		NativeFn: nativeJson,
-	})
-	e.stackTop.scope.bindings["num"] = NewCell(Value{
+	}))
+	e.setGlobal("num", NewCell(Value{
 		Tag:      ValueNativeFn,
 		NativeFn: nativeNum,
-	})
-	e.stackTop.scope.bindings["parseJson"] = NewCell(Value{
+	}))
+	e.setGlobal("parseJson", NewCell(Value{
 		Tag:      ValueNativeFn,
 		NativeFn: nativeParseJson,
-	})
+	}))
 }
