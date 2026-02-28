@@ -1280,6 +1280,33 @@ func EvalExpression(exprSrc string, rootValue Value, stdout io.Writer) (*Cell, e
 	return cell, nil
 }
 
+func EvalBeginFileExpression(exprSrc string, files []InputFile, rootSelectors []string, stdout io.Writer, fuzzing bool) (*Evaluator, error) {
+	lex := NewLexer(exprSrc)
+	parser := NewParser(&lex)
+	expr, err := parser.ParseExpression()
+	if err != nil {
+		return nil, err
+	}
+
+	printStmt := StatementPrint{
+		token: expr.Token(),
+		Args:  []Expr{expr},
+	}
+
+	prog := Program{
+		Rules: []Rule{
+			{BeginFileRule, nil, &printStmt},
+		},
+	}
+
+	ev := NewEvaluator(prog, &lex, stdout)
+	_, err = evalProgramInternal(ev, files, rootSelectors, stdout, fuzzing)
+	if err != nil {
+		return &ev, err
+	}
+	return &ev, nil
+}
+
 func EvalProgram(progSrc string, files []InputFile, rootSelectors []string, stdout io.Writer, fuzzing bool) (*Evaluator, error) {
 	lex := NewLexer(progSrc)
 	parser := NewParser(&lex)

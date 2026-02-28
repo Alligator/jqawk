@@ -77,6 +77,7 @@ func Run(version string) (exitCode int) {
 	outfile := flag.String("o", "", "the file to write JSON to")
 	showVersion := flag.Bool("version", false, "print version information")
 	interactive := flag.Bool("i", false, "start interactive REPL")
+	expr := flag.String("e", "", "evaluate expression and print the result")
 
 	flag.Usage = usage(flag.CommandLine)
 
@@ -105,7 +106,7 @@ func Run(version string) (exitCode int) {
 			return 1
 		}
 		progSrc = string(file)
-	} else if *interactive {
+	} else if *interactive || len(*expr) > 0 {
 		filePaths = args
 	} else {
 		switch len(args) {
@@ -154,6 +155,15 @@ func Run(version string) (exitCode int) {
 
 	if *interactive {
 		return RunRepl(version, inputFiles, rValues)
+	}
+
+	if len(*expr) > 0 {
+		_, err := lang.EvalBeginFileExpression(*expr, inputFiles, rValues, os.Stdout, false)
+		if err != nil {
+			lang.PrintError(err)
+			return 1
+		}
+		return 0
 	}
 
 	ev, err := lang.EvalProgram(progSrc, inputFiles, rValues, os.Stdout, false)

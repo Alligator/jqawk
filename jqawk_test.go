@@ -1304,6 +1304,13 @@ func TestJqawkExe(t *testing.T) {
 		json:     "[]",
 		expected: "",
 	})
+
+	testExe(t, testCase{
+		name:     "expr",
+		args:     []string{"-e", "$.length()"},
+		json:     "[1, 2, 3]",
+		expected: "3\n",
+	})
 }
 
 func TestJqawkStreamingJson(t *testing.T) {
