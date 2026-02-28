@@ -57,11 +57,17 @@ func usage(fs *flag.FlagSet) func() {
 		})
 
 		for _, f := range flags {
-			if len(f.Name) == 1 {
-				fmt.Fprintf(fs.Output(), "  -%-11s %s\n", f.Name, f.Usage)
-			} else {
-				fmt.Fprintf(fs.Output(), "  --%-10s %s\n", f.Name, f.Usage)
+			placeholder, flagUsage := flag.UnquoteUsage(f)
+			name := "-" + f.Name
+			if len(f.Name) > 1 {
+				name = "--" + f.Name
 			}
+
+			if len(placeholder) > 0 {
+				name += " <" + placeholder + ">"
+			}
+
+			fmt.Fprintf(fs.Output(), "  %-16s %s\n", name, flagUsage)
 		}
 	}
 }
@@ -71,13 +77,13 @@ func Run(version string) (exitCode int) {
 
 	dbgAst := flag.Bool("dbg-ast", false, "print the AST and exit")
 	dbgLex := flag.Bool("dbg-lex", false, "print tokens and exit")
-	progFile := flag.String("f", "", "the program file to run")
-	flag.Var(&rValues, "r", "root selector. can be specified multiple times")
+	progFile := flag.String("f", "", "the program `file` to run")
+	flag.Var(&rValues, "r", "root `selector`. can be specified multiple times")
 	profile := flag.Bool("profile", false, "record a CPU profile")
-	outfile := flag.String("o", "", "the file to write JSON to")
+	outfile := flag.String("o", "", "the `file` to write JSON to")
 	showVersion := flag.Bool("version", false, "print version information")
 	interactive := flag.Bool("i", false, "start interactive REPL")
-	expr := flag.String("e", "", "evaluate expression and print the result")
+	expr := flag.String("e", "", "evaluate an `expression` and print the result")
 
 	flag.Usage = usage(flag.CommandLine)
 
