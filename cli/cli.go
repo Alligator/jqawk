@@ -37,7 +37,7 @@ func (m *multiFlag) Set(value string) error {
 
 func usage(fs *flag.FlagSet) func() {
 	return func() {
-		fmt.Fprint(fs.Output(), "usage: jqawk [flags] <file>...\n\n")
+		fmt.Fprint(fs.Output(), "usage: jqawk [flags] <program> <file>...\n\n")
 
 		var flags []*flag.Flag
 		fs.VisitAll(func(f *flag.Flag) {
