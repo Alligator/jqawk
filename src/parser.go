@@ -922,13 +922,23 @@ func (p *Parser) rewriteCompundAssingment(left Expr, right Expr, opToken Token) 
 	}
 
 	value := &ExprBinary{
-		Left:    left,
-		Right:   right,
-		OpToken: Token{Tag: opTag, Pos: opToken.Pos, Len: opToken.Len},
+		Left:  left,
+		Right: right,
+		OpToken: Token{
+			lex: p.lexer,
+			Tag: opTag,
+			Pos: opToken.Pos,
+			Len: opToken.Len,
+		},
 	}
 
 	return &ExprAssign{
-		token:  Token{Tag: Equal, Pos: opToken.Pos, Len: opToken.Len},
+		token: Token{
+			lex: p.lexer,
+			Tag: Equal,
+			Pos: opToken.Pos,
+			Len: opToken.Len,
+		},
 		Target: target,
 		Value:  value,
 	}, nil
