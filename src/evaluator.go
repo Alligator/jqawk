@@ -62,6 +62,15 @@ func NewEvaluator(prog Program, lexer *Lexer, stdout io.Writer) Evaluator {
 	return e
 }
 
+func NewEmptyEvaluator(stdout io.Writer) Evaluator {
+	e := Evaluator{
+		stdout: stdout,
+	}
+	e.pushFrame("<root>")
+	addRuntimeFunctions(&e)
+	return e
+}
+
 func (e *Evaluator) readRules() {
 	e.beginRules = make([]*Rule, 0)
 	e.beginFileRules = make([]*Rule, 0)
@@ -1248,49 +1257,77 @@ func (e *Evaluator) checkContext() error {
 	return nil
 }
 
-func EvalExpression(exprSrc string, rootValue Value, stdout io.Writer) (*Cell, error) {
-	lex := NewLexer(exprSrc)
-	parser := NewParser(&lex)
-	expr, err := parser.ParseExpression()
-	if err != nil {
-		return nil, err
+func (e *Evaluator) forEachRootValue(files []InputFile, rootSelectors []string, fn func(*Cell) error) error {
+	for _, file := range files {
+		// for each json value
+		jp := newJsonParser(file.NewReader())
+		for {
+			rootValue, err := jp.next()
+			if err != nil {
+				if err == io.EOF {
+					break
+				}
+				return JsonError{err.Error(), file.Name()}
+			}
+
+			e.setGlobal("$file", NewCell(NewValue(file.Name())))
+
+			// find the root value(s)
+			rootCells := make([]*Cell, 0)
+			if len(rootSelectors) > 0 {
+				for _, rootSelector := range rootSelectors {
+					lex := NewLexer(rootSelector)
+					parser := NewParser(&lex)
+					expr, err := parser.ParseExpression()
+
+					rootCell := NewCell(rootValue)
+					e.root = rootCell
+					e.ruleRoot = rootCell
+					cell, err := e.evalExpr(expr)
+					if err != nil && err != errExit {
+						return err
+					}
+					rootCells = append(rootCells, cell)
+				}
+			} else {
+				rootCells = append(rootCells, NewCell(rootValue))
+			}
+
+			for _, rootCell := range rootCells {
+				if err = fn(rootCell); err != nil {
+					return err
+				}
+			}
+		}
 	}
-	rootCell := NewCell(rootValue)
-	ev := NewEvaluator(Program{}, &lex, stdout)
-	ev.root = rootCell
-	ev.ruleRoot = rootCell
-	cell, err := ev.evalExpr(expr)
-	if err != nil && err != errExit {
-		return nil, err
-	}
-	return cell, nil
+	return nil
 }
 
-func EvalBeginFileExpression(exprSrc string, files []InputFile, rootSelectors []string, stdout io.Writer, fuzzing bool) (*Evaluator, error) {
-	lex := NewLexer(exprSrc)
-	parser := NewParser(&lex)
-	expr, err := parser.ParseExpression()
-	if err != nil {
-		return nil, err
-	}
+func (e *Evaluator) RunInBeginFileContext(files []InputFile, rootSelectors []string, fn func() error) error {
+	return e.forEachRootValue(files, rootSelectors, func(rootCell *Cell) error {
+		e.root = rootCell
+		e.ruleRoot = rootCell
+		if err := fn(); err != nil {
+			return err
+		}
+		return nil
+	})
+}
 
-	printStmt := StatementPrint{
-		token: expr.Token(),
-		Args:  []Expr{expr},
-	}
+func (e *Evaluator) RunProgram(prog Program, files []InputFile, rootSelectors []string) error {
+	e.prog = prog
+	e.readRules()
+	e.addProgramFunctions()
+	_, err := evalProgramInternal(e, files, rootSelectors)
+	return err
+}
 
-	prog := Program{
-		Rules: []Rule{
-			{BeginFileRule, nil, &printStmt},
-		},
-	}
+func (e *Evaluator) EvalExpr(expr Expr) (*Cell, error) {
+	return e.evalExpr(expr)
+}
 
-	ev := NewEvaluator(prog, &lex, stdout)
-	_, err = evalProgramInternal(ev, files, rootSelectors, stdout, fuzzing)
-	if err != nil {
-		return &ev, err
-	}
-	return &ev, nil
+func (e *Evaluator) EvalStatement(stmt Statement) error {
+	return e.evalStatement(stmt)
 }
 
 func EvalProgram(progSrc string, files []InputFile, rootSelectors []string, stdout io.Writer, fuzzing bool) (*Evaluator, error) {
@@ -1301,7 +1338,8 @@ func EvalProgram(progSrc string, files []InputFile, rootSelectors []string, stdo
 		return nil, err
 	}
 	ev := NewEvaluator(prog, &lex, stdout)
-	return evalProgramInternal(ev, files, rootSelectors, stdout, fuzzing)
+	ev.fuzzing = fuzzing
+	return evalProgramInternal(&ev, files, rootSelectors)
 }
 
 func EvalProgramContext(progSrc string, files []InputFile, rootSelectors []string, stdout io.Writer, fuzzing bool, ctx context.Context) (*Evaluator, error) {
@@ -1313,87 +1351,62 @@ func EvalProgramContext(progSrc string, files []InputFile, rootSelectors []strin
 	}
 	ev := NewEvaluator(prog, &lex, stdout)
 	ev.ctx = ctx
-	return evalProgramInternal(ev, files, rootSelectors, stdout, fuzzing)
+	ev.fuzzing = fuzzing
+	return evalProgramInternal(&ev, files, rootSelectors)
 }
 
-func evalProgramInternal(ev Evaluator, files []InputFile, rootSelectors []string, stdout io.Writer, fuzzing bool) (*Evaluator, error) {
-	ev.fuzzing = fuzzing
-
+func evalProgramInternal(ev *Evaluator, files []InputFile, rootSelectors []string) (*Evaluator, error) {
 	// begin rules
 	for _, rule := range ev.beginRules {
 		ev.ruleRoot = NewCell(NewValue(nil))
 		if err := ev.evalStatement(rule.Body); err != nil {
 			if err == errExit {
-				return &ev, nil
+				return ev, nil
 			}
-			return &ev, err
+			return ev, err
 		}
 	}
 
 	// for each file, run the pattern rules
-	for _, file := range files {
-		// for each json value
-		jp := newJsonParser(file.NewReader())
-		for {
-			rootValue, err := jp.next()
-			if err != nil {
-				if err == io.EOF {
-					break
+	err := ev.forEachRootValue(files, rootSelectors, func(rootCell *Cell) error {
+		var rootVal = rootCell.Value
+
+		// run the begin file rules
+		for _, rule := range ev.beginFileRules {
+			ev.ruleRoot = rootCell
+			if err := ev.evalStatement(rule.Body); err != nil {
+				if err == errExit {
+					return nil
 				}
-				return &ev, JsonError{err.Error(), file.Name()}
-			}
-
-			ev.setGlobal("$file", NewCell(NewValue(file.Name())))
-
-			// find the root value(s)
-			rootCells := make([]*Cell, 0)
-			if len(rootSelectors) > 0 {
-				for _, rootSelector := range rootSelectors {
-					cell, err := EvalExpression(rootSelector, rootValue, stdout)
-					if err != nil {
-						return &ev, err
-					}
-					rootCells = append(rootCells, cell)
-				}
-			} else {
-				rootCells = append(rootCells, NewCell(rootValue))
-			}
-
-			for _, rootCell := range rootCells {
-				var rootVal = rootCell.Value
-
-				// run the begin file rules
-				for _, rule := range ev.beginFileRules {
-					ev.ruleRoot = rootCell
-					if err := ev.evalStatement(rule.Body); err != nil {
-						if err == errExit {
-							return &ev, nil
-						}
-						return &ev, err
-					}
-				}
-
-				// run the rules
-				ev.root = rootCell
-				if err := ev.evalPatternRules(ev.patternRules); err != nil {
-					if err == errExit {
-						return &ev, nil
-					}
-					return &ev, err
-				}
-
-				// run the end file rules
-				for _, rule := range ev.endFileRules {
-					ev.ruleRoot = NewCell(rootVal)
-					if err := ev.evalStatement(rule.Body); err != nil {
-						if err == errExit {
-							return &ev, nil
-						}
-						return &ev, err
-					}
-				}
+				return err
 			}
 		}
+
+		// run the rules
+		ev.root = rootCell
+		if err := ev.evalPatternRules(ev.patternRules); err != nil {
+			if err == errExit {
+				return nil
+			}
+			return err
+		}
+
+		// run the end file rules
+		for _, rule := range ev.endFileRules {
+			ev.ruleRoot = NewCell(rootVal)
+			if err := ev.evalStatement(rule.Body); err != nil {
+				if err == errExit {
+					return nil
+				}
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return ev, err
 	}
 
 	// end rules
@@ -1401,11 +1414,11 @@ func evalProgramInternal(ev Evaluator, files []InputFile, rootSelectors []string
 		ev.ruleRoot = NewCell(NewValue(nil))
 		if err := ev.evalStatement(rule.Body); err != nil {
 			if err == errExit {
-				return &ev, nil
+				return ev, nil
 			}
-			return &ev, err
+			return ev, err
 		}
 	}
 
-	return &ev, nil
+	return ev, nil
 }

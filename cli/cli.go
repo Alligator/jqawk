@@ -158,7 +158,23 @@ func Run(version string) (exitCode int) {
 	}
 
 	if len(*expr) > 0 {
-		_, err := lang.EvalBeginFileExpression(*expr, inputFiles, rValues, os.Stdout, false)
+		ev := lang.NewEmptyEvaluator(os.Stdout)
+		err := ev.RunInBeginFileContext(inputFiles, rValues, func() error {
+			lex := lang.NewLexer(*expr)
+			parser := lang.NewParser(&lex)
+			expr, err := parser.ParseExpression()
+			if err != nil {
+				return err
+			}
+
+			cell, err := ev.EvalExpr(expr)
+			if err != nil {
+				return err
+			}
+			fmt.Println(cell.Value.PrettyString(false))
+			return nil
+		})
+
 		if err != nil {
 			lang.PrintError(err)
 			return 1
