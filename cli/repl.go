@@ -83,6 +83,19 @@ func RunRepl(version string, files []lang.InputFile, rootSelectors []string) int
 
 	ev := lang.NewEmptyEvaluator(os.Stdout)
 
+	evalStmtAndMaybePrint := func(stmt lang.Statement) error {
+		if s, ok := stmt.(*lang.StatementExpr); ok {
+			val, err := ev.EvalExpr(s.Expr)
+			if err != nil {
+				return err
+			}
+			fmt.Println(val.Value.PrettyString(false))
+			return nil
+		}
+
+		return ev.EvalStatement(stmt)
+	}
+
 	for {
 		line, err := rl.Readline()
 		if err != nil {
@@ -90,6 +103,10 @@ func RunRepl(version string, files []lang.InputFile, rootSelectors []string) int
 			return 1
 		}
 		line = strings.TrimSpace(line)
+
+		if len(line) == 0 {
+			continue
+		}
 
 		if strings.HasPrefix(line, ":") {
 			parts := strings.Split(line, " ")
@@ -118,16 +135,21 @@ func RunRepl(version string, files []lang.InputFile, rootSelectors []string) int
 
 		switch mode {
 		case "statement":
-			err = ev.RunInBeginFileContext(bufferedFiles, rootSelectors, func() error {
-				lex := lang.NewLexer(line)
-				parser := lang.NewParser(&lex)
-				stmt, err := parser.ParseStatement()
-				if err != nil {
-					return err
-				}
+			lex := lang.NewLexer(line)
+			parser := lang.NewParser(&lex)
+			stmt, err := parser.ParseStatement()
+			if err != nil {
+				lang.PrintError(err)
+				continue
+			}
 
-				return ev.EvalStatement(stmt)
-			})
+			if len(bufferedFiles) == 0 {
+				err = evalStmtAndMaybePrint(stmt)
+			} else {
+				err = ev.RunInBeginFileContext(bufferedFiles, rootSelectors, func() error {
+					return evalStmtAndMaybePrint(stmt)
+				})
+			}
 
 			if err != nil {
 				lang.PrintError(err)
