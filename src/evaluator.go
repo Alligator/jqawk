@@ -50,7 +50,7 @@ var (
 var fuzzingLoopLimit = 10000
 var callDepthLimit = 4096
 
-func NewEvaluator(prog Program, lexer *Lexer, stdout io.Writer) Evaluator {
+func NewEvaluator(prog Program, stdout io.Writer) Evaluator {
 	e := Evaluator{
 		prog:   prog,
 		stdout: stdout,
@@ -1337,7 +1337,7 @@ func EvalProgram(progSrc string, files []InputFile, rootSelectors []string, stdo
 	if err != nil {
 		return nil, err
 	}
-	ev := NewEvaluator(prog, &lex, stdout)
+	ev := NewEvaluator(prog, stdout)
 	ev.fuzzing = fuzzing
 	return evalProgramInternal(&ev, files, rootSelectors)
 }
@@ -1349,7 +1349,7 @@ func EvalProgramContext(progSrc string, files []InputFile, rootSelectors []strin
 	if err != nil {
 		return nil, err
 	}
-	ev := NewEvaluator(prog, &lex, stdout)
+	ev := NewEvaluator(prog, stdout)
 	ev.ctx = ctx
 	ev.fuzzing = fuzzing
 	return evalProgramInternal(&ev, files, rootSelectors)
