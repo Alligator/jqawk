@@ -100,8 +100,7 @@ func (e *Evaluator) addProgramFunctions() {
 			Tag: ValueFn,
 			Fn:  f,
 		}
-		name := e.lexer.GetString(&fn.ident)
-		e.stackTop.scope.bindings[name] = NewCell(val)
+		e.stackTop.scope.bindings[fn.Ident] = NewCell(val)
 	}
 }
 
@@ -205,8 +204,7 @@ func (e *Evaluator) getIdentifier(expr *ExprIdentifier) (*Cell, error) {
 			return nil, e.error(expr.Token(), "unknown variable $")
 		}
 	} else {
-		ident := e.lexer.GetString(&expr.token)
-		local, err := e.getVariable(ident)
+		local, err := e.getVariable(expr.Ident)
 		if err != nil {
 			return nil, e.error(expr.Token(), err.Error())
 		}
@@ -246,15 +244,13 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 	case *ExprLiteral:
 		switch exp.token.Tag {
 		case Str, Ident:
-			str := e.lexer.GetString(&exp.token)
-			cell, err := e.evalString(str)
+			cell, err := e.evalString(exp.Literal)
 			if err != nil {
 				return nil, e.error(expr.Token(), err.Error())
 			}
 			return cell, nil
 		case Regex:
-			str := e.lexer.GetString(&exp.token)
-			re, err := regexp.Compile(str)
+			re, err := regexp.Compile(exp.Literal)
 			if err != nil {
 				return nil, e.error(expr.Token(), err.Error())
 			}
@@ -264,8 +260,7 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 			}
 			return NewCell(val), nil
 		case Num:
-			numStr := e.lexer.GetString(&exp.token)
-			num, err := strconv.ParseFloat(numStr, 64)
+			num, err := strconv.ParseFloat(exp.Literal, 64)
 			if err != nil {
 				return nil, e.error(expr.Token(), "could not parse number")
 			}
@@ -391,9 +386,8 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 			Tag: ValueFn,
 			Fn:  fn,
 		}
-		name := e.lexer.GetString(&exp.ident)
 		cell := NewCell(val)
-		e.stackTop.scope.bindings[name] = cell
+		e.stackTop.scope.bindings[exp.Ident] = cell
 		return cell, nil
 	case *ExprAssign:
 		val, err := e.evalExpr(exp.Value)
@@ -426,9 +420,8 @@ func (e *Evaluator) assignToTarget(target AssignTarget, value *Cell) (*Cell, Val
 			}
 			tok = seg.Expr.Token()
 		} else {
-			str := e.lexer.GetString(&seg.Field)
-			key = NewCell(NewString(str))
-			tok = seg.Field
+			key = NewCell(NewString(seg.Field))
+			tok = seg.token
 		}
 
 		// base doesn't exist, create it
@@ -523,8 +516,7 @@ func (e *Evaluator) evalCaseMatch(value *Cell, exprs []Expr) (bool, map[string]*
 			return true, bindings, nil
 		case *ExprIdentifier:
 			bindings := make(map[string]*Cell)
-			ident := e.lexer.GetString(&ex.token)
-			bindings[ident] = value
+			bindings[ex.Ident] = value
 			return true, bindings, nil
 		default:
 			return false, nil, e.error(expr.Token(), fmt.Sprintf("%s not supported in match expressions", expr))
@@ -546,14 +538,12 @@ func (e *Evaluator) callFunction(fn *Cell, args []*Value) (*Cell, error) {
 		return NewCell(NewValue(nil)), nil
 	case ValueFn:
 		f := fn.Value.Fn
-		name := e.lexer.GetString(&f.Expr.ident)
-
-		if err := e.pushFrame(name); err != nil {
+		if err := e.pushFrame(f.Expr.Ident); err != nil {
 			return nil, err
 		}
 		e.stackTop.scope.parent = f.Scope
 
-		e.stackTop.scope.bindings[name] = fn
+		e.stackTop.scope.bindings[f.Expr.Ident] = fn
 
 		for index, argName := range f.Expr.Args {
 			if index > len(args)-1 {
@@ -679,7 +669,7 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (*Cell, error) {
 				return NewCell(NewValue(result)), nil
 			}
 
-			s := e.lexer.GetString(&exp.token)
+			s := exp.Ident
 			switch s {
 			case "string":
 				result = left.Value.Tag == ValueStr
@@ -1096,16 +1086,14 @@ func (e *Evaluator) evalStatement(stmt Statement) error {
 			}
 		}
 	case *StatementForIn:
-		ident := e.lexer.GetString(&st.Ident.token)
-		local, err := e.getVariable(ident)
+		local, err := e.getVariable(st.Ident.Ident)
 		if err != nil {
 			return e.error(st.Token(), err.Error())
 		}
 
 		var indexLocal *Cell
 		if st.IndexIdent != nil {
-			indexIdent := e.lexer.GetString(&st.IndexIdent.token)
-			indexLocal, err = e.getVariable(indexIdent)
+			indexLocal, err = e.getVariable(st.IndexIdent.Ident)
 			if err != nil {
 				return e.error(st.Token(), err.Error())
 			}
@@ -1168,7 +1156,7 @@ func (e *Evaluator) evalStatement(stmt Statement) error {
 	case *StatementExit:
 		return errExit
 	case *StatementLet:
-		ident := e.lexer.GetString(&st.Ident.token)
+		ident := st.Ident.Ident
 		_, present := e.stackTop.scope.bindings[ident]
 		if present {
 			return e.error(st.Token(), fmt.Sprintf("variable '%s' already declared", ident))

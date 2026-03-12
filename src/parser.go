@@ -303,7 +303,8 @@ func (p *Parser) statement() (Statement, error) {
 					if err := p.consume(Ident); err != nil {
 						return nil, err
 					}
-					indexIdent = &ExprIdentifier{*p.previous}
+					ident := p.lexer.GetString(p.previous)
+					indexIdent = &ExprIdentifier{*p.previous, ident}
 				}
 
 				p.consume(In)
@@ -497,7 +498,8 @@ func literal(p *Parser) (Expr, error) {
 	if _, err := p.advance(); err != nil {
 		return nil, err
 	}
-	return &ExprLiteral{*p.previous}, nil
+	str := p.lexer.GetString(p.previous)
+	return &ExprLiteral{*p.previous, str}, nil
 }
 
 func regex(p *Parser) (Expr, error) {
@@ -512,7 +514,8 @@ func regex(p *Parser) (Expr, error) {
 	if _, err := p.advance(); err != nil {
 		return nil, err
 	}
-	return &ExprLiteral{token}, nil
+	str := p.lexer.GetString(&token)
+	return &ExprLiteral{token, str}, nil
 }
 
 func identifier(p *Parser) (Expr, error) {
@@ -521,7 +524,8 @@ func identifier(p *Parser) (Expr, error) {
 		if _, err := p.advance(); err != nil {
 			return nil, err
 		}
-		return &ExprIdentifier{*p.previous}, nil
+		ident := p.lexer.GetString(p.previous)
+		return &ExprIdentifier{*p.previous, ident}, nil
 	}
 	return nil, p.error(p.current.Pos, "expected an identifier")
 }
@@ -639,9 +643,11 @@ func member(p *Parser, left Expr) (Expr, error) {
 	}
 	ident := p.previous
 
+	str := p.lexer.GetString(ident)
+
 	return &ExprBinary{
 		Left:    left,
-		Right:   &ExprLiteral{*ident},
+		Right:   &ExprLiteral{*ident, str},
 		OpToken: *opToken,
 	}, nil
 }
@@ -885,7 +891,8 @@ func is(p *Parser, left Expr) (Expr, error) {
 	}
 	rhs := p.previous
 
-	ident := ExprIdentifier{*rhs}
+	s := p.lexer.GetString(p.previous)
+	ident := ExprIdentifier{*rhs, s}
 	return &ExprBinary{
 		Left:    left,
 		Right:   &ident,
@@ -933,7 +940,8 @@ func (p *Parser) buildAssignTarget(expr Expr) (AssignTarget, error) {
 	}
 
 	if b, ok := expr.(*ExprIdentifier); ok {
-		return AssignTarget{Obj: &ExprIdentifier{b.token}}, nil
+		ident := p.lexer.GetString(&b.token)
+		return AssignTarget{Obj: &ExprIdentifier{b.token, ident}}, nil
 	}
 
 	path := make([]PathSeg, 0)
@@ -946,10 +954,18 @@ func (p *Parser) buildAssignTarget(expr Expr) (AssignTarget, error) {
 
 		switch b.OpToken.Tag {
 		case Dot:
-			path = append(path, PathSeg{Field: b.Right.Token()})
+			tok := b.Right.Token()
+			s := p.lexer.GetString(&tok)
+			path = append(path, PathSeg{
+				token: b.Right.Token(),
+				Field: s,
+			})
 			curr = b.Left
 		case LSquare:
-			path = append(path, PathSeg{Expr: b.Right})
+			path = append(path, PathSeg{
+				token: b.Right.Token(),
+				Expr:  b.Right,
+			})
 			curr = b.Left
 		default:
 			return AssignTarget{}, p.error(b.OpToken.Pos, "invalid assignment target")
@@ -1080,7 +1096,8 @@ func (p *Parser) parseFunction() (ExprFunction, error) {
 	}
 
 	return ExprFunction{
-		ident: identToken,
+		token: identToken,
+		Ident: p.lexer.GetString(&identToken),
 		Args:  args,
 		Body:  &block,
 	}, nil
@@ -1098,6 +1115,20 @@ func (p *Parser) ParseExpression() (Expr, error) {
 		return nil, err
 	}
 	return expr, nil
+}
+
+func (p *Parser) ParseStatement() (Statement, error) {
+	if _, err := p.advance(); err != nil {
+		return nil, err
+	}
+	stmt, err := p.statement()
+	if err != nil {
+		return nil, err
+	}
+	if err = p.consume(EOF); err != nil {
+		return nil, err
+	}
+	return stmt, nil
 }
 
 func (p *Parser) Parse() (Program, error) {

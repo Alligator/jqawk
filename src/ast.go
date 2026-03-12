@@ -53,11 +53,13 @@ type Rule struct {
 }
 
 type ExprLiteral struct {
-	token Token
+	token   Token
+	Literal string
 }
 
 type ExprIdentifier struct {
 	token Token
+	Ident string
 }
 
 type ExprArray struct {
@@ -94,7 +96,8 @@ type ExprCall struct {
 }
 
 type ExprFunction struct {
-	ident Token
+	token Token
+	Ident string
 	Args  []string
 	Body  Statement
 }
@@ -141,7 +144,7 @@ func (expr *ExprObject) Token() Token     { return expr.token }
 func (expr *ExprUnary) Token() Token      { return expr.OpToken }
 func (expr *ExprBinary) Token() Token     { return expr.Left.Token() }
 func (expr *ExprCall) Token() Token       { return expr.Func.Token() }
-func (expr *ExprFunction) Token() Token   { return expr.ident }
+func (expr *ExprFunction) Token() Token   { return expr.token }
 func (expr *ExprMatch) Token() Token      { return expr.token }
 func (expr *ExprAssign) Token() Token     { return expr.token }
 func (expr *ExprRange) Token() Token      { return expr.token }
@@ -164,7 +167,8 @@ type AssignTarget struct {
 }
 
 type PathSeg struct {
-	Field Token
+	token Token
+	Field string
 	Expr  Expr
 }
 
