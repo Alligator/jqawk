@@ -3,3 +3,9 @@
 *.exe
 *.prof
 build/
+*.jqawk
+bench_*.txt
+.DS_Store
+coverage.out
+/jqawk
+*.jsonl
