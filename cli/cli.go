@@ -126,13 +126,6 @@ func Run(version string) (exitCode int) {
 		}
 	}
 
-	readStdin := false
-	if len(filePaths) == 0 && !isatty.IsTerminal(os.Stdin.Fd()) {
-		// no files and stdin isn't a tty, read from stdin
-		readStdin = true
-		filePaths = append(filePaths, "<stdin>")
-	}
-
 	// debug args
 	if *dbgAst {
 		debugAst(progSrc, rValues)
@@ -145,10 +138,11 @@ func Run(version string) (exitCode int) {
 	}
 
 	inputFiles := make([]lang.InputFile, 0)
-	for _, filePath := range filePaths {
-		if readStdin {
-			inputFiles = append(inputFiles, lang.NewStreamingInputFile("<stdin>", os.Stdin))
-		} else {
+	if len(filePaths) == 0 && !isatty.IsTerminal(os.Stdin.Fd()) {
+		// no files and stdin isn't a tty, read from stdin
+		inputFiles = append(inputFiles, lang.NewStreamingInputFile("<stdin>", os.Stdin))
+	} else {
+		for _, filePath := range filePaths {
 			fp, err := os.Open(filePath)
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
