@@ -76,9 +76,14 @@ const (
 )
 
 type Token struct {
+	lex *Lexer
 	Tag TokenTag
 	Pos int
 	Len int
+}
+
+func (t *Token) GetLineAndCol() (string, int, int) {
+	return t.lex.GetLineAndCol(t.Pos)
 }
 
 type Lexer struct {
@@ -102,15 +107,15 @@ func (l *Lexer) atEnd() bool {
 }
 
 func (l *Lexer) simpleToken(tag TokenTag) Token {
-	return Token{tag, l.tokenStart, 0}
+	return Token{l, tag, l.tokenStart, 0}
 }
 
 func (l *Lexer) errorToken() Token {
-	return Token{Error, l.tokenStart, 0}
+	return Token{l, Error, l.tokenStart, 0}
 }
 
 func (l *Lexer) stringToken(tag TokenTag, length int) Token {
-	return Token{tag, l.tokenStart, length}
+	return Token{l, tag, l.tokenStart, length}
 }
 
 func (l *Lexer) advance() byte {

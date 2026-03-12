@@ -25,7 +25,6 @@ type stackFrame struct {
 
 type Evaluator struct {
 	prog           Program
-	lexer          *Lexer
 	stdout         io.Writer
 	root           *Cell
 	ruleRoot       *Cell
@@ -54,7 +53,6 @@ var callDepthLimit = 4096
 func NewEvaluator(prog Program, lexer *Lexer, stdout io.Writer) Evaluator {
 	e := Evaluator{
 		prog:   prog,
-		lexer:  lexer,
 		stdout: stdout,
 	}
 	e.readRules()
@@ -109,7 +107,7 @@ func (e *Evaluator) print(str string) {
 }
 
 func (e *Evaluator) error(token Token, msg string) RuntimeError {
-	srcLine, line, col := e.lexer.GetLineAndCol(token.Pos)
+	srcLine, line, col := token.GetLineAndCol()
 	return RuntimeError{
 		Message: msg,
 		Line:    line,
