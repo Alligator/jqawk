@@ -1370,6 +1370,72 @@ func TestJqawkStreamingJson(t *testing.T) {
 	}
 }
 
+func TestJqawkInteractive(t *testing.T) {
+	// test the interactive repl
+
+	// create temp json file
+	filename := "_interative_test.json"
+	f, err := os.Create(filename)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = f.WriteString("[1, 2, 3]")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = f.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	defer func() {
+		os.Remove(filename)
+	}()
+
+	// run cmd
+	cmd := exec.Command("./jqawk", "-i", filename)
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		t.Fatalf("error opening stdin: %s\n", err)
+	}
+
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		t.Fatalf("error opening stdout: %s\n", err)
+	}
+	br := bufio.NewReader(stdout)
+
+	err = cmd.Start()
+	if err != nil {
+		t.Fatalf("error starting command: %s\n", err)
+	}
+
+	readLine := func() string {
+		s, err := br.ReadString('\n')
+		if err != nil {
+			t.Fatalf("error reading from stdout: %s\n", err)
+		}
+		return s
+	}
+
+	writeStdinAndExpectOutput := func(input string, expected string) {
+		io.WriteString(stdin, input)
+		str := readLine()
+		if str != expected {
+			t.Fatalf("expected %q\ngot %q\n", expected, str)
+		}
+	}
+
+	// read the header
+	readLine()
+	readLine()
+
+	// interact with the repl
+	writeStdinAndExpectOutput("print $\n", "[1, 2, 3]\n")
+	writeStdinAndExpectOutput("n = $[1]\n", "2\n")
+	writeStdinAndExpectOutput("print n * 10\n", "20\n")
+}
+
 func TestJqawkOneTrueAwk(t *testing.T) {
 	countries := `[
 		["Russia", 8650, 262, "Asia"],
