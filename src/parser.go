@@ -128,15 +128,7 @@ func (p *Parser) advance() (Token, error) {
 }
 
 func (p *Parser) consume(tags ...TokenTag) error {
-	match := false
-	for _, tag := range tags {
-		if p.current.Tag == tag {
-			match = true
-			break
-		}
-	}
-
-	if !match {
+	if !slices.Contains(tags, p.current.Tag) {
 		if len(tags) == 1 {
 			return p.error(p.current.Pos, fmt.Sprintf("expected %s", tags[0]))
 		}

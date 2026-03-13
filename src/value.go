@@ -60,7 +60,7 @@ type FnWithContext struct {
 	Scope *scope
 }
 
-func NewValue(srcVal interface{}) Value {
+func NewValue(srcVal any) Value {
 	switch val := srcVal.(type) {
 	case []*Cell:
 		return Value{
@@ -68,7 +68,7 @@ func NewValue(srcVal interface{}) Value {
 			Array: val,
 			Proto: getArrayPrototype(),
 		}
-	case []interface{}:
+	case []any:
 		arr := make([]*Cell, 0, len(val))
 		for _, item := range val {
 			arr = append(arr, NewCell(NewValue(item)))
@@ -88,7 +88,7 @@ func NewValue(srcVal interface{}) Value {
 			Array: arr,
 			Proto: getArrayPrototype(),
 		}
-	case map[string]interface{}:
+	case map[string]any:
 		obj := make(map[string]*Cell)
 		for k, v := range val {
 			obj[k] = NewCell(NewValue(v))
