@@ -955,6 +955,14 @@ false true
 		expected: "beep\nboop\n",
 	},
 	{
+		name: "num native fn",
+		prog: `BEGIN {
+			print num(1.23), num('1.23'), num(true), num('nope'), num([1,2,3])
+		}`,
+		json:     "",
+		expected: "1.23 1.23 1 null null\n",
+	},
+	{
 		name: "bug: statement after block",
 		prog: `
 			{

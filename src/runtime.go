@@ -238,7 +238,13 @@ func nativeNum(e *Evaluator, args []*Value, this *Value) (*Value, error) {
 
 	switch args[0].Tag {
 	case ValueNum:
-		v := NewValue(int(*args[0].Num))
+		v := NewValue(*args[0].Num)
+		return &v, nil
+	case ValueBool:
+		v := NewValue(0)
+		if *args[0].Bool {
+			v = NewValue(1)
+		}
 		return &v, nil
 	case ValueStr:
 		n, err := strconv.ParseFloat(*args[0].Str, 64)
