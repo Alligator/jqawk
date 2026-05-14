@@ -47,9 +47,6 @@ func printMode(mode string) {
 	}
 }
 
-func readCommand(line string) {
-}
-
 func RunRepl(version string, files []lang.InputFile, rootSelectors []string) int {
 	rl, err := readline.New("> ")
 	if err != nil {

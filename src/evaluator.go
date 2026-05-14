@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"regexp"
 	"strconv"
 	"strings"
@@ -336,10 +337,7 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 
 			if isMatch {
 				e.pushScope()
-
-				for k, v := range bindings {
-					e.stackTop.scope.bindings[k] = v
-				}
+				maps.Copy(e.stackTop.scope.bindings, bindings)
 
 				switch body := matchCase.Body.(type) {
 				case *StatementExpr:
@@ -515,9 +513,7 @@ func (e *Evaluator) evalCaseMatch(value *Cell, exprs []Expr) (bool, map[string]*
 				if !match {
 					return false, nil, nil
 				}
-				for k, v := range newBindings {
-					bindings[k] = v
-				}
+				maps.Copy(bindings, newBindings)
 			}
 
 			return true, bindings, nil
