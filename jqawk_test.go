@@ -1187,27 +1187,8 @@ func testInternal(t testing.TB, tc testCase) {
 				t.Fatalf("expected error %q\ngot %q\n", tc.expectedError, err.Error())
 			}
 		} else {
-			var printError func(err error)
-			printError = func(err error) {
-				switch tErr := err.(type) {
-				case lang.RuntimeError:
-					t.Logf("  %s\n", tErr.SrcLine)
-					t.Logf("  %*s\n", tErr.Col+1, "^")
-					t.Logf("runtime error on line %d: %s\n", tErr.Line, tErr.Message)
-				case lang.SyntaxError:
-					t.Logf("  %s\n", tErr.SrcLine)
-					t.Logf("  %*s\n", tErr.Col+1, "^")
-					t.Logf("syntax error on line %d: %s\n", tErr.Line, tErr.Message)
-				case lang.ErrorGroup:
-					for _, err2 := range tErr.Errors {
-						printError(err2)
-					}
-				default:
-					t.Log(err)
-				}
-			}
-			printError(err)
-			panic("unexpected error")
+			lang.PrintError(err)
+			t.Fatalf("unexpected error %q\n", err)
 		}
 	}
 
