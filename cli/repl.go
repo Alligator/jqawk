@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	lang "github.com/alligator/jqawk/src"
-	"github.com/chzyer/readline"
+	"github.com/ergochat/readline"
 )
 
 func printHelp(mode string) {
