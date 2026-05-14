@@ -254,23 +254,59 @@ false
 	{
 		name: "printf",
 		prog: `
-		{
-			printf('name: %s\nage: %f\n', $.name, $.age)
-			printf('string lpad: %10s %1s\n', $.name, $.name)
-			printf('string rpad: %-10s %-1s\n', $.name, $.name)
-			printf(' float lpad: %6f %06f\n', $.age, $.age)
+		BEGIN {
+			printf('no fmt\n')
+			printf('percent %%\n')
+
+			printf('str %s\n', 'goes here')
+			printf('str lpad _%10s_\n', '12345')
+			printf('str rpad _%-10s_\n', '12345')
+
+			printf('flt %f\n', 123.456)
+			printf('flt lpad _%10f_\n', 123.456)
+			printf('flt rpad _%-10f_\n', 123.456)
+			printf('flt prec %10.1f %.2f\n', 123.456, 123.456)
+
+			# awk book examples
+			printf('c %c\n', 97)
+			printf('d %d\n', 97.5)
+			printf('d %5d\n', 97.5)
+			printf('f %f\n', 97.5)
+			printf('f %7.2f\n', 97.5)
+			printf('o %o\n', 97)
+			printf('o %06o\n', 97)
+			printf('x %x\n', 97)
+			printf('s |%s|\n', 'January')
+			printf('s |%10s|\n', 'January')
+			printf('s |%-10s|\n', 'January')
+			printf('s |%.3s|\n', 'January')
+			printf('s |%10.3s|\n', 'January')
+			printf('s |%-10.3s|\n', 'January')
 		}`,
-		json: `[{ "name": "gate", "age": 1 }, { "name": "sponge", "age": 2.300 }]`,
-		expected: `name: gate
-age: 1
-string lpad:       gate gate
-string rpad: gate       gate
- float lpad:      1 000001
-name: sponge
-age: 2.3
-string lpad:     sponge sponge
-string rpad: sponge     sponge
- float lpad:    2.3 0002.3
+		json: `[]`,
+		expected: `no fmt
+percent %
+str goes here
+str lpad _     12345_
+str rpad _12345     _
+flt 123.456
+flt lpad _   123.456_
+flt rpad _123.456   _
+flt prec      123.5 123.46
+c a
+d 97
+d    97
+f 97.5
+f   97.50
+o 141
+o 000141
+x 61
+s |January|
+s |   January|
+s |January   |
+s |Jan|
+s |       Jan|
+s |Jan       |
 `,
 	},
 	{
@@ -1535,5 +1571,29 @@ func TestJqawkOneTrueAwk(t *testing.T) {
 		prog:     "$[3] == 'Asia' || $[3] == 'Europe' { print $[0] }",
 		json:     countries,
 		expected: "Russia\nChina\nIndia\n",
+	})
+
+	test(t, testCase{
+		name:     "p22",
+		prog:     "$[3] ~/^(Asia|Europe)/ { print $[0] }",
+		json:     countries,
+		expected: "Russia\nChina\nIndia\n",
+	})
+
+	test(t, testCase{
+		name: "p25",
+		prog: `{ printf("%10s %6.1f\n", $[0], 1000 * $[2] / $[1]) }`,
+		json: countries,
+		expected: `    Russia   30.3
+    Canada    6.2
+     China  234.6
+       USA   60.6
+    Brazil   35.3
+ Australia    4.7
+     India  502.0
+ Argentina   24.3
+     Sudan   19.6
+   Algeria   19.6
+`,
 	})
 }

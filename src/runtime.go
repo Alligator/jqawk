@@ -69,6 +69,7 @@ func nativePrintf(e *Evaluator, args []*Value, this *Value) (*Value, error) {
 		i++
 
 		widthSpec := 0
+		precSpec := -1
 		padChar := " "
 		if unicode.IsDigit(rune(fmtStr[i])) || fmtStr[i] == '-' {
 			numEnd := i + 1
@@ -77,13 +78,14 @@ func nativePrintf(e *Evaluator, args []*Value, this *Value) (*Value, error) {
 			}
 			numStr := fmtStr[i:numEnd]
 			num, err := strconv.ParseInt(numStr, 10, 64)
-			widthSpec = int(num)
 			if err != nil {
 				return nil, fmt.Errorf("invalid width specifier")
 			}
 
+			widthSpec = int(num)
+
 			// arbitrary limit
-			if num > 65536 || num < -65536 {
+			if widthSpec > 65536 || widthSpec < -65536 {
 				return nil, fmt.Errorf("width specifier too large")
 			}
 
@@ -91,14 +93,84 @@ func nativePrintf(e *Evaluator, args []*Value, this *Value) (*Value, error) {
 			if numStr[0] == '0' {
 				padChar = "0"
 			}
-			if i > end-1 {
-				return nil, fmt.Errorf("expected something after width specifier")
+		}
+
+		if i < len(fmtStr)-1 && rune(fmtStr[i]) == '.' {
+			precStart := i + 1
+			numEnd := precStart + 1
+			for numEnd < end && unicode.IsDigit(rune(fmtStr[numEnd])) {
+				numEnd++
 			}
+
+			precStr := fmtStr[precStart:numEnd]
+			prec, err := strconv.ParseInt(precStr, 10, 64)
+			if err != nil {
+				return nil, fmt.Errorf("invalid precision specifier")
+			}
+
+			precSpec = int(prec)
+			if precSpec > 65536 || precSpec < -65536 {
+				return nil, fmt.Errorf("precision specifier too large")
+			}
+
+			i = numEnd
+		}
+
+		if i > end-1 {
+			return nil, fmt.Errorf("expected something after width specifier")
+		}
+
+		pad := func(argStr string) string {
+			if widthSpec > 0 && len(argStr) < widthSpec {
+				return strings.Repeat(padChar, widthSpec-len(argStr)) + argStr
+			}
+
+			if widthSpec < 0 && len(argStr) < -widthSpec {
+				return argStr + strings.Repeat(padChar, -widthSpec-len(argStr))
+			}
+
+			return argStr
 		}
 
 		switch fmtStr[i] {
 		case '%':
 			sb.WriteByte('%')
+		case 'c':
+			arg, err := checkArg(args, argIndex, ValueNum)
+			if err != nil {
+				return nil, err
+			}
+			argIndex++
+			argStr := string(rune(int64(*arg.Num)))
+			argStr = pad(argStr)
+			sb.WriteString(argStr)
+		case 'd', 'i', 'o', 'x':
+			arg, err := checkArg(args, argIndex, ValueNum)
+			if err != nil {
+				return nil, err
+			}
+			argIndex++
+
+			base := 10
+			switch fmtStr[i] {
+			case 'o':
+				base = 8
+			case 'x':
+				base = 16
+			}
+
+			argStr := strconv.FormatInt(int64(*arg.Num), base)
+			argStr = pad(argStr)
+			sb.WriteString(argStr)
+		case 'f':
+			arg, err := checkArg(args, argIndex, ValueNum)
+			if err != nil {
+				return nil, err
+			}
+			argIndex++
+			argStr := strconv.FormatFloat(*arg.Num, 'f', precSpec, 64)
+			argStr = pad(argStr)
+			sb.WriteString(argStr)
 		case 's':
 			arg, err := checkArg(args, argIndex, ValueStr)
 			if err != nil {
@@ -107,27 +179,11 @@ func nativePrintf(e *Evaluator, args []*Value, this *Value) (*Value, error) {
 			argIndex++
 			argStr := arg.String()
 
-			if widthSpec > 0 && len(argStr) < widthSpec {
-				argStr = strings.Repeat(padChar, widthSpec-len(argStr)) + argStr
-			} else if widthSpec < 0 && len(argStr) < -widthSpec {
-				argStr = argStr + strings.Repeat(padChar, -widthSpec-len(argStr))
+			if precSpec != -1 {
+				argStr = argStr[:precSpec]
 			}
 
-			sb.WriteString(argStr)
-		case 'f':
-			arg, err := checkArg(args, argIndex, ValueNum)
-			if err != nil {
-				return nil, err
-			}
-			argIndex++
-			argStr := arg.String()
-
-			if widthSpec > 0 && len(argStr) < widthSpec {
-				argStr = strings.Repeat(padChar, widthSpec-len(argStr)) + argStr
-			} else if widthSpec < 0 && len(argStr) < -widthSpec {
-				argStr = argStr + strings.Repeat(padChar, -widthSpec-len(argStr))
-			}
-
+			argStr = pad(argStr)
 			sb.WriteString(argStr)
 		case 'v':
 			if len(args)-1 < argIndex {
