@@ -69,35 +69,23 @@ func NewValue(srcVal any) Value {
 			Proto: getArrayPrototype(),
 		}
 	case []any:
-		arr := make([]*Cell, 0, len(val))
+		arr := NewArray()
 		for _, item := range val {
-			arr = append(arr, NewCell(NewValue(item)))
+			arr.Array = append(arr.Array, NewCell(NewValue(item)))
 		}
-		return Value{
-			Tag:   ValueArray,
-			Array: arr,
-			Proto: getArrayPrototype(),
-		}
+		return arr
 	case []string:
-		arr := make([]*Cell, 0, len(val))
+		arr := NewArray()
 		for _, item := range val {
-			arr = append(arr, NewCell(NewValue(item)))
+			arr.Array = append(arr.Array, NewCell(NewValue(item)))
 		}
-		return Value{
-			Tag:   ValueArray,
-			Array: arr,
-			Proto: getArrayPrototype(),
-		}
+		return arr
 	case map[string]any:
-		obj := make(map[string]*Cell)
+		obj := NewObject()
 		for k, v := range val {
-			obj[k] = NewCell(NewValue(v))
+			(*obj.Obj)[k] = NewCell(NewValue(v))
 		}
-		return Value{
-			Tag:   ValueObj,
-			Obj:   &obj,
-			Proto: getObjPrototype(),
-		}
+		return obj
 	case bool:
 		return Value{
 			Tag:  ValueBool,
