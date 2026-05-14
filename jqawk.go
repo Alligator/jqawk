@@ -6,7 +6,7 @@ import (
 	cli "github.com/alligator/jqawk/cli"
 )
 
-var version = "0.6.2"
+var version = "0.6.3"
 
 func main() {
 	os.Exit(cli.Run(version))
