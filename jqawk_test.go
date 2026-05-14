@@ -267,6 +267,8 @@ false
 			printf('flt rpad _%-10f_\n', 123.456)
 			printf('flt prec %10.1f %.2f\n', 123.456, 123.456)
 
+			printf('v %v %v %v %v\n', 1, 'one', [1, 2, 3], function() { })
+
 			# awk book examples
 			printf('c %c\n', 97)
 			printf('d %d\n', 97.5)
@@ -293,6 +295,7 @@ flt 123.456
 flt lpad _   123.456_
 flt rpad _123.456   _
 flt prec      123.5 123.46
+v 1 one [1, 2, 3] <function>
 c a
 d 97
 d    97
