@@ -1260,6 +1260,7 @@ func testCli(t *testing.T, tc testCase) {
 			if stderr.String() != tc.expectedError {
 				t.Logf("expected stderr: %q\n", tc.expectedError)
 				t.Logf("     got stderr: %q\n", stderr.String())
+				t.Logf("         stdout: %q\n", stdout.String())
 				t.Fatalf("unexpected error")
 			}
 		}
