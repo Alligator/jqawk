@@ -73,8 +73,17 @@ func (p *jsonParser) parseObject() (Value, error) {
 		obj.ObjKeys = append(obj.ObjKeys, key)
 	}
 
-	if _, err := p.dec.Token(); err != nil {
+	tok, err := p.dec.Token()
+	if err == io.EOF {
+		return Value{}, fmt.Errorf("expected end of JSON input")
+	}
+
+	if err != nil {
 		return Value{}, err
+	}
+
+	if tok != json.Delim('}') {
+		return Value{}, fmt.Errorf("expected '}'")
 	}
 
 	return obj, nil
@@ -91,8 +100,17 @@ func (p *jsonParser) parseArray() (Value, error) {
 		array.Array = append(array.Array, NewCell(val))
 	}
 
-	if _, err := p.dec.Token(); err != nil {
+	tok, err := p.dec.Token()
+	if err == io.EOF {
+		return Value{}, fmt.Errorf("expected end of JSON input")
+	}
+
+	if err != nil {
 		return Value{}, err
+	}
+
+	if tok != json.Delim(']') {
+		return Value{}, fmt.Errorf("expected ']'")
 	}
 
 	return array, nil
