@@ -102,7 +102,7 @@ func (p *jsonParser) parseArray() (Value, error) {
 
 	tok, err := p.dec.Token()
 	if err == io.EOF {
-		return Value{}, fmt.Errorf("expected end of JSON input")
+		return Value{}, fmt.Errorf("unexpected end of JSON input")
 	}
 
 	if err != nil {
