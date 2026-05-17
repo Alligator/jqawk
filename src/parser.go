@@ -170,14 +170,15 @@ func (p *Parser) block() (StatementBlock, error) {
 			errors = append(errors, p.error(p.current.Pos, "unexpected end of input"))
 		}
 	}
-	if err := p.consume(RCurly); err != nil {
-		return StatementBlock{}, err
-	}
-	p.didEndStatement = true
 
 	if len(errors) > 0 {
 		return StatementBlock{}, ErrorGroup{errors}
 	}
+
+	if err := p.consume(RCurly); err != nil {
+		return StatementBlock{}, err
+	}
+	p.didEndStatement = true
 
 	return StatementBlock{startToken, block}, nil
 }

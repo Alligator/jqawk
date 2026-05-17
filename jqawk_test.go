@@ -753,10 +753,22 @@ rhs not null
 				print a.sort();  # numbers
 				print b.sort();  # strings and other things
 				print a;         # original array is unmodified
+
+				function s(a, b) {
+					if (a < b) { return -1 }
+					if (a > b) { return 1 }
+					return 0
+				}
+
+				print a.sort(s) # sort function
 			}
 		`,
-		json:     "[]",
-		expected: "[1, 2, 3, 4, 5]\n[{\"a\": 1}, [1], \"bee\", \"clown\", \"dog\"]\n[4, 5, 3, 1, 2]\n",
+		json: "[]",
+		expected: `[1, 2, 3, 4, 5]
+[{"a": 1}, [1], "bee", "clown", "dog"]
+[4, 5, 3, 1, 2]
+[1, 2, 3, 4, 5]
+`,
 	},
 	{
 		name: "beginfile endfile",
@@ -1244,6 +1256,14 @@ func testCli(t *testing.T, tc testCase) {
 
 		returnCode := cli.Run("test", tc.args, stdin, &stdout, &stderr, false)
 
+		if len(tc.expectedError) > 0 {
+			if stderr.String() != tc.expectedError {
+				t.Logf("expected stderr: %q\n", tc.expected)
+				t.Logf("     got stderr: %q\n", stdout.String())
+				t.Fatalf("unexpected error")
+			}
+		}
+
 		if stdout.String() != tc.expected {
 			t.Logf("expected: %q\n", tc.expected)
 			t.Logf("     got: %q\n", stdout.String())
@@ -1314,6 +1334,37 @@ func TestJqawkCli(t *testing.T) {
 		json:     "[1, 2, 3]",
 		expected: "3\n",
 	})
+
+	testCli(t, testCase{
+		name:          "json error",
+		args:          []string{},
+		json:          "[1, 2, 3",
+		expectedError: "could not parse <stdin>: unexpected end of JSON input\n",
+	})
+
+	testCli(t, testCase{
+		name: "syntax error",
+		args: []string{"BEGIN { print [1, 2, 3 }"},
+		json: "",
+		expectedError: `  BEGIN { print [1, 2, 3 }
+                         ^
+syntax error on line 1: expected ]
+  BEGIN { print [1, 2, 3 }
+                         ^
+syntax error on line 1: unexpected end of input
+`,
+	})
+
+	testCli(t, testCase{
+		name: "runtime error",
+		args: []string{"BEGIN { 1[1:2] }"},
+		json: "",
+		expectedError: `  BEGIN { 1[1:2] }
+             ^
+runtime error on line 1: cannot slice a number
+`,
+	})
+
 }
 
 func TestJqawkStreamingJson2(t *testing.T) {
