@@ -3,24 +3,23 @@ package cli
 import (
 	"fmt"
 	"io"
-	"os"
 	"strings"
 
 	lang "github.com/alligator/jqawk/src"
 	"github.com/ergochat/readline"
 )
 
-func printHelp(mode string) {
-	fmt.Println(`commands
+func printHelp(mode string, dst io.Writer) {
+	fmt.Fprintln(dst, `commands
   :h :help   print this message
   :q :quit   quit
   :mode      switch mode`)
-	fmt.Println()
-	printMode(mode)
+	fmt.Fprintln(dst)
+	printMode(mode, dst)
 }
 
-func printModeHelp(mode string) {
-	fmt.Println(`Modes control how each line is interpreted
+func printModeHelp(mode string, dst io.Writer) {
+	fmt.Fprintln(dst, `Modes control how each line is interpreted
 Availiable modes are:
 
 statement
@@ -34,23 +33,28 @@ program
 usage
   :mode                      show this message
   :mode statement|program    switch mode`)
-	fmt.Println()
-	printMode(mode)
+	fmt.Fprintln(dst)
+	printMode(mode, dst)
 }
 
-func printMode(mode string) {
+func printMode(mode string, dst io.Writer) {
 	switch mode {
 	case "statement":
-		fmt.Println("current mode: statement (run once with $ = root)")
+		fmt.Fprintln(dst, "current mode: statement (run once with $ = root)")
 	case "program":
-		fmt.Println("current mode: program (run as full program)")
+		fmt.Fprintln(dst, "current mode: program (run as full program)")
 	}
 }
 
-func RunRepl(version string, files []lang.InputFile, rootSelectors []string) int {
-	rl, err := readline.New("> ")
+func RunRepl(version string, files []lang.InputFile, rootSelectors []string, stdin io.Reader, stdout, stderr io.Writer) int {
+	rl, err := readline.NewFromConfig(&readline.Config{
+		Prompt: "> ",
+		Stdin: stdin,
+		Stdout: stdout,
+		Stderr: stderr,
+	})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error starting REPL: %s\n", err.Error())
+		fmt.Fprintf(stderr, "error starting REPL: %s\n", err.Error())
 		return 1
 	}
 	defer rl.Close()
@@ -60,13 +64,13 @@ func RunRepl(version string, files []lang.InputFile, rootSelectors []string) int
 	for i, file := range files {
 		if sif, ok := file.(*lang.StreamingInputFile); ok {
 			if file.Name() == "<stdin>" {
-				fmt.Fprintln(os.Stderr, "cannot read from stdin in interactive mode")
+				fmt.Fprintln(stderr, "cannot read from stdin in interactive mode")
 				return 1
 			}
 
 			bytes, err := io.ReadAll(sif.NewReader())
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "error opening file: %s\n", err.Error())
+				fmt.Fprintf(stderr, "error opening file: %s\n", err.Error())
 				return 1
 			}
 			bufferedFiles[i] = lang.NewBufferedInputFile(file.Name(), bytes)
@@ -76,9 +80,9 @@ func RunRepl(version string, files []lang.InputFile, rootSelectors []string) int
 	}
 
 	mode := "statement"
-	fmt.Printf("jqawk %s (revision %s)\nrun :help for help\n", version, getCommit())
+	fmt.Fprintf(stdout, "jqawk %s (revision %s)\nrun :help for help\n", version, getCommit())
 
-	ev := lang.NewEmptyEvaluator(os.Stdout)
+	ev := lang.NewEmptyEvaluator(stdout)
 
 	evalStmtAndMaybePrint := func(stmt lang.Statement) error {
 		if s, ok := stmt.(*lang.StatementExpr); ok {
@@ -86,7 +90,7 @@ func RunRepl(version string, files []lang.InputFile, rootSelectors []string) int
 			if err != nil {
 				return err
 			}
-			fmt.Println(val.Value.PrettyString(false))
+			fmt.Fprintln(stdout, val.Value.PrettyString(false))
 			return nil
 		}
 
@@ -96,7 +100,7 @@ func RunRepl(version string, files []lang.InputFile, rootSelectors []string) int
 	for {
 		line, err := rl.Readline()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "readline error: %s\n", err.Error())
+			fmt.Fprintf(stderr, "readline error: %s\n", err.Error())
 			return 1
 		}
 		line = strings.TrimSpace(line)
@@ -109,23 +113,23 @@ func RunRepl(version string, files []lang.InputFile, rootSelectors []string) int
 			parts := strings.Split(line, " ")
 			switch parts[0] {
 			case ":h", ":help":
-				printHelp(mode)
+				printHelp(mode, stdout)
 			case ":q", ":quit":
 				return 0
 			case ":mode":
 				if len(parts) != 2 {
-					printModeHelp(mode)
+					printModeHelp(mode, stdout)
 					continue
 				}
 				switch parts[1] {
 				case "program", "statement":
 					mode = parts[1]
-					printMode(mode)
+					printMode(mode, stdout)
 				default:
-					fmt.Printf("unknown mode %s\n", parts[1])
+					fmt.Fprintf(stdout, "unknown mode %s\n", parts[1])
 				}
 			default:
-				fmt.Printf("unknown command %s\n", parts[0])
+				fmt.Fprintf(stdout, "unknown command %s\n", parts[0])
 			}
 			continue
 		}
@@ -136,7 +140,7 @@ func RunRepl(version string, files []lang.InputFile, rootSelectors []string) int
 			parser := lang.NewParser(&lex)
 			stmt, err := parser.ParseStatement()
 			if err != nil {
-				lang.PrintError(err)
+				lang.PrintError(err, stdout)
 				continue
 			}
 
@@ -149,21 +153,21 @@ func RunRepl(version string, files []lang.InputFile, rootSelectors []string) int
 			}
 
 			if err != nil {
-				lang.PrintError(err)
+				lang.PrintError(err, stdout)
 			}
 		case "program":
 			lex := lang.NewLexer(line)
 			parser := lang.NewParser(&lex)
 			prog, err := parser.Parse()
 			if err != nil {
-				lang.PrintError(err)
+				lang.PrintError(err, stdout)
 				continue
 			}
 
 			err = ev.RunProgram(prog, bufferedFiles, rootSelectors)
 
 			if err != nil {
-				lang.PrintError(err)
+				lang.PrintError(err, stdout)
 			}
 		}
 	}

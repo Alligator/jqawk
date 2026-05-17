@@ -3,11 +3,16 @@ package main
 import (
 	"os"
 
-	cli "github.com/alligator/jqawk/cli"
+	"github.com/alligator/jqawk/cli"
+	"github.com/mattn/go-isatty"
 )
 
 var version = "0.6.3"
 
 func main() {
-	os.Exit(cli.Run(version))
+	tty := false
+	if isatty.IsTerminal(os.Stdin.Fd()) {
+		tty = true
+	}
+	os.Exit(cli.Run(version, os.Args[1:], os.Stdin, os.Stdout, os.Stderr, tty))
 }

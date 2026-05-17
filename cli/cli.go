@@ -3,6 +3,7 @@ package cli
 import (
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"runtime/debug"
 	"runtime/pprof"
@@ -10,7 +11,6 @@ import (
 	"strings"
 
 	lang "github.com/alligator/jqawk/src"
-	"github.com/mattn/go-isatty"
 )
 
 func getCommit() string {
@@ -72,25 +72,29 @@ func usage(fs *flag.FlagSet) func() {
 	}
 }
 
-func Run(version string) (exitCode int) {
+// func Run(version string) (exitCode int) {
+func Run(version string, args []string, stdin io.Reader, stdout, stderr io.Writer, isTty bool) (exitCode int) {
 	var rValues multiFlag
 
-	dbgAst := flag.Bool("dbg-ast", false, "print the AST and exit")
-	dbgLex := flag.Bool("dbg-lex", false, "print tokens and exit")
-	progFile := flag.String("f", "", "the program `file` to run")
-	flag.Var(&rValues, "r", "root `selector`. can be specified multiple times")
-	profile := flag.Bool("profile", false, "record a CPU profile")
-	outfile := flag.String("o", "", "the `file` to write JSON to")
-	showVersion := flag.Bool("version", false, "print version information")
-	interactive := flag.Bool("i", false, "start interactive REPL")
-	expr := flag.String("e", "", "evaluate an `expression` and print the result")
+	fs := flag.NewFlagSet("jqawk", flag.ExitOnError)
 
-	flag.Usage = usage(flag.CommandLine)
+	dbgAst := fs.Bool("dbg-ast", false, "print the AST and exit")
+	dbgLex := fs.Bool("dbg-lex", false, "print tokens and exit")
+	progFile := fs.String("f", "", "the program `file` to run")
+	fs.Var(&rValues, "r", "root `selector`. can be specified multiple times")
+	profile := fs.Bool("profile", false, "record a CPU profile")
+	outfile := fs.String("o", "", "the `file` to write JSON to")
+	showVersion := fs.Bool("version", false, "print version information")
+	interactive := fs.Bool("i", false, "start interactive REPL")
+	expr := fs.String("e", "", "evaluate an `expression` and print the result")
 
-	flag.Parse()
+	fs.Usage = usage(fs)
+	fs.SetOutput(stderr)
+
+	fs.Parse(args)
 
 	if *showVersion {
-		fmt.Printf("jqawk %s (revision %s)\n", version, getCommit())
+		fmt.Fprintf(stdout, "jqawk %s (revision %s)\n", version, getCommit())
 		return 0
 	}
 
@@ -100,7 +104,7 @@ func Run(version string) (exitCode int) {
 		defer pprof.StopCPUProfile()
 	}
 
-	args := flag.Args()
+	args = fs.Args()
 
 	var progSrc string
 	var filePaths []string
@@ -108,7 +112,7 @@ func Run(version string) (exitCode int) {
 		filePaths = args
 		file, err := os.ReadFile(*progFile)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
+			fmt.Fprintln(stderr, err)
 			return 1
 		}
 		progSrc = string(file)
@@ -128,24 +132,24 @@ func Run(version string) (exitCode int) {
 
 	// debug args
 	if *dbgAst {
-		debugAst(progSrc, rValues)
+		debugAst(progSrc, rValues, stdout)
 		return 0
 	}
 
 	if *dbgLex {
-		debugLex(progSrc, rValues)
+		debugLex(progSrc, rValues, stdout)
 		return 0
 	}
 
 	inputFiles := make([]lang.InputFile, 0)
-	if len(filePaths) == 0 && !isatty.IsTerminal(os.Stdin.Fd()) {
+	if len(filePaths) == 0 && !isTty {
 		// no files and stdin isn't a tty, read from stdin
-		inputFiles = append(inputFiles, lang.NewStreamingInputFile("<stdin>", os.Stdin))
+		inputFiles = append(inputFiles, lang.NewStreamingInputFile("<stdin>", stdin))
 	} else {
 		for _, filePath := range filePaths {
 			fp, err := os.Open(filePath)
 			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
+				fmt.Fprintln(stderr, err)
 				return 1
 			}
 			defer fp.Close()
@@ -154,11 +158,11 @@ func Run(version string) (exitCode int) {
 	}
 
 	if *interactive {
-		return RunRepl(version, inputFiles, rValues)
+		return RunRepl(version, inputFiles, rValues, stdin, stdout, stderr)
 	}
 
 	if len(*expr) > 0 {
-		ev := lang.NewEmptyEvaluator(os.Stdout)
+		ev := lang.NewEmptyEvaluator(stdout)
 		err := ev.RunInBeginFileContext(inputFiles, rValues, func() error {
 			lex := lang.NewLexer(*expr)
 			parser := lang.NewParser(&lex)
@@ -171,47 +175,47 @@ func Run(version string) (exitCode int) {
 			if err != nil {
 				return err
 			}
-			fmt.Println(cell.Value.PrettyString(false))
+			fmt.Fprintln(stdout, cell.Value.PrettyString(false))
 			return nil
 		})
 
 		if err != nil {
-			lang.PrintError(err)
+			lang.PrintError(err, stderr)
 			return 1
 		}
 		return 0
 	}
 
-	ev, err := lang.EvalProgram(progSrc, inputFiles, rValues, os.Stdout, false)
+	ev, err := lang.EvalProgram(progSrc, inputFiles, rValues, stdout, false)
 	if err != nil {
-		lang.PrintError(err)
+		lang.PrintError(err, stderr)
 		return 1
 	}
 
 	if len(*outfile) > 0 {
 		if len(filePaths) > 1 {
-			fmt.Fprintln(os.Stderr, "error writing JSON: can't write JSON with more than one input file")
+			fmt.Fprintln(stderr, "error writing JSON: can't write JSON with more than one input file")
 			return 1
 		}
 
 		j, err := ev.GetRootJson()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "error writing JSON: %s\n", err.Error())
+			fmt.Fprintf(stderr, "error writing JSON: %s\n", err.Error())
 			return 1
 		}
 
 		if *outfile == "-" {
-			fmt.Print(j)
+			fmt.Fprint(stdout, j)
 		} else {
 			file, err := os.Create(*outfile)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "error writing JSON: %s\n", err.Error())
+				fmt.Fprintf(stderr, "error writing JSON: %s\n", err.Error())
 				return 1
 			}
 
 			_, err = file.WriteString(j)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "error writing JSON: %s\n", err.Error())
+				fmt.Fprintf(stderr, "error writing JSON: %s\n", err.Error())
 				return 1
 			}
 		}

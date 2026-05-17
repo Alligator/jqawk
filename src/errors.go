@@ -2,7 +2,7 @@ package lang
 
 import (
 	"fmt"
-	"os"
+	"io"
 	"strings"
 )
 
@@ -64,23 +64,23 @@ func prefix(line string, col int) string {
 	return sb.String()
 }
 
-func PrintError(err error) {
+func PrintError(err error, dest io.Writer) {
 	switch tErr := err.(type) {
 	case SyntaxError:
-		fmt.Fprintf(os.Stderr, "  %s\n", tErr.SrcLine)
-		fmt.Fprintf(os.Stderr, "  %s%s\n", prefix(tErr.SrcLine, tErr.Col), "^")
-		fmt.Fprintf(os.Stderr, "syntax error on line %d: %s\n", tErr.Line, tErr.Message)
+		fmt.Fprintf(dest, "  %s\n", tErr.SrcLine)
+		fmt.Fprintf(dest, "  %s%s\n", prefix(tErr.SrcLine, tErr.Col), "^")
+		fmt.Fprintf(dest, "syntax error on line %d: %s\n", tErr.Line, tErr.Message)
 	case RuntimeError:
-		fmt.Fprintf(os.Stderr, "  %s\n", tErr.SrcLine)
-		fmt.Fprintf(os.Stderr, "  %s%s\n", prefix(tErr.SrcLine, tErr.Col), "^")
-		fmt.Fprintf(os.Stderr, "runtime error on line %d: %s\n", tErr.Line, tErr.Message)
+		fmt.Fprintf(dest, "  %s\n", tErr.SrcLine)
+		fmt.Fprintf(dest, "  %s%s\n", prefix(tErr.SrcLine, tErr.Col), "^")
+		fmt.Fprintf(dest, "runtime error on line %d: %s\n", tErr.Line, tErr.Message)
 	case JsonError:
-		fmt.Fprintf(os.Stderr, "could not parse %s: %s\n", tErr.FileName, tErr.Message)
+		fmt.Fprintf(dest, "could not parse %s: %s\n", tErr.FileName, tErr.Message)
 	case ErrorGroup:
 		for _, err := range tErr.Errors {
-			PrintError(err)
+			PrintError(err, dest)
 		}
 	default:
-		fmt.Fprintln(os.Stderr, err)
+		fmt.Fprintln(dest, err)
 	}
 }

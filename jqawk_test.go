@@ -1,18 +1,16 @@
 package main
 
 import (
-	"bufio"
+	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io"
-	"os"
-	"os/exec"
 	"strings"
 	"testing"
 	"time"
 
-	lang "github.com/alligator/jqawk/src"
+	"github.com/alligator/jqawk/cli"
+	"github.com/alligator/jqawk/src"
 )
 
 type testCase struct {
@@ -1128,16 +1126,6 @@ false true
 	},
 }
 
-func TestMain(m *testing.M) {
-	cmd := exec.Command("go", "build")
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "error building: %v\n%s\n", err, output)
-		os.Exit(1)
-	}
-	os.Exit(m.Run())
-}
-
 func FuzzJqawk(f *testing.F) {
 	for _, tc := range tests {
 		if tc.expectedError == "" {
@@ -1198,7 +1186,7 @@ func testInternal(t testing.TB, tc testCase) {
 				t.Fatalf("expected error %q\ngot %q\n", tc.expectedError, err.Error())
 			}
 		} else {
-			lang.PrintError(err)
+			lang.PrintError(err, t.Output())
 			t.Fatalf("unexpected error %q\n", err)
 		}
 	}
@@ -1248,31 +1236,19 @@ func bench(b *testing.B, tc testCase) {
 	})
 }
 
-func testExe(t *testing.T, tc testCase) {
+func testCli(t *testing.T, tc testCase) {
 	t.Run(tc.name, func(t *testing.T) {
-		cmd := exec.Command("./jqawk", tc.args...)
-		rdr := strings.NewReader(tc.json)
-		var stdErr strings.Builder
-		cmd.Stdin = rdr
-		cmd.Stderr = &stdErr
-		output, err := cmd.Output()
-		if err != nil {
-			t.Logf("stderr: %s\n", stdErr.String())
-			t.Fatal(err.Error())
-		}
-		if string(output) != tc.expected {
-			actualLines := strings.Split(string(output), "\n")
-			expectedLines := strings.Split(tc.expected, "\n")
-			for i, line := range actualLines {
-				if len(expectedLines) < i {
-					fmt.Printf("\x1b[92m+ %s\x1b[0m\n", line)
-				} else if len(expectedLines) > i && line != expectedLines[i] {
-					fmt.Printf("\x1b[91m- %s\x1b[0m\n", expectedLines[i])
-					fmt.Printf("\x1b[92m+ %s\x1b[0m\n", line)
-				} else {
-					fmt.Printf("  %s\n", line)
-				}
-			}
+		stdin := strings.NewReader(tc.json)
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+
+		returnCode := cli.Run("test", tc.args, stdin, &stdout, &stderr, false)
+
+		if stdout.String() != tc.expected {
+			t.Logf("expected: %q\n", tc.expected)
+			t.Logf("     got: %q\n", stdout.String())
+			t.Logf("  stderr: %q\n", stderr.String())
+			t.Logf("exitcode: %d\n", returnCode)
 			t.Fatalf("unexpected result")
 		}
 	})
@@ -1290,29 +1266,28 @@ func BenchmarkJqawk(b *testing.B) {
 	}
 }
 
-func TestJqawkExe(t *testing.T) {
-	testExe(t, testCase{
+func TestJqawkCli(t *testing.T) {
+	testCli(t, testCase{
 		name:     "root selector",
 		args:     []string{"-r", "$.items", "{ print }"},
 		json:     `{ "items": [1, 2, 3] }`,
 		expected: "1\n2\n3\n",
 	})
-
-	testExe(t, testCase{
+	testCli(t, testCase{
 		name:     "root selector (array)",
 		args:     []string{"-r", "$[0]", "{ print }"},
 		json:     `[[2, 3], [0, 1]]`,
 		expected: "2\n3\n",
 	})
 
-	testExe(t, testCase{
+	testCli(t, testCase{
 		name:     "root selector (multiple)",
 		args:     []string{"-r", "$.a", "-r", "$.b", "{ print }"},
 		json:     `{ "a": [2, 3], "b": [0, 1] }`,
 		expected: "2\n3\n0\n1\n",
 	})
 
-	testExe(t, testCase{
+	testCli(t, testCase{
 		name: "json output",
 		args: []string{"-o", "-", "{ $.x++ }"},
 		json: `[{ "x": 1 }, { "x": 2 }]`,
@@ -1326,14 +1301,14 @@ func TestJqawkExe(t *testing.T) {
 ]`,
 	})
 
-	testExe(t, testCase{
+	testCli(t, testCase{
 		name:     "no arguments",
 		args:     []string{},
 		json:     "[]",
 		expected: "",
 	})
 
-	testExe(t, testCase{
+	testCli(t, testCase{
 		name:     "expr",
 		args:     []string{"-e", "$.length()"},
 		json:     "[1, 2, 3]",
@@ -1341,127 +1316,59 @@ func TestJqawkExe(t *testing.T) {
 	})
 }
 
-func TestJqawkStreamingJson(t *testing.T) {
-	// this is a special-case of the exe tests. it streams json to jqawk on stdin
-	// and expects a stream of output on stdout.
-	//
-	// this is for jsonl-style newline separated json values.
-	cmd := exec.Command("./jqawk", "BEGINFILE { sum = 0 } { sum += $ } ENDFILE { print sum }")
+func TestJqawkStreamingJson2(t *testing.T) {
+	program := "BEGINFILE { sum = 0 } { sum += $} ENDFILE { print sum }"
+	stdin := strings.NewReader("[1, 2, 3]\n[2, 3, 4]\n")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
 
-	stdin, err := cmd.StdinPipe()
-	if err != nil {
-		t.Fatalf("error opening stdin: %s\n", err)
-	}
+	cli.Run("test", []string{program}, stdin, &stdout, &stderr, false)
 
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		t.Fatalf("error opening stdout: %s\n", err)
-	}
-	br := bufio.NewReader(stdout)
-
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		t.Fatalf("error opening stderr: %s\n", err)
-	}
-
-	defer func() {
-		scanner := bufio.NewScanner(stderr)
-		for scanner.Scan() {
-			t.Logf("stderr: %s\n", scanner.Text())
-		}
-	}()
-
-	err = cmd.Start()
-	if err != nil {
-		t.Fatalf("error starting command: %s\n", err)
-	}
-
-	writeStdinAndExpectOutput := func(input string, expected string) {
-		io.WriteString(stdin, input)
-		str, err := br.ReadString('\n')
-		if err != nil && !errors.Is(err, io.EOF) {
-			t.Fatalf("error reading stdout: %s\n", err)
-		}
-		if str != expected {
-			t.Fatalf("expected %q\ngot %q\n", expected, str)
-		}
-	}
-
-	writeStdinAndExpectOutput("[1, 2, 3]\n", "6\n")
-	writeStdinAndExpectOutput("[2, 3, 4]\n", "9\n")
-
-	stdin.Close()
-
-	err = cmd.Wait()
-	if err != nil {
-		t.Fatal(err)
+	actual := stdout.String()
+	expected := "6\n9\n"
+	if actual != expected {
+		t.Logf("  actual: %q\n", actual)
+		t.Logf("expected: %q\n", expected)
+		t.Fatalf("output did not match")
 	}
 }
 
 func TestJqawkInteractive(t *testing.T) {
-	// test the interactive repl
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
 
-	// create temp json file
-	filename := "_interative_test.json"
-	f, err := os.Create(filename)
-	if err != nil {
-		t.Fatal(err)
+	files := []lang.InputFile{
+		lang.NewBufferedInputFile("test.json", []byte("[1, 2, 4]")),
 	}
 
-	_, err = f.WriteString("[1, 2, 3]")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err = f.Close(); err != nil {
-		t.Fatal(err)
-	}
+	cli.RunRepl(
+		"test",
+		files,
+		[]string{},
+		strings.NewReader("print $\nn = $[1]\nprint n * 10\n"),
+		&stdout,
+		&stderr,
+	)
 
-	defer func() {
-		os.Remove(filename)
-	}()
+	outputLines := strings.Split(stdout.String(), "\n")
 
-	// run cmd
-	cmd := exec.Command("./jqawk", "-i", filename)
-	stdin, err := cmd.StdinPipe()
-	if err != nil {
-		t.Fatalf("error opening stdin: %s\n", err)
-	}
+	// skip the header
+	outputLines = outputLines[2:]
 
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		t.Fatalf("error opening stdout: %s\n", err)
-	}
-	br := bufio.NewReader(stdout)
-
-	err = cmd.Start()
-	if err != nil {
-		t.Fatalf("error starting command: %s\n", err)
+	expectedOutputLines := []string{
+		"[1, 2, 4]",
+		"2",
+		"20",
 	}
 
-	readLine := func() string {
-		s, err := br.ReadString('\n')
-		if err != nil {
-			t.Fatalf("error reading from stdout: %s\n", err)
-		}
-		return s
-	}
-
-	writeStdinAndExpectOutput := func(input string, expected string) {
-		io.WriteString(stdin, input)
-		str := readLine()
-		if str != expected {
-			t.Fatalf("expected %q\ngot %q\n", expected, str)
+	for i, expected := range expectedOutputLines {
+		actual := outputLines[i]
+		if actual != expected {
+			t.Logf("  actual: %q\n", actual)
+			t.Logf("expected: %q\n", expected)
+			t.Fatalf("repl output did not match")
 		}
 	}
-
-	// read the header
-	readLine()
-	readLine()
-
-	// interact with the repl
-	writeStdinAndExpectOutput("print $\n", "[1, 2, 3]\n")
-	writeStdinAndExpectOutput("n = $[1]\n", "2\n")
-	writeStdinAndExpectOutput("print n * 10\n", "20\n")
 }
 
 func TestJqawkOneTrueAwk(t *testing.T) {
