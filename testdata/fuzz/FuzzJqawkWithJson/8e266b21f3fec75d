@@ -1,0 +1,3 @@
+go test fuzz v1
+string("BEGIN{a=b=[[0],'']\nfunction s(A){if(0%0)0}a.sort(s)}")
+string("0")

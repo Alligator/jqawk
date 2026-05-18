@@ -140,9 +140,13 @@ func getArrayPrototype() *Value {
 							if err != nil {
 								return 0
 							}
+
 							args := []*Value{&a.Value, &b.Value}
 							var result *Cell
 							result, err = e.callFunction(NewCell(*sortFunc), args)
+							if err != nil {
+								return 0
+							}
 
 							if result.Value.Tag == ValueNum {
 								return int(*result.Value.Num)
