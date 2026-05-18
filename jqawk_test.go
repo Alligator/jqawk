@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -1365,7 +1366,52 @@ syntax error on line 1: unexpected end of input
 runtime error on line 1: cannot slice a number
 `,
 	})
+}
 
+func TestJqawkCliReadWriteFiles(t *testing.T) {
+	json := "[1, 2, 3]"
+	prog := "{ $ = $ * 2}"
+	expected := "[\n  2,\n  4,\n  6\n]"
+
+	defer func() {
+		os.Remove("_cli_test.json")
+		os.Remove("_cli_test.jqawk")
+		os.Remove("_cli_test_output.json")
+	}()
+
+	err := os.WriteFile("_cli_test.json", []byte(json), 0666)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = os.WriteFile("_cli_test.jqawk", []byte(prog), 0666)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var stdin bytes.Buffer
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	args := []string{"-f", "_cli_test.jqawk", "-o", "_cli_test_output.json", "_cli_test.json"}
+	returnCode := cli.Run("test", args, &stdin, &stdout, &stderr, false)
+
+	if returnCode != 0 {
+		t.Log("jqawk failed")
+		t.Logf("stdout: %s\n", stdout.String())
+		t.Logf("stderr: %s\n", stderr.String())
+		t.Fatal("jqawk failed")
+	}
+
+	output, err := os.ReadFile("_cli_test_output.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if string(output) != expected {
+		t.Logf("expected: %s\n", expected)
+		t.Logf("     got: %s\n", string(output))
+		t.Logf("exitcode: %d\n", returnCode)
+		t.Fatal("unexpected result")
+	}
 }
 
 func TestJqawkStreamingJson2(t *testing.T) {
