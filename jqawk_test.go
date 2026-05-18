@@ -1432,6 +1432,25 @@ func TestJqawkStreamingJson2(t *testing.T) {
 }
 
 func TestJqawkInteractive(t *testing.T) {
+	input := []string{
+		"print $",
+		"n = $[1]",
+		"print n * 10",
+		":mode program",
+		"{ print $ }",
+	}
+
+	expectedOutputLines := []string{
+		"[1, 2, 4]",
+		"2",
+		"20",
+		"current mode: program (run as full program)",
+		"1",
+		"2",
+		"4",
+		"",
+	}
+
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
@@ -1443,7 +1462,7 @@ func TestJqawkInteractive(t *testing.T) {
 		"test",
 		files,
 		[]string{},
-		strings.NewReader("print $\nn = $[1]\nprint n * 10\n"),
+		strings.NewReader(strings.Join(input, "\n")),
 		&stdout,
 		&stderr,
 	)
@@ -1453,10 +1472,8 @@ func TestJqawkInteractive(t *testing.T) {
 	// skip the header
 	outputLines = outputLines[2:]
 
-	expectedOutputLines := []string{
-		"[1, 2, 4]",
-		"2",
-		"20",
+	if len(expectedOutputLines) != len(outputLines) {
+		t.Fatalf("expected %d output lines but got %d\n", len(expectedOutputLines), len(outputLines))
 	}
 
 	for i, expected := range expectedOutputLines {
@@ -1464,7 +1481,7 @@ func TestJqawkInteractive(t *testing.T) {
 		if actual != expected {
 			t.Logf("  actual: %q\n", actual)
 			t.Logf("expected: %q\n", expected)
-			t.Fatalf("repl output did not match")
+			t.Fatalf("repl output line %d did not match", i)
 		}
 	}
 }
