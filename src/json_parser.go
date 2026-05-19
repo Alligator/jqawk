@@ -69,8 +69,7 @@ func (p *jsonParser) parseObject() (Value, error) {
 			return Value{}, err
 		}
 
-		(*obj.Obj)[key] = NewCell(val)
-		obj.ObjKeys = append(obj.ObjKeys, key)
+		obj.Obj.Set(key, NewCell(val))
 	}
 
 	tok, err := p.dec.Token()

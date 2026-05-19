@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
-	"slices"
 	"strconv"
 	"strings"
 )
@@ -45,8 +44,7 @@ type Value struct {
 	Num       *float64
 	Bool      *bool
 	Array     *Array
-	Obj       *map[string]*Cell
-	ObjKeys   []string
+	Obj       *Object
 	NativeFn  func(*Evaluator, []*Value, *Value) (*Value, error)
 	Fn        FnWithContext
 	Regexp    *regexp.Regexp
@@ -61,6 +59,24 @@ type Array struct {
 
 func (a *Array) Add(cell *Cell) {
 	a.Items = append(a.Items, cell)
+}
+
+type Object struct {
+	Items map[string]*Cell
+	Keys  []string
+}
+
+func (o *Object) Set(key string, cell *Cell) {
+	_, present := o.Items[key]
+	o.Items[key] = cell
+	if !present {
+		o.Keys = append(o.Keys, key)
+	}
+}
+
+func (o *Object) Get(key string) (*Cell, bool) {
+	cell, ok := o.Items[key]
+	return cell, ok
 }
 
 type FnWithContext struct {
@@ -91,7 +107,7 @@ func NewValue(srcVal any) Value {
 	case map[string]any:
 		obj := NewObject()
 		for k, v := range val {
-			(*obj.Obj)[k] = NewCell(NewValue(v))
+			obj.Obj.Set(k, NewCell(NewValue(v)))
 		}
 		return obj
 	case bool:
@@ -140,7 +156,7 @@ func NewArray() Value {
 }
 
 func NewObject() Value {
-	obj := make(map[string]*Cell)
+	obj := Object{make(map[string]*Cell), make([]string, 0)}
 	return Value{
 		Tag:   ValueObj,
 		Obj:   &obj,
@@ -235,8 +251,8 @@ func (v *Value) prettyStringInteral(rootValues []*Value, quote bool, checkCircul
 		var sb strings.Builder
 		sb.WriteByte('{')
 		index := 0
-		for _, key := range v.ObjKeys {
-			value := (*v.Obj)[key]
+		for _, key := range v.Obj.Keys {
+			value, _ := v.Obj.Get(key)
 			if index > 0 {
 				sb.WriteString(", ")
 			}
@@ -287,7 +303,7 @@ func (v *Value) GetMember(member Value) (*Cell, bool, error) {
 			return nil, false, fmt.Errorf("objects can only by indexed with numbers or strings, got %s", member.Tag)
 		}
 		key := member.String()
-		value, present := (*v.Obj)[key]
+		value, present := v.Obj.Get(key)
 		if present {
 			return value, true, nil
 		}
@@ -358,10 +374,7 @@ func (v *Value) SetMember(member Value, cell *Cell) (*Cell, error) {
 		return item, nil
 	case ValueObj:
 		key := member.String()
-		(*v.Obj)[key] = cell
-		if !slices.Contains(v.ObjKeys, key) {
-			v.ObjKeys = append(v.ObjKeys, key)
-		}
+		v.Obj.Set(key, cell)
 		return cell, nil
 	default:
 		// TODO?
@@ -485,7 +498,7 @@ func (v *Value) marshalAndDetectCircularReferences(w *bytes.Buffer, seen []*Valu
 		b, err = json.Marshal(v.Array.Items)
 	case ValueObj:
 		w.WriteString("{ ")
-		for i, key := range v.ObjKeys {
+		for i, key := range v.Obj.Keys {
 			if i > 0 {
 				w.WriteString(", ")
 			}
@@ -498,8 +511,8 @@ func (v *Value) marshalAndDetectCircularReferences(w *bytes.Buffer, seen []*Valu
 			w.Write(keyJson)
 			w.WriteString(": ")
 
-			val := (*v.Obj)[key].Value
-			err = val.marshalAndDetectCircularReferences(w, seen)
+			cell, _ := v.Obj.Get(key)
+			err = cell.Value.marshalAndDetectCircularReferences(w, seen)
 			if err != nil {
 				return err
 			}

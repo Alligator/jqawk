@@ -378,8 +378,7 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 				return nil, e.error(expr.Token(), err.Error())
 			}
 
-			(*obj.Obj)[kv.Key] = newCell
-			obj.ObjKeys = append(obj.ObjKeys, kv.Key)
+			obj.Obj.Set(kv.Key, newCell)
 		}
 		return NewCell(obj), nil
 	case *ExprFunction:
@@ -1122,7 +1121,8 @@ func (e *Evaluator) evalStatement(stmt Statement) error {
 				}
 			}
 		case ValueObj:
-			for k, v := range *iterable.Value.Obj {
+			for _, k := range iterable.Value.Obj.Keys {
+				v, _ := iterable.Value.Obj.Get(k)
 				if indexLocal != nil {
 					indexLocal.Value = v.Value
 				}
