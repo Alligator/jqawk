@@ -1254,6 +1254,18 @@ func (e *Evaluator) checkContext() error {
 }
 
 func (e *Evaluator) forEachRootValue(files []InputFile, rootSelectors []string, fn func(*Cell) error) error {
+	parsedRootSelectors := make([]Expr, len(rootSelectors))
+
+	for i, rootSelector := range rootSelectors {
+		lex := NewLexer(rootSelector)
+		parser := NewParser(&lex)
+		expr, err := parser.ParseExpression()
+		if err != nil {
+			return err
+		}
+		parsedRootSelectors[i] = expr
+	}
+
 	for _, file := range files {
 		// for each json value
 		jp := newJsonParser(file.NewReader())
@@ -1270,12 +1282,8 @@ func (e *Evaluator) forEachRootValue(files []InputFile, rootSelectors []string, 
 
 			// find the root value(s)
 			rootCells := make([]*Cell, 0)
-			if len(rootSelectors) > 0 {
-				for _, rootSelector := range rootSelectors {
-					lex := NewLexer(rootSelector)
-					parser := NewParser(&lex)
-					expr, err := parser.ParseExpression()
-
+			if len(parsedRootSelectors) > 0 {
+				for _, expr := range parsedRootSelectors {
 					rootCell := NewCell(rootValue)
 					e.root = rootCell
 					e.ruleRoot = rootCell
