@@ -398,7 +398,7 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 		if err != nil {
 			return nil, err
 		}
-		cell, _, err := e.assignToTarget(exp.Target, val)
+		cell, err := e.assignToTarget(exp.Target, val)
 		if err != nil {
 			return nil, err
 		}
@@ -407,10 +407,10 @@ func (e *Evaluator) evalExpr(expr Expr) (*Cell, error) {
 	return nil, e.error(expr.Token(), "expected an expression")
 }
 
-func (e *Evaluator) assignToTarget(target AssignTarget, value *Cell) (*Cell, Value, error) {
+func (e *Evaluator) evalAssignTarget(target AssignTarget) (LValue, error) {
 	curr, err := e.evalExpr(target.Obj)
 	if err != nil {
-		return nil, Value{}, err
+		return nil, err
 	}
 
 	for i, seg := range target.Path {
@@ -420,7 +420,7 @@ func (e *Evaluator) assignToTarget(target AssignTarget, value *Cell) (*Cell, Val
 		if seg.Expr != nil {
 			key, err = e.evalExpr(seg.Expr)
 			if err != nil {
-				return nil, Value{}, err
+				return nil, err
 			}
 			tok = seg.Expr.Token()
 		} else {
@@ -437,43 +437,50 @@ func (e *Evaluator) assignToTarget(target AssignTarget, value *Cell) (*Cell, Val
 				curr.Value = NewObject()
 			default:
 				// FIXME token
-				return nil, Value{}, e.error(tok, "invalid assignment target")
+				return nil, e.error(tok, "invalid assignment target")
 			}
 		}
 
 		if i == len(target.Path)-1 {
-			// last segment, assign the value
-			oldValue, _, _ := curr.Value.GetMember(key.Value)
-
-			newVal, err := curr.Value.SetMember(key.Value, value)
+			// last segment, set and return the member
+			newCell, err := curr.Value.SetMember(key.Value, NewCell(NewValue(nil)))
 			if err != nil {
-				return nil, Value{}, e.error(tok, err.Error())
+				return nil, e.error(tok, err.Error())
 			}
-
-			if oldValue != nil {
-				return newVal, oldValue.Value, nil
-			}
-			return newVal, Value{}, nil
+			curr = newCell
+			break
 		}
 
 		// intermediate segment, get next child
 		child, present, err := curr.Value.GetMember(key.Value)
 		if err != nil {
-			return nil, Value{}, e.error(tok, err.Error())
+			return nil, e.error(tok, err.Error())
 		}
 
 		if !present {
 			child, err = curr.Value.SetMember(key.Value, NewCell(Value{Tag: ValueUnknown}))
 			if err != nil {
-				return nil, Value{}, e.error(tok, err.Error())
+				return nil, e.error(tok, err.Error())
 			}
 		}
 
 		curr = child
 	}
-	oldValue := value.Value
-	curr.Value = value.Value
-	return curr, oldValue, nil
+
+	return cellLValue{curr}, nil
+}
+
+func (e *Evaluator) assignToTarget(target AssignTarget, value *Cell) (*Cell, error) {
+	lv, err := e.evalAssignTarget(target)
+	if err != nil {
+		return nil, err
+	}
+
+	// HACK
+	clv := lv.(cellLValue)
+
+	lv.Set(value.Value)
+	return clv.cell, nil
 }
 
 func (e *Evaluator) evalCaseMatch(value *Cell, exprs []Expr) (bool, map[string]*Cell, error) {
@@ -606,7 +613,7 @@ func (e *Evaluator) evalUnaryExpr(expr *ExprUnary) (*Cell, error) {
 		}
 
 		oldValue := val.Value
-		cell, _, err := e.assignToTarget(expr.Target, NewCell(newValue))
+		cell, err := e.assignToTarget(expr.Target, NewCell(newValue))
 		if err != nil {
 			return nil, err
 		}
