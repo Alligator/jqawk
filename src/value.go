@@ -44,7 +44,7 @@ type Value struct {
 	Str       *string // used by ValueStr and ValueRegex
 	Num       *float64
 	Bool      *bool
-	Array     []*Cell
+	Array     *Array
 	Obj       *map[string]*Cell
 	ObjKeys   []string
 	NativeFn  func(*Evaluator, []*Value, *Value) (*Value, error)
@@ -53,6 +53,14 @@ type Value struct {
 	Proto     *Value
 	Binding   *Value
 	ParentObj *Value
+}
+
+type Array struct {
+	Items []*Cell
+}
+
+func (a *Array) Add(cell *Cell) {
+	a.Items = append(a.Items, cell)
 }
 
 type FnWithContext struct {
@@ -65,19 +73,19 @@ func NewValue(srcVal any) Value {
 	case []*Cell:
 		return Value{
 			Tag:   ValueArray,
-			Array: val,
+			Array: &Array{val},
 			Proto: getArrayPrototype(),
 		}
 	case []any:
 		arr := NewArray()
 		for _, item := range val {
-			arr.Array = append(arr.Array, NewCell(NewValue(item)))
+			arr.Array.Add(NewCell(NewValue(item)))
 		}
 		return arr
 	case []string:
 		arr := NewArray()
 		for _, item := range val {
-			arr.Array = append(arr.Array, NewCell(NewValue(item)))
+			arr.Array.Add(NewCell(NewValue(item)))
 		}
 		return arr
 	case map[string]any:
@@ -123,10 +131,10 @@ func NewValue(srcVal any) Value {
 }
 
 func NewArray() Value {
-	arr := make([]*Cell, 0)
+	arr := Array{make([]*Cell, 0)}
 	return Value{
 		Tag:   ValueArray,
-		Array: arr,
+		Array: &arr,
 		Proto: getArrayPrototype(),
 	}
 }
@@ -182,7 +190,8 @@ func isSame(a *Value, b *Value) bool {
 		return a.Obj == b.Obj
 	}
 	if a.Tag == ValueArray && b.Tag == ValueArray {
-		return alias(a.Array, b.Array)
+		// FIXME pointer check?
+		return alias(a.Array.Items, b.Array.Items)
 	}
 	return false
 }
@@ -214,7 +223,7 @@ func (v *Value) prettyStringInteral(rootValues []*Value, quote bool, checkCircul
 	case ValueArray:
 		var sb strings.Builder
 		sb.WriteByte('[')
-		for index, cell := range v.Array {
+		for index, cell := range v.Array.Items {
 			if index > 0 {
 				sb.WriteString(", ")
 			}
@@ -267,12 +276,12 @@ func (v *Value) GetMember(member Value) (*Cell, bool, error) {
 		if member.Tag != ValueNum && v.Proto != nil {
 			return v.Proto.GetMember(member)
 		}
-		index, ok := getArrayIndex(*member.Num, len(v.Array))
+		index, ok := getArrayIndex(*member.Num, len(v.Array.Items))
 		if !ok {
 			return NewCell(NewValue(nil)), false, nil
 		}
 		arr := v.Array
-		return arr[index], true, nil
+		return arr.Items[index], true, nil
 	case ValueObj:
 		if member.Tag != ValueNum && member.Tag != ValueStr {
 			return nil, false, fmt.Errorf("objects can only by indexed with numbers or strings, got %s", member.Tag)
@@ -320,7 +329,7 @@ func (v *Value) SetMember(member Value, cell *Cell) (*Cell, error) {
 			return nil, fmt.Errorf("array indices must be numbers")
 		}
 
-		index, ok := getArrayIndex(*member.Num, len(v.Array))
+		index, ok := getArrayIndex(*member.Num, len(v.Array.Items))
 		if !ok {
 			if index < 0 {
 				return nil, fmt.Errorf("index out of range")
@@ -332,9 +341,9 @@ func (v *Value) SetMember(member Value, cell *Cell) (*Cell, error) {
 			}
 
 			var lastCell *Cell
-			for i := len(v.Array); i <= index; i++ {
+			for i := len(v.Array.Items); i <= index; i++ {
 				lastCell = NewCell(NewValue(nil))
-				v.Array = append(v.Array, lastCell)
+				v.Array.Add(lastCell)
 			}
 			lastCell.Value = cell.Value
 
@@ -473,7 +482,7 @@ func (v *Value) marshalAndDetectCircularReferences(w *bytes.Buffer, seen []*Valu
 	case ValueNil, ValueUnknown:
 		b, err = json.Marshal(nil)
 	case ValueArray:
-		b, err = json.Marshal(v.Array)
+		b, err = json.Marshal(v.Array.Items)
 	case ValueObj:
 		w.WriteString("{ ")
 		for i, key := range v.ObjKeys {

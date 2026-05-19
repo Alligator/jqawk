@@ -498,13 +498,13 @@ func (e *Evaluator) evalCaseMatch(value *Cell, exprs []Expr) (bool, map[string]*
 			}
 
 			array := value.Value.Array
-			if len(array) != len(ex.Items) {
+			if len(array.Items) != len(ex.Items) {
 				return false, nil, nil
 			}
 
 			bindings := make(map[string]*Cell)
 
-			for i, item := range array {
+			for i, item := range array.Items {
 				exprToMatch := ex.Items[i]
 				match, newBindings, err := e.evalCaseMatch(item, []Expr{exprToMatch})
 				if err != nil {
@@ -725,12 +725,12 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (*Cell, error) {
 
 		if left.Value.Tag == ValueArray {
 			slice := NewArray()
-			starti, startok := getArrayIndex(*start.Value.Num, len(left.Value.Array))
+			starti, startok := getArrayIndex(*start.Value.Num, len(left.Value.Array.Items))
 
-			endi := len(left.Value.Array)
+			endi := len(left.Value.Array.Items)
 			endok := true
 			if end != nil {
-				endi, endok = getArrayIndex(*end.Value.Num, len(left.Value.Array))
+				endi, endok = getArrayIndex(*end.Value.Num, len(left.Value.Array.Items))
 			}
 
 			if !startok || !endok {
@@ -747,7 +747,7 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (*Cell, error) {
 					return nil, err
 				}
 				newCell := NewCell(NewValue(nil))
-				slice.Array = append(slice.Array, newCell)
+				slice.Array.Add(newCell)
 				_, err = copyValue(cell, newCell)
 				if err != nil {
 					return nil, err
@@ -1109,7 +1109,7 @@ func (e *Evaluator) evalStatement(stmt Statement) error {
 
 		switch iterable.Value.Tag {
 		case ValueArray:
-			for index, item := range iterable.Value.Array {
+			for index, item := range iterable.Value.Array.Items {
 				if indexLocal != nil {
 					indexLocal.Value = NewValue(index)
 				}
@@ -1211,7 +1211,7 @@ func (e *Evaluator) evalPatternRules(patternRules []*Rule) error {
 
 	switch e.root.Value.Tag {
 	case ValueArray:
-		for i, item := range e.root.Value.Array {
+		for i, item := range e.root.Value.Array.Items {
 			e.ruleRoot = item
 			e.stackTop.scope.bindings["$index"] = NewCell(NewValue(i))
 			if err := e.evalRules(patternRules); err != nil {

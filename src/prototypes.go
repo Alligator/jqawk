@@ -30,7 +30,7 @@ func getArrayPrototype() *Value {
 						return &v, nil
 					}
 
-					length := len(this.Array)
+					length := len(this.Array.Items)
 					lengthVal := NewValue(length)
 					return &lengthVal, nil
 				},
@@ -45,7 +45,7 @@ func getArrayPrototype() *Value {
 						return nil, err
 					}
 
-					this.Array = append(this.Array, NewCell(*v[0]))
+					this.Array.Add(NewCell(*v[0]))
 					return this, nil
 				},
 			}),
@@ -59,13 +59,13 @@ func getArrayPrototype() *Value {
 						return nil, err
 					}
 
-					if len(this.Array) == 0 {
+					if len(this.Array.Items) == 0 {
 						retVal := NewValue(nil)
 						return &retVal, nil
 					}
 
-					retVal := this.Array[len(this.Array)-1].Value
-					this.Array = this.Array[:len(this.Array)-1]
+					retVal := this.Array.Items[len(this.Array.Items)-1].Value
+					this.Array.Items = this.Array.Items[:len(this.Array.Items)-1]
 					return &retVal, nil
 				},
 			}),
@@ -79,13 +79,13 @@ func getArrayPrototype() *Value {
 						return nil, err
 					}
 
-					if len(this.Array) == 0 {
+					if len(this.Array.Items) == 0 {
 						retVal := NewValue(nil)
 						return &retVal, nil
 					}
 
-					retVal := this.Array[0].Value
-					this.Array = this.Array[1:]
+					retVal := this.Array.Items[0].Value
+					this.Array.Items = this.Array.Items[1:]
 					return &retVal, nil
 				},
 			}),
@@ -99,7 +99,7 @@ func getArrayPrototype() *Value {
 						return nil, err
 					}
 
-					for _, item := range this.Array {
+					for _, item := range this.Array.Items {
 						comp, err := v[0].Compare(&item.Value)
 						if err != nil {
 							return nil, err
@@ -122,8 +122,8 @@ func getArrayPrototype() *Value {
 					}
 
 					// make a clone
-					clone := make([]*Cell, len(this.Array))
-					for i, item := range this.Array {
+					clone := make([]*Cell, len(this.Array.Items))
+					for i, item := range this.Array.Items {
 						clone[i] = &Cell{}
 						copyValue(item, clone[i])
 					}
@@ -162,7 +162,7 @@ func getArrayPrototype() *Value {
 
 					// is this array only numbers?
 					onlyNumbers := true
-					for _, item := range this.Array {
+					for _, item := range this.Array.Items {
 						if item.Value.Tag != ValueNum {
 							onlyNumbers = false
 							break
@@ -239,7 +239,7 @@ func getObjPrototype() *Value {
 					newArray := NewArray()
 					for _, key := range this.ObjKeys {
 						pair := []*Cell{NewCell(NewValue(key)), (*this.Obj)[key]}
-						newArray.Array = append(newArray.Array, NewCell(NewValue(pair)))
+						newArray.Array.Add(NewCell(NewValue(pair)))
 					}
 					return &newArray, nil
 				},

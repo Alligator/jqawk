@@ -97,7 +97,7 @@ func (p *jsonParser) parseArray() (Value, error) {
 		if err != nil {
 			return Value{}, err
 		}
-		array.Array = append(array.Array, NewCell(val))
+		array.Array.Add(NewCell(val))
 	}
 
 	tok, err := p.dec.Token()
