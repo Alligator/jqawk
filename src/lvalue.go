@@ -18,18 +18,6 @@ func (lv varLValue) Set(v Value) error {
 	return nil
 }
 
-type rootLValue struct {
-	e *Evaluator
-}
-
-func (lv rootLValue) Get() Value {
-	return *lv.e.ruleRoot
-}
-func (lv rootLValue) Set(v Value) error {
-	lv.e.ruleRoot = &v
-	return nil
-}
-
 type objectLValue struct {
 	obj *Object
 	key string

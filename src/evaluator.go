@@ -28,7 +28,7 @@ type Evaluator struct {
 	prog           Program
 	stdout         io.Writer
 	root           *Value
-	ruleRoot       *Value
+	ruleRoot       LValue
 	stackTop       *stackFrame
 	returnVal      *Value
 	beginRules     []*Rule
@@ -218,19 +218,19 @@ func (e *Evaluator) getIdentifier(expr *ExprIdentifier) (Value, error) {
 }
 
 func (e *Evaluator) identifierLValue(expr *ExprIdentifier) (LValue, error) {
+	ident := expr.Ident
 	if expr.token.Tag == Dollar {
-		if e.ruleRoot != nil {
-			return rootLValue{e}, nil
-		} else {
+		if e.ruleRoot == nil {
 			return nil, e.error(expr.Token(), "unknown variable $")
 		}
-	} else {
-		scope, err := e.getVariable(expr.Ident)
-		if err != nil {
-			return nil, e.error(expr.Token(), err.Error())
-		}
-		return varLValue{scope, expr.Ident}, nil
+		return e.ruleRoot, nil
 	}
+
+	scope, err := e.getVariable(ident)
+	if err != nil {
+		return nil, e.error(expr.Token(), err.Error())
+	}
+	return varLValue{scope, expr.Ident}, nil
 }
 
 func (e *Evaluator) evalString(str string) (Value, error) {
@@ -468,7 +468,7 @@ func (e *Evaluator) evalAssignTarget(target AssignTarget) (LValue, error) {
 			return nil, err
 		}
 	default:
-		panic("no lvalue handler")
+		return nil, e.error(expr.Token(), "invalid assignment target")
 	}
 
 	if len(target.Path) == 0 {
@@ -1022,7 +1022,8 @@ func (e *Evaluator) evalStatement(stmt Statement) error {
 		}
 
 		if len(args) == 0 {
-			fmt.Fprintln(e.stdout, e.ruleRoot.PrettyString(false))
+			val := e.ruleRoot.Get()
+			fmt.Fprintln(e.stdout, val.PrettyString(false))
 			return nil
 		}
 
@@ -1239,6 +1240,11 @@ func (e *Evaluator) evalRules(rules []*Rule) error {
 	return nil
 }
 
+func (e *Evaluator) setRuleRoot(value Value) {
+	e.stackTop.scope.bindings["$"] = value
+	e.ruleRoot = varLValue{e.stackTop.scope, "$"}
+}
+
 func (e *Evaluator) evalPatternRules(patternRules []*Rule) error {
 	if e.root == nil {
 		return nil
@@ -1246,20 +1252,15 @@ func (e *Evaluator) evalPatternRules(patternRules []*Rule) error {
 
 	switch e.root.Tag {
 	case ValueArray:
-		for i, item := range e.root.Array.Items {
-			e.ruleRoot = &item
+		for i := range e.root.Array.Items {
 			e.stackTop.scope.bindings["$index"] = NewCell(NewValue(i))
+			e.ruleRoot = arrayLValue{e.root.Array, i}
 			if err := e.evalRules(patternRules); err != nil {
 				return err
 			}
 		}
-	case ValueObj:
-		e.ruleRoot = e.root
-		if err := e.evalRules(patternRules); err != nil {
-			return err
-		}
 	default:
-		e.ruleRoot = e.root
+		e.setRuleRoot(*e.root)
 		if err := e.evalRules(patternRules); err != nil {
 			return err
 		}
@@ -1320,7 +1321,7 @@ func (e *Evaluator) forEachRootValue(files []InputFile, rootSelectors []string, 
 			if len(parsedRootSelectors) > 0 {
 				for _, expr := range parsedRootSelectors {
 					e.root = &rootValue
-					e.ruleRoot = &rootValue
+					e.setRuleRoot(*e.root)
 					value, err := e.evalExpr(expr)
 					if err != nil && err != errExit {
 						return err
@@ -1344,7 +1345,7 @@ func (e *Evaluator) forEachRootValue(files []InputFile, rootSelectors []string, 
 func (e *Evaluator) RunInBeginFileContext(files []InputFile, rootSelectors []string, fn func() error) error {
 	return e.forEachRootValue(files, rootSelectors, func(rootValue *Value) error {
 		e.root = rootValue
-		e.ruleRoot = rootValue
+		e.setRuleRoot(*e.root)
 		if err := fn(); err != nil {
 			return err
 		}
@@ -1408,22 +1409,20 @@ func evalProgramInternal(ev *Evaluator, files []InputFile, rootSelectors []strin
 	// for each file, run the pattern rules
 	err := ev.forEachRootValue(files, rootSelectors, func(rootValue *Value) error {
 		// run the begin file rules
-		modifiedRoot := rootValue
+		modifiedRoot := *rootValue
 		for _, rule := range ev.beginFileRules {
-			ev.ruleRoot = modifiedRoot
+			ev.setRuleRoot(*rootValue)
 			if err := ev.evalStatement(rule.Body); err != nil {
 				if err == errExit {
 					return nil
 				}
 				return err
 			}
-
-			// allow the root to be modified in BEGINFILE
-			modifiedRoot = ev.ruleRoot
+			modifiedRoot = ev.ruleRoot.Get()
 		}
 
 		// run the rules
-		ev.root = modifiedRoot
+		ev.root = &modifiedRoot
 		if err := ev.evalPatternRules(ev.patternRules); err != nil {
 			if err == errExit {
 				return nil
@@ -1433,7 +1432,7 @@ func evalProgramInternal(ev *Evaluator, files []InputFile, rootSelectors []strin
 
 		// run the end file rules
 		for _, rule := range ev.endFileRules {
-			ev.ruleRoot = modifiedRoot
+			ev.setRuleRoot(modifiedRoot)
 			if err := ev.evalStatement(rule.Body); err != nil {
 				if err == errExit {
 					return nil

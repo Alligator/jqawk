@@ -949,6 +949,11 @@ func (p *Parser) buildAssignTarget(expr Expr) (AssignTarget, error) {
 
 	path := make([]PathSeg, 0)
 	curr := expr
+
+	if _, ok := curr.(*ExprBinary); !ok {
+		return AssignTarget{}, p.error(curr.Token().Pos, "invalid assignment target")
+	}
+
 	for {
 		b, ok := curr.(*ExprBinary)
 		if !ok {
