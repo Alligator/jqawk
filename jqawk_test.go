@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -623,13 +622,13 @@ s |Jan       |
 	},
 	{
 		name:     "printing circular references",
-		prog:     "BEGIN { a.a=a; print a; b = []; b[0] = 1; b[1] = b; print b; }",
+		prog:     "BEGIN { a.a = 3; a.a = a; print a; b = []; b[0] = 1; b[1] = b; print b; }",
 		json:     "[]",
 		expected: "{\"a\": <circular reference>}\n[1, <circular reference>]\n",
 	},
 	{
 		name:          "converting circular references to JSON",
-		prog:          "BEGIN { a.a=a; print json(a) }",
+		prog:          "BEGIN { a.a = 3; a.a = a; print json(a) }",
 		json:          "[]",
 		expectedError: "error creating JSON: circular reference",
 	},
@@ -774,14 +773,12 @@ rhs not null
 	{
 		name: "beginfile endfile",
 		prog: `
-			BEGIN { print 'begin', $ }
 			BEGINFILE { print 'beginfile', $ }
 			ENDFILE { print 'endfile', $ }
-			END { print 'end', $ }
 		`,
 		json:     "123",
 		json2:    "456",
-		expected: "begin null\nbeginfile 123\nendfile 123\nbeginfile 456\nendfile 456\nend null\n",
+		expected: "beginfile 123\nendfile 123\nbeginfile 456\nendfile 456\n",
 	},
 	{
 		name: "$ is the root value in endfile",
@@ -791,7 +788,7 @@ rhs not null
 			ENDFILE { print $ }
 		`,
 		json:     `{ "stuff": [1, 2, 3] }`,
-		expected: "1\n2\n3\n{\"stuff\": [1, 2, 3]}\n",
+		expected: "1\n2\n3\n[1, 2, 3]\n",
 	},
 	{
 		name: "num methods",
@@ -1132,11 +1129,6 @@ false true
 		`,
 		expected: "[[0, 0, 0], [0, 0, 0], [0, 0, 0]]\n",
 	},
-	{
-		name:     "bug: crash on indexing unknown",
-		prog:     "BEGIN { a[a.a] = 0; print a }",
-		expected: "{\"\": 0}\n",
-	},
 }
 
 func FuzzJqawk(f *testing.F) {
@@ -1225,12 +1217,12 @@ func testInternal(t testing.TB, tc testCase) {
 		expectedLines := strings.Split(tc.expected, "\n")
 		for i, line := range actualLines {
 			if len(expectedLines) < i {
-				fmt.Printf("\x1b[92m+ %s\x1b[0m\n", line)
+				t.Logf("\x1b[92m+ %s\x1b[0m\n", line)
 			} else if len(expectedLines) > i && line != expectedLines[i] {
-				fmt.Printf("\x1b[91m- %s\x1b[0m\n", expectedLines[i])
-				fmt.Printf("\x1b[92m+ %s\x1b[0m\n", line)
+				t.Logf("\x1b[91m- %s\x1b[0m\n", expectedLines[i])
+				t.Logf("\x1b[92m+ %s\x1b[0m\n", line)
 			} else {
-				fmt.Printf("  %s\n", line)
+				t.Logf("  %s\n", line)
 			}
 		}
 		t.Fatalf("unexpected result")

@@ -171,11 +171,11 @@ func Run(version string, args []string, stdin io.Reader, stdout, stderr io.Write
 				return err
 			}
 
-			cell, err := ev.EvalExpr(expr)
+			value, err := ev.EvalExpr(expr)
 			if err != nil {
 				return err
 			}
-			fmt.Fprintln(stdout, cell.Value.PrettyString(false))
+			fmt.Fprintln(stdout, value.PrettyString(false))
 			return nil
 		})
 

@@ -19,7 +19,7 @@ var numPrototype *Value = nil
 func makeProto() Value {
 	return Value{
 		Tag: ValueObj,
-		Obj: &Object{make(map[string]*Cell), make([]string, 0)},
+		Obj: &Object{make(map[string]Value), make([]string, 0)},
 	}
 }
 
@@ -76,7 +76,7 @@ func getArrayPrototype() *Value {
 					return &retVal, nil
 				}
 
-				retVal := this.Array.Items[len(this.Array.Items)-1].Value
+				retVal := this.Array.Items[len(this.Array.Items)-1]
 				this.Array.Items = this.Array.Items[:len(this.Array.Items)-1]
 				return &retVal, nil
 			},
@@ -97,7 +97,7 @@ func getArrayPrototype() *Value {
 					return &retVal, nil
 				}
 
-				retVal := this.Array.Items[0].Value
+				retVal := this.Array.Items[0]
 				this.Array.Items = this.Array.Items[1:]
 				return &retVal, nil
 			},
@@ -114,7 +114,7 @@ func getArrayPrototype() *Value {
 				}
 
 				for _, item := range this.Array.Items {
-					comp, err := v[0].Compare(&item.Value)
+					comp, err := v[0].Compare(&item)
 					if err != nil {
 						return nil, err
 					}
@@ -137,10 +137,9 @@ func getArrayPrototype() *Value {
 				}
 
 				// make a clone
-				clone := make([]*Cell, len(this.Array.Items))
-				for i, item := range this.Array.Items {
-					clone[i] = &Cell{}
-					copyValue(item, clone[i])
+				clone := NewArray()
+				for _, item := range this.Array.Items {
+					clone.Array.Add(item)
 				}
 
 				// is there a sort func?
@@ -151,20 +150,19 @@ func getArrayPrototype() *Value {
 					sortFunc := v[0]
 
 					var err error
-					slices.SortStableFunc(clone, func(a *Cell, b *Cell) int {
+					slices.SortStableFunc(clone.Array.Items, func(a Value, b Value) int {
 						if err != nil {
 							return 0
 						}
 
-						args := []*Value{&a.Value, &b.Value}
-						var result *Cell
-						result, err = e.callFunction(NewCell(*sortFunc), args)
+						var result Value
+						result, err = e.callFunction(*sortFunc, []*Value{&a, &b})
 						if err != nil {
 							return 0
 						}
 
-						if result.Value.Tag == ValueNum {
-							return int(*result.Value.Num)
+						if result.Tag == ValueNum {
+							return int(*result.Num)
 						}
 
 						return 0
@@ -178,20 +176,20 @@ func getArrayPrototype() *Value {
 				// is this array only numbers?
 				onlyNumbers := true
 				for _, item := range this.Array.Items {
-					if item.Value.Tag != ValueNum {
+					if item.Tag != ValueNum {
 						onlyNumbers = false
 						break
 					}
 				}
 
-				slices.SortStableFunc(clone, func(a *Cell, b *Cell) int {
+				slices.SortStableFunc(clone.Array.Items, func(a Value, b Value) int {
 					if onlyNumbers {
-						return cmp.Compare(*a.Value.Num, *b.Value.Num)
+						return cmp.Compare(*a.Num, *b.Num)
 					}
-					return cmp.Compare(a.Value.String(), b.Value.String())
+					return cmp.Compare(a.String(), b.String())
 				})
 
-				retVal := NewValue(clone)
+				retVal := clone
 				return &retVal, nil
 			},
 		}))
@@ -229,15 +227,15 @@ func getObjPrototype() *Value {
 			NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
 				newObj := NewObject()
 				for _, value := range v {
-					val, _, err := this.GetMember(*value)
+					val, present, err := this.GetMember(*value)
 					if err != nil {
 						return nil, err
 					}
 
-					if val == nil {
-						_, err = newObj.SetMember(*value, NewCell(NewValue(nil)))
+					if !present {
+						err = newObj.SetMember(*value, NewCell(NewValue(nil)))
 					} else {
-						_, err = newObj.SetMember(*value, NewCell(val.Value))
+						err = newObj.SetMember(*value, val)
 					}
 
 					if err != nil {
@@ -254,7 +252,7 @@ func getObjPrototype() *Value {
 				newArray := NewArray()
 				for _, key := range this.Obj.Keys {
 					v, _ := this.Obj.Get(key)
-					pair := []*Cell{NewCell(NewValue(key)), v}
+					pair := []Value{NewCell(NewValue(key)), v}
 					newArray.Array.Add(NewCell(NewValue(pair)))
 				}
 				return &newArray, nil

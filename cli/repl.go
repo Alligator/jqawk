@@ -49,7 +49,7 @@ func printMode(mode string, dst io.Writer) {
 func RunRepl(version string, files []lang.InputFile, rootSelectors []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	rl, err := readline.NewFromConfig(&readline.Config{
 		Prompt: "> ",
-		Stdin: stdin,
+		Stdin:  stdin,
 		Stdout: stdout,
 		Stderr: stderr,
 	})
@@ -90,7 +90,7 @@ func RunRepl(version string, files []lang.InputFile, rootSelectors []string, std
 			if err != nil {
 				return err
 			}
-			fmt.Fprintln(stdout, val.Value.PrettyString(false))
+			fmt.Fprintln(stdout, val.PrettyString(false))
 			return nil
 		}
 
