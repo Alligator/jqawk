@@ -1245,7 +1245,9 @@ func test(t *testing.T, tc testCase) {
 
 func bench(b *testing.B, tc testCase) {
 	b.Run(tc.name, func(b *testing.B) {
-		testInternal(b, tc)
+		for b.Loop() {
+			testInternal(b, tc)
+		}
 	})
 }
 
@@ -1283,6 +1285,8 @@ func TestJqawk(t *testing.T) {
 }
 
 func BenchmarkJqawk(b *testing.B) {
+	b.ReportAllocs()
+	b.ResetTimer()
 	for _, tc := range tests {
 		bench(b, tc)
 	}
