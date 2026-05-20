@@ -27,7 +27,7 @@ func getArrayPrototype() *Value {
 	if arrayPrototype == nil {
 		proto := makeProto()
 
-		proto.Obj.Set("length", NewCell(Value{
+		proto.Obj.Set("length", Value{
 			Tag: ValueNativeFn,
 			NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
 				if this == nil {
@@ -44,9 +44,9 @@ func getArrayPrototype() *Value {
 				lengthVal := NewValue(length)
 				return &lengthVal, nil
 			},
-		}))
+		})
 
-		proto.Obj.Set("push", NewCell(Value{
+		proto.Obj.Set("push", Value{
 			Tag: ValueNativeFn,
 			NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
 				if this == nil {
@@ -56,12 +56,12 @@ func getArrayPrototype() *Value {
 					return nil, err
 				}
 
-				this.Array.Add(NewCell(*v[0]))
+				this.Array.Add(*v[0])
 				return this, nil
 			},
-		}))
+		})
 
-		proto.Obj.Set("pop", NewCell(Value{
+		proto.Obj.Set("pop", Value{
 			Tag: ValueNativeFn,
 			NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
 				if this == nil {
@@ -80,9 +80,9 @@ func getArrayPrototype() *Value {
 				this.Array.Items = this.Array.Items[:len(this.Array.Items)-1]
 				return &retVal, nil
 			},
-		}))
+		})
 
-		proto.Obj.Set("popfirst", NewCell(Value{
+		proto.Obj.Set("popfirst", Value{
 			Tag: ValueNativeFn,
 			NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
 				if this == nil {
@@ -101,9 +101,9 @@ func getArrayPrototype() *Value {
 				this.Array.Items = this.Array.Items[1:]
 				return &retVal, nil
 			},
-		}))
+		})
 
-		proto.Obj.Set("contains", NewCell(Value{
+		proto.Obj.Set("contains", Value{
 			Tag: ValueNativeFn,
 			NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
 				if this == nil {
@@ -127,9 +127,9 @@ func getArrayPrototype() *Value {
 				retVal := NewValue(false)
 				return &retVal, nil
 			},
-		}))
+		})
 
-		proto.Obj.Set("sort", NewCell(Value{
+		proto.Obj.Set("sort", Value{
 			Tag: ValueNativeFn,
 			NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
 				if this == nil {
@@ -192,7 +192,7 @@ func getArrayPrototype() *Value {
 				retVal := clone
 				return &retVal, nil
 			},
-		}))
+		})
 
 		arrayPrototype = &proto
 	}
@@ -203,7 +203,7 @@ func getObjPrototype() *Value {
 	if objPrototype == nil {
 		proto := makeProto()
 
-		proto.Obj.Set("length", NewCell(Value{
+		proto.Obj.Set("length", Value{
 			Tag: ValueNativeFn,
 			NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
 				if this == nil {
@@ -220,9 +220,9 @@ func getObjPrototype() *Value {
 				lengthVal := NewValue(length)
 				return &lengthVal, nil
 			},
-		}))
+		})
 
-		proto.Obj.Set("pluck", NewCell(Value{
+		proto.Obj.Set("pluck", Value{
 			Tag: ValueNativeFn,
 			NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
 				newObj := NewObject()
@@ -233,7 +233,7 @@ func getObjPrototype() *Value {
 					}
 
 					if !present {
-						err = newObj.SetMember(*value, NewCell(NewValue(nil)))
+						err = newObj.SetMember(*value, NewValue(nil))
 					} else {
 						err = newObj.SetMember(*value, val)
 					}
@@ -244,20 +244,20 @@ func getObjPrototype() *Value {
 				}
 				return &newObj, nil
 			},
-		}))
+		})
 
-		proto.Obj.Set("pairs", NewCell(Value{
+		proto.Obj.Set("pairs", Value{
 			Tag: ValueNativeFn,
 			NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
 				newArray := NewArray()
 				for _, key := range this.Obj.Keys {
 					v, _ := this.Obj.Get(key)
-					pair := []Value{NewCell(NewValue(key)), v}
-					newArray.Array.Add(NewCell(NewValue(pair)))
+					pair := []Value{NewValue(key), v}
+					newArray.Array.Add(NewValue(pair))
 				}
 				return &newArray, nil
 			},
-		}))
+		})
 
 		objPrototype = &proto
 	}
@@ -268,7 +268,7 @@ func getStrPrototype() *Value {
 	if strPrototype == nil {
 		proto := makeProto()
 
-		proto.Obj.Set("length", NewCell(Value{
+		proto.Obj.Set("length", Value{
 			Tag: ValueNativeFn,
 			NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
 				if this == nil {
@@ -285,9 +285,9 @@ func getStrPrototype() *Value {
 				lengthVal := NewValue(length)
 				return &lengthVal, nil
 			},
-		}))
+		})
 
-		proto.Obj.Set("split", NewCell(Value{
+		proto.Obj.Set("split", Value{
 			Tag: ValueNativeFn,
 			NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
 				if this == nil || this.Tag != ValueStr {
@@ -313,9 +313,9 @@ func getStrPrototype() *Value {
 
 				return nil, nil
 			},
-		}))
+		})
 
-		proto.Obj.Set("lower", NewCell(Value{
+		proto.Obj.Set("lower", Value{
 			Tag: ValueNativeFn,
 			NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
 				if this == nil || this.Tag != ValueStr {
@@ -326,9 +326,9 @@ func getStrPrototype() *Value {
 				lower := NewValue(strings.ToLower(*this.Str))
 				return &lower, nil
 			},
-		}))
+		})
 
-		proto.Obj.Set("upper", NewCell(Value{
+		proto.Obj.Set("upper", Value{
 			Tag: ValueNativeFn,
 			NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
 				if this == nil || this.Tag != ValueStr {
@@ -339,9 +339,9 @@ func getStrPrototype() *Value {
 				upper := NewValue(strings.ToUpper(*this.Str))
 				return &upper, nil
 			},
-		}))
+		})
 
-		proto.Obj.Set("trim", NewCell(Value{
+		proto.Obj.Set("trim", Value{
 			Tag: ValueNativeFn,
 			NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
 				if this == nil || this.Tag != ValueStr {
@@ -352,7 +352,7 @@ func getStrPrototype() *Value {
 				trimmed := NewValue(strings.TrimSpace(*this.Str))
 				return &trimmed, nil
 			},
-		}))
+		})
 
 		strPrototype = &proto
 	}
@@ -363,7 +363,7 @@ func getNumPrototype() *Value {
 	if numPrototype == nil {
 		proto := makeProto()
 
-		proto.Obj.Set("floor", NewCell(Value{
+		proto.Obj.Set("floor", Value{
 			Tag: ValueNativeFn,
 			NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
 				if this == nil || this.Tag != ValueNum {
@@ -374,9 +374,9 @@ func getNumPrototype() *Value {
 				result := NewValue(math.Floor(*this.Num))
 				return &result, nil
 			},
-		}))
+		})
 
-		proto.Obj.Set("ceil", NewCell(Value{
+		proto.Obj.Set("ceil", Value{
 			Tag: ValueNativeFn,
 			NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
 				if this == nil || this.Tag != ValueNum {
@@ -387,9 +387,9 @@ func getNumPrototype() *Value {
 				result := NewValue(math.Ceil(*this.Num))
 				return &result, nil
 			},
-		}))
+		})
 
-		proto.Obj.Set("round", NewCell(Value{
+		proto.Obj.Set("round", Value{
 			Tag: ValueNativeFn,
 			NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
 				if this == nil || this.Tag != ValueNum {
@@ -400,9 +400,9 @@ func getNumPrototype() *Value {
 				result := NewValue(math.Round(*this.Num))
 				return &result, nil
 			},
-		}))
+		})
 
-		proto.Obj.Set("mod", NewCell(Value{
+		proto.Obj.Set("mod", Value{
 			Tag: ValueNativeFn,
 			NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
 				arg, err := checkArg(v, 0, ValueNum)
@@ -420,9 +420,9 @@ func getNumPrototype() *Value {
 				result := NewValue(math.Mod((math.Mod(a, b) + b), b))
 				return &result, nil
 			},
-		}))
+		})
 
-		proto.Obj.Set("abs", NewCell(Value{
+		proto.Obj.Set("abs", Value{
 			Tag: ValueNativeFn,
 			NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
 				if this == nil || this.Tag != ValueNum {
@@ -433,9 +433,9 @@ func getNumPrototype() *Value {
 				result := NewValue(math.Abs(*this.Num))
 				return &result, nil
 			},
-		}))
+		})
 
-		proto.Obj.Set("format", NewCell(Value{
+		proto.Obj.Set("format", Value{
 			Tag: ValueNativeFn,
 			NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
 				thousandsSep := ","
@@ -479,7 +479,7 @@ func getNumPrototype() *Value {
 				val := NewValue(sb.String())
 				return &val, nil
 			},
-		}))
+		})
 
 		numPrototype = &proto
 	}

@@ -9,14 +9,6 @@ import (
 	"strings"
 )
 
-// HACK temp version to avoid too many rewrites
-func NewCell(srcVal any) Value {
-	if v, ok := srcVal.(Value); ok {
-		return v
-	}
-	return NewValue(srcVal)
-}
-
 type ValueTag uint8
 
 //go:generate stringer -type=ValueTag -linecomment
@@ -90,19 +82,19 @@ func NewValue(srcVal any) Value {
 	case []any:
 		arr := NewArray()
 		for _, item := range val {
-			arr.Array.Add(NewCell(NewValue(item)))
+			arr.Array.Add(NewValue(item))
 		}
 		return arr
 	case []string:
 		arr := NewArray()
 		for _, item := range val {
-			arr.Array.Add(NewCell(NewValue(item)))
+			arr.Array.Add(NewValue(item))
 		}
 		return arr
 	case map[string]any:
 		obj := NewObject()
 		for k, v := range val {
-			obj.Obj.Set(k, NewCell(NewValue(v)))
+			obj.Obj.Set(k, NewValue(v))
 		}
 		return obj
 	case bool:
@@ -289,7 +281,7 @@ func (v *Value) GetMember(member Value) (Value, bool, error) {
 		}
 		index, ok := getArrayIndex(*member.Num, len(v.Array.Items))
 		if !ok {
-			return NewCell(NewValue(nil)), false, nil
+			return NewValue(nil), false, nil
 		}
 		arr := v.Array
 		return arr.Items[index], true, nil
@@ -305,7 +297,7 @@ func (v *Value) GetMember(member Value) (Value, bool, error) {
 		if v.Proto != nil {
 			return v.Proto.GetMember(member)
 		}
-		return NewCell(NewValue(nil)), false, nil
+		return NewValue(nil), false, nil
 	case ValueStr:
 		if member.Tag != ValueNum {
 			return v.Proto.GetMember(member)
@@ -322,9 +314,9 @@ func (v *Value) GetMember(member Value) (Value, bool, error) {
 		}
 
 		if index < 0 || index >= len(*v.Str) {
-			return NewCell(NewValue(nil)), false, nil
+			return NewValue(nil), false, nil
 		}
-		return NewCell(NewString(string((*v.Str)[index]))), true, nil
+		return NewString(string((*v.Str)[index])), true, nil
 	default:
 		if v.Proto != nil {
 			return v.Proto.GetMember(member)

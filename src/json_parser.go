@@ -69,7 +69,7 @@ func (p *jsonParser) parseObject() (Value, error) {
 			return Value{}, err
 		}
 
-		obj.Obj.Set(key, NewCell(val))
+		obj.Obj.Set(key, val)
 	}
 
 	tok, err := p.dec.Token()
@@ -96,7 +96,7 @@ func (p *jsonParser) parseArray() (Value, error) {
 		if err != nil {
 			return Value{}, err
 		}
-		array.Array.Add(NewCell(val))
+		array.Array.Add(val)
 	}
 
 	tok, err := p.dec.Token()

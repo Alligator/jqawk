@@ -108,7 +108,7 @@ func (e *Evaluator) addProgramFunctions() {
 			Tag: ValueFn,
 			Fn:  f,
 		}
-		e.stackTop.scope.bindings[fn.Ident] = NewCell(val)
+		e.stackTop.scope.bindings[fn.Ident] = val
 	}
 }
 
@@ -256,7 +256,7 @@ func (e *Evaluator) evalString(str string) (Value, error) {
 		}
 	}
 	s := string(buf)
-	return NewCell(NewString(s)), nil
+	return NewString(s), nil
 }
 
 func (e *Evaluator) evalExpr(expr Expr) (Value, error) {
@@ -282,19 +282,19 @@ func (e *Evaluator) evalExpr(expr Expr) (Value, error) {
 				Tag:    ValueRegex,
 				Regexp: re,
 			}
-			return NewCell(val), nil
+			return val, nil
 		case Num:
 			num, err := strconv.ParseFloat(exp.Literal, 64)
 			if err != nil {
 				return Value{}, e.error(expr.Token(), "could not parse number")
 			}
-			return NewCell(NewValue(num)), nil
+			return NewValue(num), nil
 		case True:
-			return NewCell(NewValue(true)), nil
+			return NewValue(true), nil
 		case False:
-			return NewCell(NewValue(false)), nil
+			return NewValue(false), nil
 		case Null:
-			return NewCell(NewValue(nil)), nil
+			return NewValue(nil), nil
 		default:
 			panic(fmt.Errorf("unhandled literal type: %s", exp.token.Tag))
 		}
@@ -335,7 +335,7 @@ func (e *Evaluator) evalExpr(expr Expr) (Value, error) {
 		if err != nil {
 			return Value{}, err
 		}
-		return NewCell(NewValue(items)), nil
+		return NewValue(items), nil
 	case *ExprMatch:
 		value, err := e.evalExpr(exp.Value)
 		if err != nil {
@@ -376,10 +376,10 @@ func (e *Evaluator) evalExpr(expr Expr) (Value, error) {
 					return Value{}, err
 				}
 
-				return NewCell(NewValue(nil)), nil
+				return NewValue(nil), nil
 			}
 		}
-		return NewCell(NewValue(nil)), nil
+		return NewValue(nil), nil
 	case *ExprObject:
 		obj := NewObject()
 		for _, kv := range exp.Items {
@@ -390,7 +390,7 @@ func (e *Evaluator) evalExpr(expr Expr) (Value, error) {
 
 			obj.Obj.Set(kv.Key, value)
 		}
-		return NewCell(obj), nil
+		return obj, nil
 	case *ExprFunction:
 		fn := FnWithContext{
 			Expr:  exp,
@@ -400,7 +400,7 @@ func (e *Evaluator) evalExpr(expr Expr) (Value, error) {
 			Tag: ValueFn,
 			Fn:  fn,
 		}
-		cell := NewCell(val)
+		cell := val
 		e.stackTop.scope.bindings[exp.Ident] = cell
 		return cell, nil
 	case *ExprAssign:
@@ -591,9 +591,9 @@ func (e *Evaluator) callFunction(fn Value, args []*Value) (Value, error) {
 			return Value{}, err
 		}
 		if result != nil {
-			return NewCell(*result), nil
+			return *result, nil
 		}
-		return NewCell(NewValue(nil)), nil
+		return NewValue(nil), nil
 	case ValueFn:
 		f := fn.Fn
 		if err := e.pushFrame(f.Expr.Ident); err != nil {
@@ -605,9 +605,9 @@ func (e *Evaluator) callFunction(fn Value, args []*Value) (Value, error) {
 
 		for index, argName := range f.Expr.Args {
 			if index > len(args)-1 {
-				e.stackTop.scope.bindings[argName] = NewCell(NewValue(nil))
+				e.stackTop.scope.bindings[argName] = NewValue(nil)
 			} else {
-				e.stackTop.scope.bindings[argName] = NewCell(*args[index])
+				e.stackTop.scope.bindings[argName] = *args[index]
 			}
 		}
 
@@ -627,9 +627,9 @@ func (e *Evaluator) callFunction(fn Value, args []*Value) (Value, error) {
 		}
 
 		if retVal != nil {
-			return NewCell(*retVal), nil
+			return *retVal, nil
 		}
-		return NewCell(NewValue(nil)), nil
+		return NewValue(nil), nil
 	default:
 		return Value{}, fmt.Errorf("attempted to call a %s", fn.Tag)
 	}
@@ -643,13 +643,13 @@ func (e *Evaluator) evalUnaryExpr(expr *ExprUnary) (Value, error) {
 
 	switch expr.OpToken.Tag {
 	case Bang:
-		return NewCell(NewValue(!val.isTruthy())), nil
+		return NewValue(!val.isTruthy()), nil
 	case Plus:
 		v := val.asFloat64()
-		return NewCell(NewValue(v)), nil
+		return NewValue(v), nil
 	case Minus:
 		v := val.asFloat64()
-		return NewCell(NewValue(-v)), nil
+		return NewValue(-v), nil
 	case PlusPlus, MinusMinus:
 		v := val.asFloat64()
 		var newValue Value
@@ -662,13 +662,13 @@ func (e *Evaluator) evalUnaryExpr(expr *ExprUnary) (Value, error) {
 		}
 
 		oldValue := val
-		value, err := e.assignToTarget(expr.Target, NewCell(newValue))
+		value, err := e.assignToTarget(expr.Target, newValue)
 		if err != nil {
 			return Value{}, err
 		}
 
 		if expr.Postfix {
-			return NewCell(NewValue(oldValue.asFloat64())), nil
+			return NewValue(oldValue.asFloat64()), nil
 		}
 		return value, nil
 	default:
@@ -691,13 +691,13 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (Value, error) {
 				return Value{}, err
 			}
 			if right.isTruthy() {
-				return NewCell(NewValue(true)), nil
+				return NewValue(true), nil
 			}
 		}
-		return NewCell(NewValue(false)), nil
+		return NewValue(false), nil
 	case PipePipe:
 		if left.isTruthy() {
-			return NewCell(NewValue(true)), nil
+			return NewValue(true), nil
 		}
 
 		right, err := e.evalExpr(expr.Right)
@@ -706,10 +706,10 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (Value, error) {
 		}
 
 		if right.isTruthy() {
-			return NewCell(NewValue(true)), nil
+			return NewValue(true), nil
 		}
 
-		return NewCell(NewValue(false)), nil
+		return NewValue(false), nil
 	}
 
 	// is special-case
@@ -721,10 +721,10 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (Value, error) {
 			switch exp.token.Tag {
 			case Function:
 				result = left.Tag == ValueFn
-				return NewCell(NewValue(result)), nil
+				return NewValue(result), nil
 			case Null:
 				result = left.Tag == ValueNil
-				return NewCell(NewValue(result)), nil
+				return NewValue(result), nil
 			}
 
 			s := exp.Ident
@@ -744,7 +744,7 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (Value, error) {
 			case "unknown":
 				result = left.Tag == ValueUnknown
 			}
-			return NewCell(NewValue(result)), nil
+			return NewValue(result), nil
 		}
 
 		return Value{}, e.error(expr.Right.Token(), "expected a type name")
@@ -756,7 +756,7 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (Value, error) {
 			return Value{}, e.error(rng.Token(), fmt.Sprintf("cannot slice a %s", left.Tag))
 		}
 
-		start := NewCell(NewValue(0))
+		start := NewValue(0)
 		if rng.Start != nil {
 			start, err = e.evalExpr(rng.Start)
 			if err != nil {
@@ -804,7 +804,7 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (Value, error) {
 				}
 				slice.Array.Add(value)
 			}
-			return NewCell(slice), nil
+			return slice, nil
 		}
 
 		if left.Tag == ValueStr {
@@ -824,7 +824,7 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (Value, error) {
 			}
 
 			str := (*left.Str)[starti:endi]
-			return NewCell(NewString(str)), nil
+			return NewString(str), nil
 		}
 	}
 
@@ -851,7 +851,7 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (Value, error) {
 		}
 
 		if !present {
-			return NewCell(NewValue(nil)), nil
+			return NewValue(nil), nil
 		}
 		member.Binding = &left
 
@@ -861,9 +861,9 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (Value, error) {
 			// for unknown values, > and < are always true, == is always false
 			switch expr.OpToken.Tag {
 			case LessThan, GreaterThan:
-				return NewCell(NewValue(true)), nil
+				return NewValue(true), nil
 			default:
-				return NewCell(NewValue(false)), nil
+				return NewValue(false), nil
 			}
 		}
 
@@ -873,18 +873,18 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (Value, error) {
 		}
 		switch expr.OpToken.Tag {
 		case LessThan:
-			return NewCell(NewValue(cmp < 0)), nil
+			return NewValue(cmp < 0), nil
 		case GreaterThan:
-			return NewCell(NewValue(cmp > 0)), nil
+			return NewValue(cmp > 0), nil
 		case EqualEqual:
-			return NewCell(NewValue(cmp == 0)), nil
+			return NewValue(cmp == 0), nil
 		case BangEqual:
 			v := NewValue(cmp == 0)
-			return NewCell(*v.Not()), nil
+			return *v.Not(), nil
 		case LessEqual:
-			return NewCell(NewValue(cmp <= 0)), nil
+			return NewValue(cmp <= 0), nil
 		case GreaterEqual:
-			return NewCell(NewValue(cmp >= 0)), nil
+			return NewValue(cmp >= 0), nil
 		default:
 			panic("unhandled comparison operator")
 		}
@@ -893,30 +893,30 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (Value, error) {
 			// string concat
 			leftStr := left.String()
 			rightStr := right.String()
-			return NewCell(NewValue(leftStr + rightStr)), nil
+			return NewValue(leftStr + rightStr), nil
 		}
 
 		leftNum := left.asFloat64()
 		rightNum := right.asFloat64()
 		switch expr.OpToken.Tag {
 		case Plus:
-			return NewCell(NewValue(leftNum + rightNum)), nil
+			return NewValue(leftNum + rightNum), nil
 		case Minus:
-			return NewCell(NewValue(leftNum - rightNum)), nil
+			return NewValue(leftNum - rightNum), nil
 		case Multiply:
-			return NewCell(NewValue(leftNum * rightNum)), nil
+			return NewValue(leftNum * rightNum), nil
 		case Divide:
 			if leftNum == 0 || rightNum == 0 {
 				return Value{}, e.error(expr.OpToken, "divide by zero")
 			}
-			return NewCell(NewValue(leftNum / rightNum)), nil
+			return NewValue(leftNum / rightNum), nil
 		case Percent:
 			leftInt := int(leftNum)
 			rightInt := int(rightNum)
 			if leftInt == 0 || rightInt == 0 {
 				return Value{}, e.error(expr.OpToken, "divide by zero")
 			}
-			return NewCell(NewValue(leftInt % rightInt)), nil
+			return NewValue(leftInt % rightInt), nil
 		default:
 			panic("unhandled operator")
 		}
@@ -943,9 +943,9 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (Value, error) {
 		}
 
 		if expr.OpToken.Tag == BangTilde {
-			return NewCell(*v.Not()), nil
+			return *v.Not(), nil
 		}
-		return NewCell(v), nil
+		return v, nil
 	default:
 		return Value{}, e.error(expr.OpToken, fmt.Sprintf("unknown operator %s", expr.OpToken.Tag))
 	}
@@ -1259,7 +1259,7 @@ func (e *Evaluator) evalPatternRules(patternRules []*Rule) error {
 	switch e.root.Tag {
 	case ValueArray:
 		for i := range e.root.Array.Items {
-			e.stackTop.scope.bindings["$index"] = NewCell(NewValue(i))
+			e.stackTop.scope.bindings["$index"] = NewValue(i)
 			e.ruleRoot = arrayLValue{e.root.Array, i}
 			if err := e.evalRules(patternRules); err != nil {
 				return err
@@ -1320,7 +1320,7 @@ func (e *Evaluator) forEachRootValue(files []InputFile, rootSelectors []string, 
 				return JsonError{err.Error(), file.Name()}
 			}
 
-			e.setGlobal("$file", NewCell(NewValue(file.Name())))
+			e.setGlobal("$file", NewValue(file.Name()))
 
 			// find the root value(s)
 			rootValues := make([]*Value, 0)

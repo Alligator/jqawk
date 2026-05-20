@@ -261,20 +261,20 @@ func nativeNum(e *Evaluator, args []*Value, this *Value) (*Value, error) {
 }
 
 func addRuntimeFunctions(e *Evaluator) {
-	e.setGlobal("printf", NewCell(Value{
+	e.setGlobal("printf", Value{
 		Tag:      ValueNativeFn,
 		NativeFn: nativePrintf,
-	}))
-	e.setGlobal("json", NewCell(Value{
+	})
+	e.setGlobal("json", Value{
 		Tag:      ValueNativeFn,
 		NativeFn: nativeJson,
-	}))
-	e.setGlobal("num", NewCell(Value{
+	})
+	e.setGlobal("num", Value{
 		Tag:      ValueNativeFn,
 		NativeFn: nativeNum,
-	}))
-	e.setGlobal("parseJson", NewCell(Value{
+	})
+	e.setGlobal("parseJson", Value{
 		Tag:      ValueNativeFn,
 		NativeFn: nativeParseJson,
-	}))
+	})
 }
