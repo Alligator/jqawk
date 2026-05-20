@@ -218,7 +218,6 @@ func (e *Evaluator) getIdentifier(expr *ExprIdentifier) (Value, error) {
 }
 
 func (e *Evaluator) identifierLValue(expr *ExprIdentifier) (LValue, error) {
-	ident := expr.Ident
 	if expr.token.Tag == Dollar {
 		if e.ruleRoot == nil {
 			return nil, e.error(expr.Token(), "unknown variable $")
@@ -226,7 +225,7 @@ func (e *Evaluator) identifierLValue(expr *ExprIdentifier) (LValue, error) {
 		return e.ruleRoot, nil
 	}
 
-	scope, err := e.getVariable(ident)
+	scope, err := e.getVariable(expr.Ident)
 	if err != nil {
 		return nil, e.error(expr.Token(), err.Error())
 	}
@@ -261,6 +260,10 @@ func (e *Evaluator) evalString(str string) (Value, error) {
 }
 
 func (e *Evaluator) evalExpr(expr Expr) (Value, error) {
+	if err := e.checkContext(); err != nil {
+		return Value{}, err
+	}
+
 	switch exp := expr.(type) {
 	case *ExprLiteral:
 		switch exp.token.Tag {
@@ -1022,6 +1025,9 @@ func (e *Evaluator) evalStatement(stmt Statement) error {
 		}
 
 		if len(args) == 0 {
+			if e.ruleRoot == nil {
+				return e.error(stmt.Token(), "unknown variable $")
+			}
 			val := e.ruleRoot.Get()
 			fmt.Fprintln(e.stdout, val.PrettyString(false))
 			return nil

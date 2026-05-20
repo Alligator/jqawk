@@ -1057,7 +1057,7 @@ func (p *Parser) parseRule() (Rule, error) {
 	} else {
 		// rule with no body
 		// becomes { print }
-		rule.Body = &StatementPrint{}
+		rule.Body = &StatementPrint{token: *p.current}
 	}
 
 	return rule, nil
