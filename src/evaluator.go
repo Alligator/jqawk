@@ -310,7 +310,7 @@ func (e *Evaluator) evalExpr(expr Expr) (Value, error) {
 			return Value{}, err
 		}
 
-		args, err := e.evalExprList(exp.Args, true)
+		args, err := e.evalExprList(exp.Args)
 		if err != nil {
 			return Value{}, err
 		}
@@ -331,7 +331,7 @@ func (e *Evaluator) evalExpr(expr Expr) (Value, error) {
 
 		return result, nil
 	case *ExprArray:
-		items, err := e.evalExprList(exp.Items, true)
+		items, err := e.evalExprList(exp.Items)
 		if err != nil {
 			return Value{}, err
 		}
@@ -951,47 +951,7 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (Value, error) {
 	}
 }
 
-// func copyValue(from Value, to Value) (Value, error) {
-// 	switch from.Tag {
-// 	// copy
-// 	case ValueNum:
-// 		n := *from.Num
-// 		to.Value = Value{
-// 			Tag:   ValueNum,
-// 			Num:   &n,
-// 			Proto: from.Value.Proto,
-// 		}
-// 	case ValueBool:
-// 		b := *from.Value.Bool
-// 		to.Value = Value{
-// 			Tag:   ValueBool,
-// 			Bool:  &b,
-// 			Proto: from.Value.Proto,
-// 		}
-// 	case ValueNil:
-// 		to.Value = NewValue(nil)
-// 	case ValueStr:
-// 		s := *from.Value.Str
-// 		to.Value = NewString(s)
-// 	case ValueRegex:
-// 		val := Value{
-// 			Tag:    ValueRegex,
-// 			Regexp: from.Value.Regexp,
-// 			Proto:  from.Value.Proto,
-// 		}
-// 		to.Value = val
-
-// 	// reference
-// 	case ValueArray, ValueObj, ValueUnknown, ValueFn:
-// 		to.Value = from.Value
-
-// 	default:
-// 		return nil, fmt.Errorf("cannot copy a %s to a %s", from.Value.Tag, to.Value.Tag)
-// 	}
-// 	return to, nil
-// }
-
-func (e *Evaluator) evalExprList(exprs []Expr, copy bool) ([]Value, error) {
+func (e *Evaluator) evalExprList(exprs []Expr) ([]Value, error) {
 	evaledExprs := make([]Value, 0, len(exprs))
 	for _, expr := range exprs {
 		v, err := e.evalExpr(expr)
@@ -1019,7 +979,7 @@ func (e *Evaluator) evalStatement(stmt Statement) error {
 		}
 		return nil
 	case *StatementPrint:
-		args, err := e.evalExprList(st.Args, false)
+		args, err := e.evalExprList(st.Args)
 		if err != nil {
 			return err
 		}
