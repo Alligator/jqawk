@@ -974,6 +974,102 @@ false true
 		expected: "1.23 1.23 1 null null\n",
 	},
 	{
+		name: "assignment semantics",
+		prog: `
+
+		function check(ok, name) {
+			if (!ok) {
+				print 'failed:', name
+			}
+		}
+			
+		BEGIN {
+			# references
+			{
+				obj = {}
+				arr = []
+
+				obj.name = 'obj ref'
+				obj2 = obj
+				check(obj.name == 'obj ref', 'obj ref')
+
+				arr[0] = obj
+				arr[0].name = 'obj in array'
+				check(obj.name == 'obj in array', 'obj ref')
+
+				obj.a = arr
+				obj.a[0] = 'array in obj'
+				check(arr[0] == 'array in obj', 'array in obj')
+			}
+
+			# values
+			{
+				obj = {}
+				arr = []
+				n = 3
+
+				arr[0] = n
+				arr[0]++
+				check(n == 3, 'original in array is unmodified')
+				check(arr[0] == 4, 'array item is modified')
+
+				obj.n = n
+				obj.n--
+				check(n == 3, 'original in object is unmodified')
+				check(obj.n == 2, 'object property is modified')
+			}
+
+			# array literals
+			{
+				obj = { 'name': 'test' }
+				n = 5
+				arr = [obj, n]
+
+				arr[0].name = 'testing'
+				arr[1] += 2
+
+				check(arr[0].name == 'testing', 'obj in array literal')
+				check(arr[1] == 7, 'var in array literal')
+				check(n == 5, 'original var unmodified in array literal')
+			}
+
+			# object literals
+			{
+				arr = [1]
+				n = 7
+				obj = { 'arr': arr, 'n': n }
+
+				obj.arr[0]++
+				obj.n -= 2
+
+				check(obj.arr[0] == 2, 'array in obj literal')
+				check(obj.n == 5, 'var in obj literal')
+				check(n == 7, 'original var unmodified in obj literal')
+			}
+
+			# function calls
+			{
+				function modifyObj(o) { o.name = 'ken' }
+				function modifyArr(a) { a[0] = 'ben' }
+				function modifyNum(n) { n += 5 }
+
+				obj = {}
+				modifyObj(obj)
+
+				arr = []
+				modifyArr(arr)
+
+				n = 5
+				modifyNum(n)
+
+				check(obj.name == 'ken', 'modify obj in function')
+				check(arr[0] == 'ben', 'modify arr in function')
+				check(n == 5, 'cannot modify num in function')
+			}
+		}`,
+		expected: "",
+	},
+	{
 		name: "bug: statement after block",
 		prog: `
 			{
