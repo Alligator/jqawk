@@ -41,27 +41,27 @@ type Value struct {
 }
 
 type Array struct {
-	Items []Value
+	Items []*Value
 }
 
 func (a *Array) Add(value Value) {
-	a.Items = append(a.Items, value)
+	a.Items = append(a.Items, &value)
 }
 
 type Object struct {
-	Items map[string]Value
+	Items map[string]*Value
 	Keys  []string
 }
 
 func (o *Object) Set(key string, cell Value) {
 	_, present := o.Items[key]
-	o.Items[key] = cell
+	o.Items[key] = &cell
 	if !present {
 		o.Keys = append(o.Keys, key)
 	}
 }
 
-func (o *Object) Get(key string) (Value, bool) {
+func (o *Object) Get(key string) (*Value, bool) {
 	cell, ok := o.Items[key]
 	return cell, ok
 }
@@ -74,11 +74,11 @@ type FnWithContext struct {
 func NewValue(srcVal any) Value {
 	switch val := srcVal.(type) {
 	case []Value:
-		return Value{
-			Tag:   ValueArray,
-			Array: &Array{val},
-			Proto: getArrayPrototype(),
+		arr := NewArray()
+		for _, item := range val {
+			arr.Array.Add(item)
 		}
+		return arr
 	case []any:
 		arr := NewArray()
 		for _, item := range val {
@@ -134,7 +134,7 @@ func NewValue(srcVal any) Value {
 }
 
 func NewArray() Value {
-	arr := Array{make([]Value, 0)}
+	arr := Array{make([]*Value, 0)}
 	return Value{
 		Tag:   ValueArray,
 		Array: &arr,
@@ -143,7 +143,7 @@ func NewArray() Value {
 }
 
 func NewObject() Value {
-	obj := Object{make(map[string]Value), make([]string, 0)}
+	obj := Object{make(map[string]*Value), make([]string, 0)}
 	return Value{
 		Tag:   ValueObj,
 		Obj:   &obj,
@@ -181,7 +181,7 @@ func (v *Value) PrettyString(quote bool) string {
 // check if two value slices have the same underlying array
 // borrowed from go's math library
 // https://go.dev/src/math/big/nat.go#L374
-func alias(x, y []Value) bool {
+func alias(x, y []*Value) bool {
 	return cap(x) > 0 && cap(y) > 0 && &x[0:cap(x)][cap(x)-1] == &y[0:cap(y)][cap(y)-1]
 }
 
@@ -284,7 +284,7 @@ func (v *Value) GetMember(member Value) (Value, bool, error) {
 			return NewValue(nil), false, nil
 		}
 		arr := v.Array
-		return arr.Items[index], true, nil
+		return *arr.Items[index], true, nil
 	case ValueObj:
 		if member.Tag != ValueNum && member.Tag != ValueStr {
 			return Value{}, false, fmt.Errorf("objects can only by indexed with numbers or strings, got %s", member.Tag)
@@ -292,7 +292,7 @@ func (v *Value) GetMember(member Value) (Value, bool, error) {
 		key := member.String()
 		value, present := v.Obj.Get(key)
 		if present {
-			return value, true, nil
+			return *value, true, nil
 		}
 		if v.Proto != nil {
 			return v.Proto.GetMember(member)
@@ -348,7 +348,7 @@ func (v *Value) SetMember(member Value, value Value) error {
 				lastIndex = i
 				v.Array.Add(NewValue(nil))
 			}
-			v.Array.Items[lastIndex] = value
+			v.Array.Items[lastIndex] = &value
 
 			return nil
 		}

@@ -19,7 +19,7 @@ var numPrototype *Value = nil
 func makeProto() Value {
 	return Value{
 		Tag: ValueObj,
-		Obj: &Object{make(map[string]Value), make([]string, 0)},
+		Obj: &Object{make(map[string]*Value), make([]string, 0)},
 	}
 }
 
@@ -78,7 +78,7 @@ func getArrayPrototype() *Value {
 
 				retVal := this.Array.Items[len(this.Array.Items)-1]
 				this.Array.Items = this.Array.Items[:len(this.Array.Items)-1]
-				return &retVal, nil
+				return retVal, nil
 			},
 		})
 
@@ -99,7 +99,7 @@ func getArrayPrototype() *Value {
 
 				retVal := this.Array.Items[0]
 				this.Array.Items = this.Array.Items[1:]
-				return &retVal, nil
+				return retVal, nil
 			},
 		})
 
@@ -114,7 +114,7 @@ func getArrayPrototype() *Value {
 				}
 
 				for _, item := range this.Array.Items {
-					comp, err := v[0].Compare(&item)
+					comp, err := v[0].Compare(item)
 					if err != nil {
 						return nil, err
 					}
@@ -139,7 +139,7 @@ func getArrayPrototype() *Value {
 				// make a clone
 				clone := NewArray()
 				for _, item := range this.Array.Items {
-					clone.Array.Add(item)
+					clone.Array.Add(*item)
 				}
 
 				// is there a sort func?
@@ -150,13 +150,13 @@ func getArrayPrototype() *Value {
 					sortFunc := v[0]
 
 					var err error
-					slices.SortStableFunc(clone.Array.Items, func(a Value, b Value) int {
+					slices.SortStableFunc(clone.Array.Items, func(a *Value, b *Value) int {
 						if err != nil {
 							return 0
 						}
 
 						var result Value
-						result, err = e.callFunction(*sortFunc, []*Value{&a, &b})
+						result, err = e.callFunction(*sortFunc, []*Value{a, b})
 						if err != nil {
 							return 0
 						}
@@ -182,7 +182,7 @@ func getArrayPrototype() *Value {
 					}
 				}
 
-				slices.SortStableFunc(clone.Array.Items, func(a Value, b Value) int {
+				slices.SortStableFunc(clone.Array.Items, func(a *Value, b *Value) int {
 					if onlyNumbers {
 						return cmp.Compare(*a.Num, *b.Num)
 					}
@@ -252,7 +252,7 @@ func getObjPrototype() *Value {
 				newArray := NewArray()
 				for _, key := range this.Obj.Keys {
 					v, _ := this.Obj.Get(key)
-					pair := []Value{NewValue(key), v}
+					pair := []Value{NewValue(key), *v}
 					newArray.Array.Add(NewValue(pair))
 				}
 				return &newArray, nil

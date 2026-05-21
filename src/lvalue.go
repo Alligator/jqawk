@@ -24,7 +24,7 @@ type objectLValue struct {
 
 func (lv objectLValue) Get() Value {
 	v, _ := lv.obj.Get(lv.key)
-	return v
+	return *v
 }
 func (lv objectLValue) Set(v Value) {
 	lv.obj.Set(lv.key, v)
@@ -36,10 +36,10 @@ type arrayLValue struct {
 }
 
 func (lv arrayLValue) Get() Value {
-	return lv.arr.Items[lv.index]
+	return *lv.arr.Items[lv.index]
 }
 func (lv arrayLValue) Set(v Value) {
-	lv.arr.Items[lv.index] = v
+	lv.arr.Items[lv.index] = &v
 }
 
 type rootLValue struct {

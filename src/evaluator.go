@@ -569,7 +569,7 @@ func (e *Evaluator) evalCaseMatch(value Value, exprs []Expr) (bool, map[string]V
 
 			for i, item := range array.Items {
 				exprToMatch := ex.Items[i]
-				match, newBindings, err := e.evalCaseMatch(item, []Expr{exprToMatch})
+				match, newBindings, err := e.evalCaseMatch(*item, []Expr{exprToMatch})
 				if err != nil {
 					return false, nil, err
 				}
@@ -1117,7 +1117,7 @@ func (e *Evaluator) evalStatement(stmt Statement) error {
 					e.setVariable(st.IndexIdent.Ident, NewValue(index))
 				}
 
-				e.setVariable(st.Ident.Ident, item)
+				e.setVariable(st.Ident.Ident, *item)
 
 				err := e.evalStatement(st.Body)
 				if err == errBreak {
@@ -1130,7 +1130,7 @@ func (e *Evaluator) evalStatement(stmt Statement) error {
 			for _, k := range iterable.Obj.Keys {
 				v, _ := iterable.Obj.Get(k)
 				if st.IndexIdent != nil {
-					e.setVariable(st.IndexIdent.Ident, v)
+					e.setVariable(st.IndexIdent.Ident, *v)
 				}
 
 				e.setVariable(st.Ident.Ident, NewValue(k))
@@ -1223,7 +1223,7 @@ func (e *Evaluator) evalPatternRules(patternRules []*Rule) error {
 	case ValueArray:
 		for i, item := range e.root.Array.Items {
 			e.stackTop.scope.bindings["$index"] = NewValue(i)
-			e.ruleRoot = &item
+			e.ruleRoot = item
 			e.ruleRootSlot = &rootLValue{e, arrayLValue{e.root.Array, i}}
 			if err := e.evalRules(patternRules); err != nil {
 				return err
