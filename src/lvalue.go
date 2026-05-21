@@ -2,7 +2,7 @@ package lang
 
 type LValue interface {
 	Get() Value
-	Set(Value) error
+	Set(Value)
 }
 
 type varLValue struct {
@@ -13,9 +13,8 @@ type varLValue struct {
 func (lv varLValue) Get() Value {
 	return lv.scope.bindings[lv.name]
 }
-func (lv varLValue) Set(v Value) error {
+func (lv varLValue) Set(v Value) {
 	lv.scope.bindings[lv.name] = v
-	return nil
 }
 
 type objectLValue struct {
@@ -27,9 +26,8 @@ func (lv objectLValue) Get() Value {
 	v, _ := lv.obj.Get(lv.key)
 	return v
 }
-func (lv objectLValue) Set(v Value) error {
+func (lv objectLValue) Set(v Value) {
 	lv.obj.Set(lv.key, v)
-	return nil
 }
 
 type arrayLValue struct {
@@ -40,7 +38,21 @@ type arrayLValue struct {
 func (lv arrayLValue) Get() Value {
 	return lv.arr.Items[lv.index]
 }
-func (lv arrayLValue) Set(v Value) error {
+func (lv arrayLValue) Set(v Value) {
 	lv.arr.Items[lv.index] = v
-	return nil
+}
+
+type rootLValue struct {
+	e    *Evaluator
+	slot LValue
+}
+
+func (lv rootLValue) Get() Value {
+	return *lv.e.ruleRoot
+}
+func (lv rootLValue) Set(v Value) {
+	if lv.slot != nil {
+		lv.slot.Set(v)
+	}
+	lv.e.ruleRoot = &v
 }
