@@ -1227,37 +1227,34 @@ false true
 	},
 }
 
-func FuzzJqawk(f *testing.F) {
-	for _, tc := range tests {
-		if tc.expectedError == "" {
-			f.Add(tc.prog)
-		}
+func FuzzJqawkWithJson(f *testing.F) {
+	seedTests := []struct {
+		prog string
+		json string
+	}{
+		{`{ print $ }`, `[1,2,3]`},
+		{`BEGIN { a = []; a[0]++; print a }`, `[]`},
+		{`BEGIN { a = {}; a.x.y = 1; print a }`, `[]`},
+		{`{ print $.a, $[0], $["x"] }`, `[{"a":1}, [2], {"x":3}]`},
+		{`{ for (x in $) print x }`, `[[1,2], {"a":1}, "abc"]`},
+		{`function f(x) { return x + 1 } { print f($) }`, `[1,2,3]`},
+
+		{`{ return }`, `[1]`},
+		{`{ break }`, `[1]`},
+		{`BEGIN { ++(1 + 2) }`, `[]`},
+		{`BEGIN { print '\z' }`, `[]`},
+		{`$ ~ /abc`, `[1]`},
 	}
 
-	f.Fuzz(func(t *testing.T, src string) {
-		input := "[{ \"a\": 1 }, { \"a\": null }]"
-		inputReader := strings.NewReader(input)
-		inputFiles := []lang.InputFile{
-			lang.NewStreamingInputFile("<test>", inputReader),
-		}
-		_, err := lang.EvalProgram(src, inputFiles, nil, io.Discard, true)
+	for _, seed := range seedTests {
+		f.Add(seed.prog, seed.json)
+	}
 
-		if err != nil {
-			switch err.(type) {
-			case lang.SyntaxError, lang.RuntimeError, lang.JsonError, lang.ErrorGroup:
-				// don't fail
-			default:
-				t.Errorf("%#v", err)
-			}
-		}
-	})
-}
-
-func FuzzJqawkWithJson(f *testing.F) {
 	for _, tc := range tests {
-		if tc.expectedError == "" {
-			f.Add(tc.prog, tc.json)
+		if len(tc.prog) > 1000 {
+			continue
 		}
+		f.Add(tc.prog, tc.json)
 	}
 
 	f.Fuzz(func(t *testing.T, src string, jsonSrc string) {
@@ -1272,6 +1269,7 @@ func FuzzJqawkWithJson(f *testing.F) {
 		if err != nil {
 			switch err.(type) {
 			case lang.SyntaxError, lang.RuntimeError, lang.JsonError, lang.ErrorGroup:
+				return
 				// don't fail
 			default:
 				t.Errorf("%#v", err)
