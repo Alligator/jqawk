@@ -1238,8 +1238,16 @@ func (e *Evaluator) evalPatternRules(patternRules []*Rule) error {
 	return nil
 }
 
-func (e *Evaluator) GetRootJson() (string, error) {
+func (e *Evaluator) GetPrettyRootJson() (string, error) {
 	bytes, err := json.MarshalIndent(e.root, "", "  ")
+	if err != nil {
+		return "", err
+	}
+	return string(bytes), nil
+}
+
+func (e *Evaluator) GetUglyRootJson() (string, error) {
+	bytes, err := json.Marshal(e.root)
 	if err != nil {
 		return "", err
 	}
