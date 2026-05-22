@@ -1070,6 +1070,28 @@ false true
 		expected: "",
 	},
 	{
+		name:          "$ in begin",
+		prog:          "BEGIN { $.x = 1; print $; }",
+		expectedError: "unknown variable $",
+	},
+	{
+		name:          "$ in begin with json",
+		prog:          "BEGIN { $.x = 1; print $; }",
+		json:          "[1,2,3]",
+		expectedError: "unknown variable $",
+	},
+	{
+		name:          "$ in end",
+		prog:          "END { $.x = 1 }",
+		expectedError: "unknown variable $",
+	},
+	{
+		name:          "$ in end with json",
+		prog:          "END { $.x = 1 }",
+		json:          "[1,2,3]",
+		expectedError: "unknown variable $",
+	},
+	{
 		name: "bug: statement after block",
 		prog: `
 			{
