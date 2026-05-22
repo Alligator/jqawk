@@ -20,6 +20,7 @@ type testCase struct {
 	json2         string
 	expected      string
 	expectedError string
+	expectedJson  string
 	args          []string
 }
 
@@ -1092,6 +1093,24 @@ false true
 		expectedError: "unknown variable $",
 	},
 	{
+		name:         "$ mutation",
+		prog:         "{ $ = $ * 2 }",
+		json:         "[1,2,3]",
+		expectedJson: "[2,4,6]",
+	},
+	{
+		name:         "$ mutation (nested)",
+		prog:         "{ $.x[0].y = 2 }",
+		json:         "[{}]",
+		expectedJson: `[{"x":[{"y":2}]}]`,
+	},
+	{
+		name:         "$ mutation (via method)",
+		prog:         "{ $.items.push(3) }",
+		json:         `{"items":[1,2]}`,
+		expectedJson: `{"items":[1,2,3]}`,
+	},
+	{
 		name: "bug: statement after block",
 		prog: `
 			{
@@ -1323,9 +1342,20 @@ func testInternal(t testing.TB, tc testCase) {
 	}
 
 	var sb strings.Builder
-	_, err := lang.EvalProgram(tc.prog, inputFiles, nil, &sb, false)
+	ev, err := lang.EvalProgram(tc.prog, inputFiles, nil, &sb, false)
 	if err != nil {
 		handleError(err)
+	}
+
+	if tc.expectedJson != "" {
+		j, err := ev.GetUglyRootJson()
+		if err != nil {
+			handleError(err)
+		}
+		if j != tc.expectedJson {
+			t.Fatalf("output json %s did not match %s\n", j, tc.expectedJson)
+		}
+		return
 	}
 
 	if sb.String() != tc.expected {
