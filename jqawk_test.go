@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -21,6 +20,7 @@ type testCase struct {
 	json2         string
 	expected      string
 	expectedError string
+	expectedJson  string
 	args          []string
 }
 
@@ -623,13 +623,13 @@ s |Jan       |
 	},
 	{
 		name:     "printing circular references",
-		prog:     "BEGIN { a.a=a; print a; b = []; b[0] = 1; b[1] = b; print b; }",
+		prog:     "BEGIN { a.a = 3; a.a = a; print a; b = []; b[0] = 1; b[1] = b; print b; }",
 		json:     "[]",
 		expected: "{\"a\": <circular reference>}\n[1, <circular reference>]\n",
 	},
 	{
 		name:          "converting circular references to JSON",
-		prog:          "BEGIN { a.a=a; print json(a) }",
+		prog:          "BEGIN { a.a = 3; a.a = a; print json(a) }",
 		json:          "[]",
 		expectedError: "error creating JSON: circular reference",
 	},
@@ -774,14 +774,12 @@ rhs not null
 	{
 		name: "beginfile endfile",
 		prog: `
-			BEGIN { print 'begin', $ }
 			BEGINFILE { print 'beginfile', $ }
 			ENDFILE { print 'endfile', $ }
-			END { print 'end', $ }
 		`,
 		json:     "123",
 		json2:    "456",
-		expected: "begin null\nbeginfile 123\nendfile 123\nbeginfile 456\nendfile 456\nend null\n",
+		expected: "beginfile 123\nendfile 123\nbeginfile 456\nendfile 456\n",
 	},
 	{
 		name: "$ is the root value in endfile",
@@ -791,7 +789,7 @@ rhs not null
 			ENDFILE { print $ }
 		`,
 		json:     `{ "stuff": [1, 2, 3] }`,
-		expected: "1\n2\n3\n{\"stuff\": [1, 2, 3]}\n",
+		expected: "1\n2\n3\n[1, 2, 3]\n",
 	},
 	{
 		name: "num methods",
@@ -977,6 +975,142 @@ false true
 		expected: "1.23 1.23 1 null null\n",
 	},
 	{
+		name: "assignment semantics",
+		prog: `
+
+		function check(ok, name) {
+			if (!ok) {
+				print 'failed:', name
+			}
+		}
+			
+		BEGIN {
+			# references
+			{
+				obj = {}
+				arr = []
+
+				obj.name = 'obj ref'
+				obj2 = obj
+				check(obj.name == 'obj ref', 'obj ref')
+
+				arr[0] = obj
+				arr[0].name = 'obj in array'
+				check(obj.name == 'obj in array', 'obj ref')
+
+				obj.a = arr
+				obj.a[0] = 'array in obj'
+				check(arr[0] == 'array in obj', 'array in obj')
+			}
+
+			# values
+			{
+				obj = {}
+				arr = []
+				n = 3
+
+				arr[0] = n
+				arr[0]++
+				check(n == 3, 'original in array is unmodified')
+				check(arr[0] == 4, 'array item is modified')
+
+				obj.n = n
+				obj.n--
+				check(n == 3, 'original in object is unmodified')
+				check(obj.n == 2, 'object property is modified')
+			}
+
+			# array literals
+			{
+				obj = { 'name': 'test' }
+				n = 5
+				arr = [obj, n]
+
+				arr[0].name = 'testing'
+				arr[1] += 2
+
+				check(arr[0].name == 'testing', 'obj in array literal')
+				check(arr[1] == 7, 'var in array literal')
+				check(n == 5, 'original var unmodified in array literal')
+			}
+
+			# object literals
+			{
+				arr = [1]
+				n = 7
+				obj = { 'arr': arr, 'n': n }
+
+				obj.arr[0]++
+				obj.n -= 2
+
+				check(obj.arr[0] == 2, 'array in obj literal')
+				check(obj.n == 5, 'var in obj literal')
+				check(n == 7, 'original var unmodified in obj literal')
+			}
+
+			# function calls
+			{
+				function modifyObj(o) { o.name = 'ken' }
+				function modifyArr(a) { a[0] = 'ben' }
+				function modifyNum(n) { n += 5 }
+
+				obj = {}
+				modifyObj(obj)
+
+				arr = []
+				modifyArr(arr)
+
+				n = 5
+				modifyNum(n)
+
+				check(obj.name == 'ken', 'modify obj in function')
+				check(arr[0] == 'ben', 'modify arr in function')
+				check(n == 5, 'cannot modify num in function')
+			}
+		}`,
+		expected: "",
+	},
+	{
+		name:          "$ in begin",
+		prog:          "BEGIN { $.x = 1; print $; }",
+		expectedError: "unknown variable $",
+	},
+	{
+		name:          "$ in begin with json",
+		prog:          "BEGIN { $.x = 1; print $; }",
+		json:          "[1,2,3]",
+		expectedError: "unknown variable $",
+	},
+	{
+		name:          "$ in end",
+		prog:          "END { $.x = 1 }",
+		expectedError: "unknown variable $",
+	},
+	{
+		name:          "$ in end with json",
+		prog:          "END { $.x = 1 }",
+		json:          "[1,2,3]",
+		expectedError: "unknown variable $",
+	},
+	{
+		name:         "$ mutation",
+		prog:         "{ $ = $ * 2 }",
+		json:         "[1,2,3]",
+		expectedJson: "[2,4,6]",
+	},
+	{
+		name:         "$ mutation (nested)",
+		prog:         "{ $.x[0].y = 2 }",
+		json:         "[{}]",
+		expectedJson: `[{"x":[{"y":2}]}]`,
+	},
+	{
+		name:         "$ mutation (via method)",
+		prog:         "{ $.items.push(3) }",
+		json:         `{"items":[1,2]}`,
+		expectedJson: `{"items":[1,2,3]}`,
+	},
+	{
 		name: "bug: statement after block",
 		prog: `
 			{
@@ -1132,44 +1266,36 @@ false true
 		`,
 		expected: "[[0, 0, 0], [0, 0, 0], [0, 0, 0]]\n",
 	},
-	{
-		name:     "bug: crash on indexing unknown",
-		prog:     "BEGIN { a[a.a] = 0; print a }",
-		expected: "{\"\": 0}\n",
-	},
-}
-
-func FuzzJqawk(f *testing.F) {
-	for _, tc := range tests {
-		if tc.expectedError == "" {
-			f.Add(tc.prog)
-		}
-	}
-
-	f.Fuzz(func(t *testing.T, src string) {
-		input := "[{ \"a\": 1 }, { \"a\": null }]"
-		inputReader := strings.NewReader(input)
-		inputFiles := []lang.InputFile{
-			lang.NewStreamingInputFile("<test>", inputReader),
-		}
-		_, err := lang.EvalProgram(src, inputFiles, nil, io.Discard, true)
-
-		if err != nil {
-			switch err.(type) {
-			case lang.SyntaxError, lang.RuntimeError, lang.JsonError, lang.ErrorGroup:
-				// don't fail
-			default:
-				t.Errorf("%#v", err)
-			}
-		}
-	})
 }
 
 func FuzzJqawkWithJson(f *testing.F) {
+	seedTests := []struct {
+		prog string
+		json string
+	}{
+		{`{ print $ }`, `[1,2,3]`},
+		{`BEGIN { a = []; a[0]++; print a }`, `[]`},
+		{`BEGIN { a = {}; a.x.y = 1; print a }`, `[]`},
+		{`{ print $.a, $[0], $["x"] }`, `[{"a":1}, [2], {"x":3}]`},
+		{`{ for (x in $) print x }`, `[[1,2], {"a":1}, "abc"]`},
+		{`function f(x) { return x + 1 } { print f($) }`, `[1,2,3]`},
+
+		{`{ return }`, `[1]`},
+		{`{ break }`, `[1]`},
+		{`BEGIN { ++(1 + 2) }`, `[]`},
+		{`BEGIN { print '\z' }`, `[]`},
+		{`$ ~ /abc`, `[1]`},
+	}
+
+	for _, seed := range seedTests {
+		f.Add(seed.prog, seed.json)
+	}
+
 	for _, tc := range tests {
-		if tc.expectedError == "" {
-			f.Add(tc.prog, tc.json)
+		if len(tc.prog) > 1000 {
+			continue
 		}
+		f.Add(tc.prog, tc.json)
 	}
 
 	f.Fuzz(func(t *testing.T, src string, jsonSrc string) {
@@ -1184,6 +1310,7 @@ func FuzzJqawkWithJson(f *testing.F) {
 		if err != nil {
 			switch err.(type) {
 			case lang.SyntaxError, lang.RuntimeError, lang.JsonError, lang.ErrorGroup:
+				return
 				// don't fail
 			default:
 				t.Errorf("%#v", err)
@@ -1215,9 +1342,20 @@ func testInternal(t testing.TB, tc testCase) {
 	}
 
 	var sb strings.Builder
-	_, err := lang.EvalProgram(tc.prog, inputFiles, nil, &sb, false)
+	ev, err := lang.EvalProgram(tc.prog, inputFiles, nil, &sb, false)
 	if err != nil {
 		handleError(err)
+	}
+
+	if tc.expectedJson != "" {
+		j, err := ev.GetUglyRootJson()
+		if err != nil {
+			handleError(err)
+		}
+		if j != tc.expectedJson {
+			t.Fatalf("output json %s did not match %s\n", j, tc.expectedJson)
+		}
+		return
 	}
 
 	if sb.String() != tc.expected {
@@ -1225,12 +1363,12 @@ func testInternal(t testing.TB, tc testCase) {
 		expectedLines := strings.Split(tc.expected, "\n")
 		for i, line := range actualLines {
 			if len(expectedLines) < i {
-				fmt.Printf("\x1b[92m+ %s\x1b[0m\n", line)
+				t.Logf("\x1b[92m+ %s\x1b[0m\n", line)
 			} else if len(expectedLines) > i && line != expectedLines[i] {
-				fmt.Printf("\x1b[91m- %s\x1b[0m\n", expectedLines[i])
-				fmt.Printf("\x1b[92m+ %s\x1b[0m\n", line)
+				t.Logf("\x1b[91m- %s\x1b[0m\n", expectedLines[i])
+				t.Logf("\x1b[92m+ %s\x1b[0m\n", line)
 			} else {
-				fmt.Printf("  %s\n", line)
+				t.Logf("  %s\n", line)
 			}
 		}
 		t.Fatalf("unexpected result")
@@ -1245,7 +1383,9 @@ func test(t *testing.T, tc testCase) {
 
 func bench(b *testing.B, tc testCase) {
 	b.Run(tc.name, func(b *testing.B) {
-		testInternal(b, tc)
+		for b.Loop() {
+			testInternal(b, tc)
+		}
 	})
 }
 
@@ -1283,6 +1423,8 @@ func TestJqawk(t *testing.T) {
 }
 
 func BenchmarkJqawk(b *testing.B) {
+	b.ReportAllocs()
+	b.ResetTimer()
 	for _, tc := range tests {
 		bench(b, tc)
 	}

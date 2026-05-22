@@ -949,6 +949,11 @@ func (p *Parser) buildAssignTarget(expr Expr) (AssignTarget, error) {
 
 	path := make([]PathSeg, 0)
 	curr := expr
+
+	if _, ok := curr.(*ExprBinary); !ok {
+		return AssignTarget{}, p.error(curr.Token().Pos, "invalid assignment target")
+	}
+
 	for {
 		b, ok := curr.(*ExprBinary)
 		if !ok {
@@ -1052,7 +1057,7 @@ func (p *Parser) parseRule() (Rule, error) {
 	} else {
 		// rule with no body
 		// becomes { print }
-		rule.Body = &StatementPrint{}
+		rule.Body = &StatementPrint{token: *p.current}
 	}
 
 	return rule, nil

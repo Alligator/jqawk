@@ -5,23 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
-	"slices"
 	"strconv"
 	"strings"
 )
-
-// everything in jqawk is wrapped in a Cell
-// this adds a layer of indirection so assignment works with any expression
-// e.g. a[2] returns a pointer to the cell at a[2], not the value
-// then a[2] = 4 just redirects that cell to the new value
-type Cell struct {
-	Value Value
-}
-
-// Create a new cell, taking overship of the value
-func NewCell(v Value) *Cell {
-	return &Cell{v}
-}
 
 type ValueTag uint8
 
@@ -44,15 +30,40 @@ type Value struct {
 	Str       *string // used by ValueStr and ValueRegex
 	Num       *float64
 	Bool      *bool
-	Array     []*Cell
-	Obj       *map[string]*Cell
-	ObjKeys   []string
+	Array     *Array
+	Obj       *Object
 	NativeFn  func(*Evaluator, []*Value, *Value) (*Value, error)
 	Fn        FnWithContext
 	Regexp    *regexp.Regexp
 	Proto     *Value
 	Binding   *Value
 	ParentObj *Value
+}
+
+type Array struct {
+	Items []*Value
+}
+
+func (a *Array) Add(value Value) {
+	a.Items = append(a.Items, &value)
+}
+
+type Object struct {
+	Items map[string]*Value
+	Keys  []string
+}
+
+func (o *Object) Set(key string, cell Value) {
+	_, present := o.Items[key]
+	o.Items[key] = &cell
+	if !present {
+		o.Keys = append(o.Keys, key)
+	}
+}
+
+func (o *Object) Get(key string) (*Value, bool) {
+	cell, ok := o.Items[key]
+	return cell, ok
 }
 
 type FnWithContext struct {
@@ -62,28 +73,28 @@ type FnWithContext struct {
 
 func NewValue(srcVal any) Value {
 	switch val := srcVal.(type) {
-	case []*Cell:
-		return Value{
-			Tag:   ValueArray,
-			Array: val,
-			Proto: getArrayPrototype(),
+	case []Value:
+		arr := NewArray()
+		for _, item := range val {
+			arr.Array.Add(item)
 		}
+		return arr
 	case []any:
 		arr := NewArray()
 		for _, item := range val {
-			arr.Array = append(arr.Array, NewCell(NewValue(item)))
+			arr.Array.Add(NewValue(item))
 		}
 		return arr
 	case []string:
 		arr := NewArray()
 		for _, item := range val {
-			arr.Array = append(arr.Array, NewCell(NewValue(item)))
+			arr.Array.Add(NewValue(item))
 		}
 		return arr
 	case map[string]any:
 		obj := NewObject()
 		for k, v := range val {
-			(*obj.Obj)[k] = NewCell(NewValue(v))
+			obj.Obj.Set(k, NewValue(v))
 		}
 		return obj
 	case bool:
@@ -123,16 +134,16 @@ func NewValue(srcVal any) Value {
 }
 
 func NewArray() Value {
-	arr := make([]*Cell, 0)
+	arr := Array{make([]*Value, 0)}
 	return Value{
 		Tag:   ValueArray,
-		Array: arr,
+		Array: &arr,
 		Proto: getArrayPrototype(),
 	}
 }
 
 func NewObject() Value {
-	obj := make(map[string]*Cell)
+	obj := Object{make(map[string]*Value), make([]string, 0)}
 	return Value{
 		Tag:   ValueObj,
 		Obj:   &obj,
@@ -170,7 +181,7 @@ func (v *Value) PrettyString(quote bool) string {
 // check if two value slices have the same underlying array
 // borrowed from go's math library
 // https://go.dev/src/math/big/nat.go#L374
-func alias(x, y []*Cell) bool {
+func alias(x, y []*Value) bool {
 	return cap(x) > 0 && cap(y) > 0 && &x[0:cap(x)][cap(x)-1] == &y[0:cap(y)][cap(y)-1]
 }
 
@@ -182,7 +193,8 @@ func isSame(a *Value, b *Value) bool {
 		return a.Obj == b.Obj
 	}
 	if a.Tag == ValueArray && b.Tag == ValueArray {
-		return alias(a.Array, b.Array)
+		// FIXME pointer check?
+		return alias(a.Array.Items, b.Array.Items)
 	}
 	return false
 }
@@ -214,11 +226,11 @@ func (v *Value) prettyStringInteral(rootValues []*Value, quote bool, checkCircul
 	case ValueArray:
 		var sb strings.Builder
 		sb.WriteByte('[')
-		for index, cell := range v.Array {
+		for index, value := range v.Array.Items {
 			if index > 0 {
 				sb.WriteString(", ")
 			}
-			sb.WriteString(cell.Value.prettyStringInteral(append(rootValues, v), true, true))
+			sb.WriteString(value.prettyStringInteral(append(rootValues, v), true, true))
 		}
 		sb.WriteByte(']')
 		return sb.String()
@@ -226,15 +238,15 @@ func (v *Value) prettyStringInteral(rootValues []*Value, quote bool, checkCircul
 		var sb strings.Builder
 		sb.WriteByte('{')
 		index := 0
-		for _, key := range v.ObjKeys {
-			value := (*v.Obj)[key]
+		for _, key := range v.Obj.Keys {
+			value, _ := v.Obj.Get(key)
 			if index > 0 {
 				sb.WriteString(", ")
 			}
 
 			sb.WriteString("\"" + key + "\"")
 			sb.WriteString(": ")
-			sb.WriteString(value.Value.prettyStringInteral(append(rootValues, v), true, true))
+			sb.WriteString(value.prettyStringInteral(append(rootValues, v), true, true))
 			index++
 		}
 		sb.WriteByte('}')
@@ -261,31 +273,31 @@ func getArrayIndex(index float64, length int) (int, bool) {
 	return i, true
 }
 
-func (v *Value) GetMember(member Value) (*Cell, bool, error) {
+func (v *Value) GetMember(member Value) (Value, bool, error) {
 	switch v.Tag {
 	case ValueArray:
 		if member.Tag != ValueNum && v.Proto != nil {
 			return v.Proto.GetMember(member)
 		}
-		index, ok := getArrayIndex(*member.Num, len(v.Array))
+		index, ok := getArrayIndex(*member.Num, len(v.Array.Items))
 		if !ok {
-			return NewCell(NewValue(nil)), false, nil
+			return NewValue(nil), false, nil
 		}
 		arr := v.Array
-		return arr[index], true, nil
+		return *arr.Items[index], true, nil
 	case ValueObj:
 		if member.Tag != ValueNum && member.Tag != ValueStr {
-			return nil, false, fmt.Errorf("objects can only by indexed with numbers or strings, got %s", member.Tag)
+			return Value{}, false, fmt.Errorf("objects can only by indexed with numbers or strings, got %s", member.Tag)
 		}
 		key := member.String()
-		value, present := (*v.Obj)[key]
+		value, present := v.Obj.Get(key)
 		if present {
-			return value, true, nil
+			return *value, true, nil
 		}
 		if v.Proto != nil {
 			return v.Proto.GetMember(member)
 		}
-		return NewCell(NewValue(nil)), false, nil
+		return NewValue(nil), false, nil
 	case ValueStr:
 		if member.Tag != ValueNum {
 			return v.Proto.GetMember(member)
@@ -297,66 +309,61 @@ func (v *Value) GetMember(member Value) (*Cell, bool, error) {
 			index = len(str) + index
 			if index < 0 {
 				// walked backwards off the front of the array
-				return nil, false, fmt.Errorf("index out of range")
+				return Value{}, false, fmt.Errorf("index out of range")
 			}
 		}
 
 		if index < 0 || index >= len(*v.Str) {
-			return NewCell(NewValue(nil)), false, nil
+			return NewValue(nil), false, nil
 		}
-		return NewCell(NewString(string((*v.Str)[index]))), true, nil
+		return NewString(string((*v.Str)[index])), true, nil
 	default:
 		if v.Proto != nil {
 			return v.Proto.GetMember(member)
 		}
-		return nil, false, nil
+		return Value{}, false, nil
 	}
 }
 
-func (v *Value) SetMember(member Value, cell *Cell) (*Cell, error) {
+func (v *Value) SetMember(member Value, value Value) error {
 	switch v.Tag {
 	case ValueArray:
 		if member.Tag != ValueNum {
-			return nil, fmt.Errorf("array indices must be numbers")
+			return fmt.Errorf("array indices must be numbers")
 		}
 
-		index, ok := getArrayIndex(*member.Num, len(v.Array))
+		index, ok := getArrayIndex(*member.Num, len(v.Array.Items))
 		if !ok {
 			if index < 0 {
-				return nil, fmt.Errorf("index out of range")
+				return fmt.Errorf("index out of range")
 			}
 
 			// past the end of the array
 			if index > 1024*1024 {
-				return nil, fmt.Errorf("index too large to auto-fill array")
+				return fmt.Errorf("index too large to auto-fill array")
 			}
 
-			var lastCell *Cell
-			for i := len(v.Array); i <= index; i++ {
-				lastCell = NewCell(NewValue(nil))
-				v.Array = append(v.Array, lastCell)
+			lastIndex := 0
+			for i := len(v.Array.Items); i <= index; i++ {
+				lastIndex = i
+				v.Array.Add(NewValue(nil))
 			}
-			lastCell.Value = cell.Value
+			v.Array.Items[lastIndex] = &value
 
-			return lastCell, nil
+			return nil
 		}
 
-		item, _, err := v.GetMember(member)
+		err := v.SetMember(member, value)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		item.Value = cell.Value
-		return item, nil
+		return nil
 	case ValueObj:
 		key := member.String()
-		(*v.Obj)[key] = cell
-		if !slices.Contains(v.ObjKeys, key) {
-			v.ObjKeys = append(v.ObjKeys, key)
-		}
-		return cell, nil
+		v.Obj.Set(key, value)
+		return nil
 	default:
-		// TODO?
-		return nil, fmt.Errorf("cannot set member on a %s", v.Tag)
+		return fmt.Errorf("cannot set member on a %s", v.Tag)
 	}
 }
 
@@ -448,10 +455,6 @@ func (v *Value) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func (c *Cell) MarshalJSON() ([]byte, error) {
-	return c.Value.MarshalJSON()
-}
-
 func (v *Value) marshalAndDetectCircularReferences(w *bytes.Buffer, seen []*Value) error {
 	var b []byte
 	var err error
@@ -473,10 +476,10 @@ func (v *Value) marshalAndDetectCircularReferences(w *bytes.Buffer, seen []*Valu
 	case ValueNil, ValueUnknown:
 		b, err = json.Marshal(nil)
 	case ValueArray:
-		b, err = json.Marshal(v.Array)
+		b, err = json.Marshal(v.Array.Items)
 	case ValueObj:
 		w.WriteString("{ ")
-		for i, key := range v.ObjKeys {
+		for i, key := range v.Obj.Keys {
 			if i > 0 {
 				w.WriteString(", ")
 			}
@@ -489,8 +492,8 @@ func (v *Value) marshalAndDetectCircularReferences(w *bytes.Buffer, seen []*Valu
 			w.Write(keyJson)
 			w.WriteString(": ")
 
-			val := (*v.Obj)[key].Value
-			err = val.marshalAndDetectCircularReferences(w, seen)
+			value, _ := v.Obj.Get(key)
+			err = value.marshalAndDetectCircularReferences(w, seen)
 			if err != nil {
 				return err
 			}

@@ -9,3 +9,5 @@ bench_*.txt
 coverage.out
 /jqawk
 *.jsonl
+_bench*.txt
+*.zip

@@ -84,6 +84,7 @@ func Run(version string, args []string, stdin io.Reader, stdout, stderr io.Write
 	fs.Var(&rValues, "r", "root `selector`. can be specified multiple times")
 	profile := fs.Bool("profile", false, "record a CPU profile")
 	outfile := fs.String("o", "", "the `file` to write JSON to")
+	compact := fs.Bool("c", false, "output compact JSON")
 	showVersion := fs.Bool("version", false, "print version information")
 	interactive := fs.Bool("i", false, "start interactive REPL")
 	expr := fs.String("e", "", "evaluate an `expression` and print the result")
@@ -171,11 +172,11 @@ func Run(version string, args []string, stdin io.Reader, stdout, stderr io.Write
 				return err
 			}
 
-			cell, err := ev.EvalExpr(expr)
+			value, err := ev.EvalExpr(expr)
 			if err != nil {
 				return err
 			}
-			fmt.Fprintln(stdout, cell.Value.PrettyString(false))
+			fmt.Fprintln(stdout, value.PrettyString(false))
 			return nil
 		})
 
@@ -198,7 +199,13 @@ func Run(version string, args []string, stdin io.Reader, stdout, stderr io.Write
 			return 1
 		}
 
-		j, err := ev.GetRootJson()
+		var j string
+		if *compact {
+			j, err = ev.GetUglyRootJson()
+		} else {
+			j, err = ev.GetPrettyRootJson()
+		}
+
 		if err != nil {
 			fmt.Fprintf(stderr, "error writing JSON: %s\n", err.Error())
 			return 1
