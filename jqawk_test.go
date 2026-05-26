@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"io"
@@ -1556,20 +1557,74 @@ func TestJqawkCliReadWriteFiles(t *testing.T) {
 	}
 }
 
-func TestJqawkStreamingJson2(t *testing.T) {
-	program := "BEGINFILE { sum = 0 } { sum += $} ENDFILE { print sum }"
-	stdin := strings.NewReader("[1, 2, 3]\n[2, 3, 4]\n")
-	var stdout bytes.Buffer
+func TestJqawkStreamingJson(t *testing.T) {
+	program := "BEGINFILE { sum = 0 } { sum += $ } ENDFILE { print sum }"
+
+	stdinR, stdinW := io.Pipe()
+	stdoutR, stdoutW := io.Pipe()
 	var stderr bytes.Buffer
 
-	cli.Run("test", []string{program}, stdin, &stdout, &stderr, false)
+	done := make(chan int, 1)
 
-	actual := stdout.String()
-	expected := "6\n9\n"
-	if actual != expected {
-		t.Logf("  actual: %q\n", actual)
-		t.Logf("expected: %q\n", expected)
-		t.Fatalf("output did not match")
+	go func() {
+		exitCode := cli.Run("test", []string{program}, stdinR, stdoutW, &stderr, false)
+		stdoutW.Close()
+		done <- exitCode
+	}()
+
+	out := bufio.NewReader(stdoutR)
+
+	write := func(s string) {
+		t.Helper()
+		_, err := io.WriteString(stdinW, s)
+		if err != nil {
+			t.Fatalf("write stdin: %v", err)
+		}
+	}
+
+	checkLine := func(expected string) {
+		t.Helper()
+		ch := make(chan string, 1)
+		errCh := make(chan error, 1)
+
+		go func() {
+			line, err := out.ReadString('\n')
+			if err != nil {
+				errCh <- err
+				return
+			}
+			ch <- line
+		}()
+
+		select {
+		case line := <-ch:
+			if line != expected {
+				t.Fatalf("output line %q did not match %q", line, expected)
+			}
+		case err := <-errCh:
+			t.Fatalf("read stdout: %v", err)
+		case <-time.After(time.Second):
+			t.Fatal("read stdin timed out")
+		}
+	}
+
+	write("[1, 2, 3]")
+	checkLine("6\n")
+
+	write("[4, 5, 6]")
+	checkLine("15\n")
+
+	if err := stdinW.Close(); err != nil {
+		t.Fatalf("failed closing stdin: %v", err)
+	}
+
+	select {
+	case exitCode := <-done:
+		if exitCode != 0 {
+			t.Fatalf("non-zero exit code: %d", exitCode)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("timed out")
 	}
 }
 
