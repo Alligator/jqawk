@@ -789,12 +789,12 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (Value, error) {
 
 		if left.Tag == ValueArray {
 			slice := NewArray()
-			starti, startok := getArrayIndex(*start.Num, len(left.Array.Items))
+			starti, startok := getSliceIndex(*start.Num, len(left.Array.Items))
 
 			endi := len(left.Array.Items)
 			endok := true
 			if end != nil {
-				endi, endok = getArrayIndex(*end.Num, len(left.Array.Items))
+				endi, endok = getSliceIndex(*end.Num, len(left.Array.Items))
 			}
 
 			if !startok || !endok {
@@ -816,11 +816,11 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (Value, error) {
 		}
 
 		if left.Tag == ValueStr {
-			starti, startok := getArrayIndex(*start.Num, len(*left.Str))
+			starti, startok := getSliceIndex(*start.Num, len(*left.Str))
 			endi := len(*left.Str)
 			endok := true
 			if end != nil {
-				endi, endok = getArrayIndex(*end.Num, len(*left.Str))
+				endi, endok = getSliceIndex(*end.Num, len(*left.Str))
 			}
 
 			if !startok || !endok {

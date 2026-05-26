@@ -925,10 +925,49 @@ false true
 		expected: "21\n",
 	},
 	{
-		name:     "slice",
-		prog:     `{ print $[1:2], $[:1], $[2:], $[:-1] }`,
-		json:     "[[1, 2, 3, 4], \"1234\"]",
-		expected: "[2] [1] [3, 4] [1, 2, 3]\n2 1 34 123\n",
+		name: "slice",
+		prog: `
+			function check(actual, expected) {
+				if (expected is array) {
+					same = true
+					for (item, i in actual) {
+						if (actual[i] != expected[i]) {
+							same = false
+							break
+						}
+					}
+					if (!same) {
+						print 'failed', actual, '!=', expected
+					}
+					return
+				}
+
+				if (actual != expected) {
+					print 'failed', actual, '!=', expected
+				}
+			}
+
+			BEGIN {
+				s = 'abcd'
+				a = [1, 2, 3, 4]
+
+				check(s[1:2],  'b')
+				check(s[:1],   'a')
+				check(s[2:],   'cd')
+				check(s[:],    'abcd')
+				check(s[1:-1], 'bc')
+				check(s[:-2],  'ab')
+				check(s[3:7],  'd')
+
+				check(a[1:2],  [2])
+				check(a[:1],   [1])
+				check(a[2:],   [3, 4])
+				check(a[:],    [1, 2, 3, 4])
+				check(a[1:-1], [2, 3])
+				check(a[:-2],  [1, 2])
+				check(a[3:7],  [4])
+			}`,
+		expected: "",
 	},
 	{
 		name:          "invalid slice",
@@ -1266,6 +1305,11 @@ false true
 			}
 		`,
 		expected: "[[0, 0, 0], [0, 0, 0], [0, 0, 0]]\n",
+	},
+	{
+		name:     "bug: range expression end",
+		prog:     "BEGIN { print 'abc'[:3] }",
+		expected: "abc\n",
 	},
 }
 
@@ -1786,7 +1830,7 @@ func TestJqawkOneTrueAwk(t *testing.T) {
 
 	test(t, testCase{
 		name:     "p22",
-		prog:     "$[3] ~/^(Asia|Europe)/ { print $[0] }",
+		prog:     "$[3] ~ /^(Asia|Europe)$/ { print $[0] }",
 		json:     countries,
 		expected: "Russia\nChina\nIndia\n",
 	})
@@ -1805,6 +1849,70 @@ func TestJqawkOneTrueAwk(t *testing.T) {
  Argentina   24.3
      Sudan   19.6
    Algeria   19.6
+`,
+	})
+
+	test(t, testCase{
+		name: "p26",
+		prog: `
+			$[3] ~ /Asia/ { pop = pop + $[2]; n = n + 1 }
+			END { print "population of", n, "Asian countries in millions is", pop }
+		`,
+		json:     countries,
+		expected: "population of 3 Asian countries in millions is 1765\n",
+	})
+
+	test(t, testCase{
+		name: "p26a",
+		prog: `
+			$[3] ~ /Asia/ { pop += $[2]; ++n }
+			END { print "population of", n, "Asian countries in millions is", pop }
+		`,
+		json:     countries,
+		expected: "population of 3 Asian countries in millions is 1765\n",
+	})
+
+	test(t, testCase{
+		name: "p27",
+		prog: `
+			maxpop < $[2] { maxpop = $[2]; country = $[0] }
+			END { print country, maxpop }
+		`,
+		json:     countries,
+		expected: "China 866\n",
+	})
+
+	test(t, testCase{
+		name: "p32",
+		prog: "{ $[0] = $[0][:3]; print $[0] }",
+		json: countries,
+		expected: `Rus
+Can
+Chi
+USA
+Bra
+Aus
+Ind
+Arg
+Sud
+Alg
+`,
+	})
+
+	test(t, testCase{
+		name: "p34",
+		prog: "{ $[1] /= 1000; print }",
+		json: countries,
+		expected: `["Russia", 8.65, 262, "Asia"]
+["Canada", 3.852, 24, "North America"]
+["China", 3.692, 866, "Asia"]
+["USA", 3.615, 219, "North America"]
+["Brazil", 3.286, 116, "South America"]
+["Australia", 2.968, 14, "Australia"]
+["India", 1.269, 637, "Asia"]
+["Argentina", 1.072, 26, "South America"]
+["Sudan", 0.968, 19, "Africa"]
+["Algeria", 0.92, 18, "Africa"]
 `,
 	})
 }

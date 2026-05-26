@@ -256,18 +256,33 @@ func (v *Value) prettyStringInteral(rootValues []*Value, quote bool, checkCircul
 	}
 }
 
-func getArrayIndex(index float64, length int) (int, bool) {
+func normalizeIndex(index float64, length int) int {
 	i := int(index)
 	if i < 0 {
 		i = length + i
-		if i < 0 {
-			// walked backwards off the front of the array
-			return i, false
-		}
+	}
+	return i
+}
+
+func getArrayIndex(index float64, length int) (int, bool) {
+	i := normalizeIndex(index, length)
+
+	if i < 0 || i >= length {
+		return i, false
 	}
 
-	if i >= length {
+	return i, true
+}
+
+func getSliceIndex(index float64, length int) (int, bool) {
+	i := normalizeIndex(index, length)
+
+	if i < 0 {
 		return i, false
+	}
+
+	if i > length {
+		return length, true
 	}
 
 	return i, true
