@@ -1915,4 +1915,25 @@ Alg
 ["Algeria", 0.92, 18, "Africa"]
 `,
 	})
+
+	test(t, testCase{
+		name: "p35",
+		prog: `
+			$[3] ~ /^North America$/ { $[3] = 'NA' }
+			$[3] ~ /^South America$/ { $[3] = 'SA' }
+			{ print }
+		`,
+		json: countries,
+		expected: `["Russia", 8650, 262, "Asia"]
+["Canada", 3852, 24, "NA"]
+["China", 3692, 866, "Asia"]
+["USA", 3615, 219, "NA"]
+["Brazil", 3286, 116, "SA"]
+["Australia", 2968, 14, "Australia"]
+["India", 1269, 637, "Asia"]
+["Argentina", 1072, 26, "SA"]
+["Sudan", 968, 19, "Africa"]
+["Algeria", 920, 18, "Africa"]
+`,
+	})
 }
