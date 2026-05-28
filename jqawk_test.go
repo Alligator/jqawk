@@ -1311,6 +1311,11 @@ false true
 		prog:     "BEGIN { print 'abc'[:3] }",
 		expected: "abc\n",
 	},
+	{
+		name:     "bug: printf negative %s precision",
+		prog:     "BEGIN { printf('%.-2s\n', 'abcde') }",
+		expected: "abcde\n",
+	},
 }
 
 func FuzzJqawkWithJson(f *testing.F) {

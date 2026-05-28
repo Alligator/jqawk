@@ -179,7 +179,7 @@ func nativePrintf(e *Evaluator, args []*Value, this *Value) (*Value, error) {
 			argIndex++
 			argStr := arg.String()
 
-			if precSpec != -1 && len(argStr) > precSpec {
+			if precSpec > 0 && len(argStr) > precSpec {
 				argStr = argStr[:precSpec]
 			}
 
