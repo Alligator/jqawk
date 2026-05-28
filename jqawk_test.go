@@ -1936,4 +1936,151 @@ Alg
 ["Algeria", 920, 18, "Africa"]
 `,
 	})
+
+	test(t, testCase{
+		name: "p36",
+		prog: "{ $[4] = 1000 * $[2] / $[1]; print $[0], $[1], $[2], $[3], $[4] }",
+		json: countries,
+		expected: `Russia 8650 262 Asia 30.289017341040463
+Canada 3852 24 North America 6.230529595015576
+China 3692 866 Asia 234.56121343445287
+USA 3615 219 North America 60.58091286307054
+Brazil 3286 116 South America 35.30127814972611
+Australia 2968 14 Australia 4.716981132075471
+India 1269 637 Asia 501.97005516154445
+Argentina 1072 26 South America 24.253731343283583
+Sudan 968 19 Africa 19.628099173553718
+Algeria 920 18 Africa 19.565217391304348
+`,
+	})
+
+	test(t, testCase{
+		name: "p36",
+		prog: `
+			{
+				if (maxpop < $[2]) {
+					maxpop = $[2]
+					country = $[0]
+				}
+			}
+			END { print country, maxpop }
+		`,
+		json:     countries,
+		expected: "China 866\n",
+	})
+
+	test(t, testCase{
+		name: "p40",
+		prog: `
+			{
+				for (i = 0; i < $.length(); i++) {
+					print $[i]
+				}
+			}
+		`,
+		json: countries,
+		expected: `Russia
+8650
+262
+Asia
+Canada
+3852
+24
+North America
+China
+3692
+866
+Asia
+USA
+3615
+219
+North America
+Brazil
+3286
+116
+South America
+Australia
+2968
+14
+Australia
+India
+1269
+637
+Asia
+Argentina
+1072
+26
+South America
+Sudan
+968
+19
+Africa
+Algeria
+920
+18
+Africa
+`,
+	})
+
+	test(t, testCase{
+		name: "p41",
+		prog: `
+			{ n++ }
+			n >= 10 { exit }
+			END { print n }
+		`,
+		json:     countries,
+		expected: "10\n",
+	})
+
+	test(t, testCase{
+		name: "p42",
+		prog: `
+			$[3] ~ /Asia/   { pop["Asia"] += $[2] }
+			$[3] ~ /Africa/ { pop["Africa"] += $[2] }
+			END {
+				print "Asian population in millions is", pop["Asia"]
+				print "African population in millions is", pop["Africa"]
+			}
+		`,
+		json:     countries,
+		expected: "Asian population in millions is 1765\nAfrican population in millions is 37\n",
+	})
+
+	test(t, testCase{
+		name: "p43",
+		prog: `
+			{ area[$[3]] += $[1] }
+			END {
+				for (name in area)
+					print name + ":" + area[name]
+			}
+		`,
+		json: countries,
+		expected: `Asia:13611
+North America:7467
+South America:4358
+Australia:2968
+Africa:1888
+`,
+	})
+
+	test(t, testCase{
+		name: "p44",
+		prog: `
+			function fact(n) {
+				if (n <= 1)
+					return 1
+				else
+					return n * fact(n-1)
+			}
+
+			BEGIN {
+				print fact(5)
+				print fact(10)
+			}
+		`,
+		json:     countries,
+		expected: "120\n3628800\n",
+	})
 }
