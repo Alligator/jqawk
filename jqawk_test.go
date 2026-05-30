@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -1470,6 +1471,109 @@ func TestJqawk(t *testing.T) {
 	for _, tc := range tests {
 		test(t, tc)
 	}
+}
+
+type printfTest struct {
+	fmt      string
+	arg      string
+	expected string
+}
+
+var printfTests []printfTest = []printfTest{
+	{"%%", "", "%"},
+
+	{"%c", "65", "A"},
+	{"%3c", "65", "  A"},
+	{"%03c", "65", "00A"},
+
+	{"%i", "123", "123"},
+	{"%d", "123", "123"},
+	{"%d", "123.456", "123"},
+	{"%4d", "123.456", " 123"},
+	{"%-4d", "123.456", "123 "},
+	{"%04d", "123.456", "0123"},
+
+	{"%o", "123", "173"},
+	{"%x", "123", "7b"},
+
+	{"%f", "123.456", "123.456"},
+	{"%8f", "123.456", " 123.456"},
+	{"%08f", "123.456", "0123.456"},
+	{"%08.2f", "123.456", "00123.46"},
+	{"%-8.2f", "123.456", "123.46  "},
+	{"%20.10f", "123.1234567890123456789", "      123.1234567890"},
+
+	{"%s", "'beep'", "beep"},
+	{"%s boop", "'beep'", "beep boop"},
+	{"%5s", "'beep'", " beep"},
+	{"%5.2s", "'beep'", "   be"},
+	{"%-5s", "'beep'", "beep "},
+
+	{"%v", "'beep'", "beep"},
+	{"%v", "123.456", "123.456"},
+	{"%v", "[1,2,3]", "[1, 2, 3]"},
+	{"%v", "{'a':2}", "{\"a\": 2}"},
+
+	// errors
+	{"%", "", "error"},
+	{"%10000000000f", "1.23", "error"},
+	{"%-10000000000f", "1.23", "error"},
+	{"%-10000000000f", "1.23", "error"},
+	{"%0.10000000000f", "1.23", "error"},
+	{"%0", "1.23", "error"},
+	{"%c", "'aaa'", "error"},
+	{"%d", "'aaa'", "error"},
+	{"%f", "'aaa'", "error"},
+	{"%s", "123", "error"},
+	{"%v", "", "error"},
+	{"%z", "", "error"},
+}
+
+func TestJqawkPrintf(t *testing.T) {
+	for _, tc := range printfTests {
+		t.Run(tc.fmt, func(t *testing.T) {
+			prog := fmt.Sprintf("BEGIN { printf('%s', %s) }", tc.fmt, tc.arg)
+			var sb strings.Builder
+			_, err := lang.EvalProgram(prog, []lang.InputFile{}, nil, &sb, false)
+			if tc.expected == "error" {
+				if err == nil {
+					t.Fatal("expected an error")
+				}
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("error: %v", err)
+			}
+
+			if sb.String() != tc.expected {
+				t.Fatalf("expected %#v got %#v", tc.expected, sb.String())
+			}
+		})
+	}
+}
+
+func FuzzJqawkPrintf(f *testing.F) {
+	for _, seed := range printfTests {
+		f.Add(seed.fmt)
+	}
+
+	f.Fuzz(func(t *testing.T, fmts string) {
+		prog := fmt.Sprintf("BEGIN { printf(%q, 123.456) }", fmts)
+		var sb strings.Builder
+		ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+		defer cancel()
+		_, err := lang.EvalProgramContext(prog, []lang.InputFile{}, nil, &sb, false, ctx)
+		if err != nil {
+			switch err.(type) {
+			case lang.SyntaxError, lang.RuntimeError, lang.JsonError, lang.ErrorGroup:
+				return
+				// don't fail
+			default:
+				t.Fatalf("%#v", err)
+			}
+		}
+	})
 }
 
 func BenchmarkJqawk(b *testing.B) {
