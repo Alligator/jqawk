@@ -7,7 +7,7 @@ import (
 	"github.com/mattn/go-isatty"
 )
 
-var version = "0.6.3"
+var version = "0.6.4"
 
 func main() {
 	tty := false
