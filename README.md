@@ -462,10 +462,22 @@ for (<identifier>, <indexidentifier> in <expression>) <body>
 
 ```
 printf(format_string, args...)
-  printf. supports %s and %f format codes, and width specifiers
+  format and print a string according to the format specifier
+
+  the follow format codes are supported:
+
+    %% - a literal %
+    %c - the character represented by the given number
+    %d - integer
+    %i - integer
+    %o - octal integer
+    %x - hexidecimal integer
+    %f - floating-point number
+    %s - string
+    %v - the value in its default format
 
 json(arg)
-  return arg converted to a pretty-printed JSON string
+  return arg converted to an indented JSON string
 
 parseJson(string)
   return the string parsed as a JSON value
