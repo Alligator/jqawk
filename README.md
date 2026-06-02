@@ -234,9 +234,10 @@ BEGIN {
       print y
     }
   }
-}```
+}
+```
 
-```shellsessions
+```shellsession
 $ jqawk -f match.jqawk
 ten
 default case 10
