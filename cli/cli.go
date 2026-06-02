@@ -13,15 +13,22 @@ import (
 	lang "github.com/alligator/jqawk/src"
 )
 
-func getCommit() string {
+func formatVersion(version string) string {
+	commit := ""
 	if info, ok := debug.ReadBuildInfo(); ok {
 		for _, setting := range info.Settings {
 			if setting.Key == "vcs.revision" {
-				return setting.Value[:7]
+				commit = setting.Value[:7]
+				break
 			}
 		}
 	}
-	return "dev"
+
+	if commit != "" {
+		return fmt.Sprintf("%s (%s)", version, commit)
+	}
+
+	return version
 }
 
 type multiFlag []string
@@ -95,7 +102,7 @@ func Run(version string, args []string, stdin io.Reader, stdout, stderr io.Write
 	fs.Parse(args)
 
 	if *showVersion {
-		fmt.Fprintf(stdout, "jqawk %s (revision %s)\n", version, getCommit())
+		fmt.Fprintf(stdout, "jqawk %s\n", formatVersion(version))
 		return 0
 	}
 

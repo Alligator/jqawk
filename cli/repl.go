@@ -80,7 +80,7 @@ func RunRepl(version string, files []lang.InputFile, rootSelectors []string, std
 	}
 
 	mode := "statement"
-	fmt.Fprintf(stdout, "jqawk %s (revision %s)\nrun :help for help\n", version, getCommit())
+	fmt.Fprintf(stdout, "jqawk %s\nrun :help for help\n", formatVersion(version))
 
 	ev := lang.NewEmptyEvaluator(stdout)
 

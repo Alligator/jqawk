@@ -2,7 +2,7 @@
 # usage:
 #   1. update the version in jqawk.go
 #   2. push a version commit
-#   3. create and push a tag
+#   3. create and push a tag (vX.Y.Z)
 #   4. python scripts/release.py
 #   5. create a release on github
 #   6. upload the files in ./build
