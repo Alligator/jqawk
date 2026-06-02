@@ -2,6 +2,16 @@
 
 jqawk is an awk-inspired programming language for wrangling JSON.
 
+## Installing
+
+Windows, Mac and Linux binaries are availble in the [latest release](https://github.com/Alligator/jqawk/releases/latest).
+
+You can also install jqawk from the go CLI:
+
+```
+go install github.com/alligator/jqawk@latest
+```
+
 ## Examples
 
 In these examples, `gh.json` contains the response from https://api.github.com/users/alligator/repos
