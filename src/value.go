@@ -302,7 +302,7 @@ func (v *Value) GetMember(member Value) (Value, bool, error) {
 		return *arr.Items[index], true, nil
 	case ValueObj:
 		if member.Tag != ValueNum && member.Tag != ValueStr {
-			return Value{}, false, fmt.Errorf("objects can only by indexed with numbers or strings, got %s", member.Tag)
+			return Value{}, false, fmt.Errorf("objects can only be indexed with numbers or strings, got %s", member.Tag)
 		}
 		key := member.String()
 		value, present := v.Obj.Get(key)
