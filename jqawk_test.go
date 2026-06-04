@@ -1331,6 +1331,11 @@ false true
 		prog:     "BEGIN { printf('%.-2s\n', 'abcde') }",
 		expected: "abcde\n",
 	},
+	{
+		name:          "bug: prototype lookup causing object error on string",
+		prog:          "BEGIN { 'abc'[false] }",
+		expectedError: "strings can only be indexed with numbers, got bool",
+	},
 }
 
 func FuzzJqawkWithJson(f *testing.F) {

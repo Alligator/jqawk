@@ -297,34 +297,42 @@ func getSliceIndex(index float64, length int) (int, bool) {
 }
 
 func (v *Value) GetMember(member Value) (Value, bool, error) {
+	var err error
+
 	switch v.Tag {
 	case ValueArray:
-		if member.Tag != ValueNum && v.Proto != nil {
-			return v.Proto.GetMember(member)
+		if member.Tag != ValueNum {
+			err = fmt.Errorf("arrays can only be indexed with numbers, got %s", member.Tag)
+			break
 		}
+
 		index, ok := getArrayIndex(*member.Num, len(v.Array.Items))
+
 		if !ok {
-			return NewValue(nil), false, nil
+			break
 		}
+
 		arr := v.Array
 		return *arr.Items[index], true, nil
 	case ValueObj:
 		if member.Tag != ValueNum && member.Tag != ValueStr {
-			return Value{}, false, fmt.Errorf("objects can only be indexed with numbers or strings, got %s", member.Tag)
+			err = fmt.Errorf("objects can only be indexed with numbers or strings, got %s", member.Tag)
+			break
 		}
+
 		key := member.String()
 		value, present := v.Obj.Get(key)
-		if present {
-			return *value, true, nil
+
+		if !present {
+			break
 		}
-		if v.Proto != nil {
-			return v.Proto.GetMember(member)
-		}
-		return NewValue(nil), false, nil
+		return *value, true, nil
 	case ValueStr:
 		if member.Tag != ValueNum {
-			return v.Proto.GetMember(member)
+			err = fmt.Errorf("strings can only be indexed with numbers, got %s", member.Tag)
+			break
 		}
+
 		index := int(*member.Num)
 		str := *v.Str
 
@@ -340,12 +348,28 @@ func (v *Value) GetMember(member Value) (Value, bool, error) {
 			return NewValue(nil), false, nil
 		}
 		return NewString(string((*v.Str)[index])), true, nil
-	default:
-		if v.Proto != nil {
-			return v.Proto.GetMember(member)
-		}
-		return Value{}, false, nil
 	}
+
+	if v.Proto != nil {
+		result, found, protoErr := v.Proto.GetMember(member)
+
+		// original error intentionally clobbers this lookup err
+		if protoErr != nil {
+			if err == nil {
+				err = protoErr
+			}
+		}
+
+		if found {
+			return result, found, protoErr
+		}
+	}
+
+	if err != nil {
+		return Value{}, false, err
+	}
+
+	return NewValue(nil), false, nil
 }
 
 func (v *Value) SetMember(member Value, value Value) error {
