@@ -136,11 +136,7 @@ func getArrayPrototype() *Value {
 					return nil, nil
 				}
 
-				// make a clone
-				clone := NewArray()
-				for _, item := range this.Array.Items {
-					clone.Array.Add(*item)
-				}
+				clone := this.Array.Clone()
 
 				// is there a sort func?
 				if len(v) == 1 {
@@ -201,11 +197,7 @@ func getArrayPrototype() *Value {
 					return nil, nil
 				}
 
-				// make a clone
-				clone := NewArray()
-				for _, item := range this.Array.Items {
-					clone.Array.Add(*item)
-				}
+				clone := this.Array.Clone()
 
 				val, err := checkArg(v, 0, ValueStr, ValueFn)
 				if err != nil {
@@ -279,6 +271,20 @@ func getArrayPrototype() *Value {
 
 				retVal := clone
 				return &retVal, nil
+			},
+		})
+
+		proto.Obj.Set("reverse", Value{
+			Tag: ValueNativeFn,
+			NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
+				if this == nil {
+					return nil, nil
+				}
+
+				clone := this.Array.Clone()
+				slices.Reverse(clone.Array.Items)
+
+				return &clone, nil
 			},
 		})
 

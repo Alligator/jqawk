@@ -561,4 +561,7 @@ array.sortKey(string|fn)
 
   with a string argument, the key is item[string]
   with a function argument, the key is the result of fn(item)
+
+array.reverse()
+  return a reversed copy of the array
 ```

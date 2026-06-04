@@ -48,6 +48,14 @@ func (a *Array) Add(value Value) {
 	a.Items = append(a.Items, &value)
 }
 
+func (a *Array) Clone() Value {
+	clone := NewArray()
+	for _, item := range a.Items {
+		clone.Array.Add(*item)
+	}
+	return clone
+}
+
 type Object struct {
 	Items map[string]*Value
 	Keys  []string
