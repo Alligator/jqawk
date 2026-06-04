@@ -99,6 +99,10 @@ func RunRepl(version string, files []lang.InputFile, rootSelectors []string, std
 
 	for {
 		line, err := rl.Readline()
+		if err == readline.ErrInterrupt {
+			return 0
+		}
+
 		if err != nil {
 			fmt.Fprintf(stderr, "readline error: %s\n", err.Error())
 			return 1
