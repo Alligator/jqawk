@@ -194,6 +194,94 @@ func getArrayPrototype() *Value {
 			},
 		})
 
+		proto.Obj.Set("sortKey", Value{
+			Tag: ValueNativeFn,
+			NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
+				if this == nil {
+					return nil, nil
+				}
+
+				// make a clone
+				clone := NewArray()
+				for _, item := range this.Array.Items {
+					clone.Array.Add(*item)
+				}
+
+				val, err := checkArg(v, 0, ValueStr, ValueFn)
+				if err != nil {
+					return nil, err
+				}
+
+				switch val.Tag {
+				case ValueStr:
+					var err error
+					slices.SortStableFunc(clone.Array.Items, func(a *Value, b *Value) int {
+						if err != nil {
+							return 0
+						}
+
+						aVal, aFound, err2 := a.GetMember(*val)
+						if err2 != nil {
+							err = err2
+							return 0
+						}
+
+						if !aFound {
+							return -1
+						}
+
+						bVal, bFound, err2 := b.GetMember(*val)
+						if err2 != nil {
+							err = err2
+							return 0
+						}
+
+						if !bFound {
+							return 1
+						}
+
+						result, err2 := aVal.Compare(&bVal)
+						if err != nil {
+							err = err2
+							return 0
+						}
+
+						return result
+					})
+				case ValueFn:
+					var err error
+					slices.SortStableFunc(clone.Array.Items, func(a *Value, b *Value) int {
+						if err != nil {
+							return 0
+						}
+
+						var aVal Value
+						aVal, err = e.callFunction(*val, []*Value{a})
+						if err != nil {
+							return 0
+						}
+
+						var bVal Value
+						bVal, err = e.callFunction(*val, []*Value{b})
+						if err != nil {
+							return 0
+						}
+
+						result, err2 := aVal.Compare(&bVal)
+						if err != nil {
+							err = err2
+							return 0
+						}
+
+						return result
+					})
+				}
+
+				retVal := clone
+				return &retVal, nil
+			},
+		})
+
 		arrayPrototype = &proto
 	}
 	return arrayPrototype

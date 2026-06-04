@@ -774,6 +774,20 @@ rhs not null
 `,
 	},
 	{
+		name: "array sortKey()",
+		prog: `
+			BEGIN {
+				a = [{ n: 1 }, { n: 8 }, { n: 0 }]
+				print a.sortKey("n")
+				print a.sortKey(function(x) { return x.n })
+			}
+		`,
+		json: "[]",
+		expected: `[{"n": 0}, {"n": 1}, {"n": 8}]
+[{"n": 0}, {"n": 1}, {"n": 8}]
+`,
+	},
+	{
 		name: "beginfile endfile",
 		prog: `
 			BEGINFILE { print 'beginfile', $ }

@@ -555,4 +555,10 @@ array.sort(fn)
     -1 means a < b
      0 means a == b
      1 means a > b
+
+array.sortKey(string|fn)
+  return a sorted copy of the array sorted by a key taken from each element.
+
+  with a string argument, the key is item[string]
+  with a function argument, the key is the result of fn(item)
 ```
