@@ -284,6 +284,8 @@ func (p *Parser) statement() (Statement, error) {
 			return nil, err
 		}
 
+		token := *p.previous
+
 		var preExpr Expr = nil
 		var err error
 
@@ -337,6 +339,7 @@ func (p *Parser) statement() (Statement, error) {
 			if err != nil {
 				return nil, err
 			}
+			token = expr.Token()
 		}
 
 		if err := p.consume(SemiColon); err != nil {
@@ -360,7 +363,7 @@ func (p *Parser) statement() (Statement, error) {
 			return nil, err
 		}
 
-		return &StatementFor{preExpr, expr, postExpr, body}, nil
+		return &StatementFor{preExpr, expr, postExpr, body, token}, nil
 	case LCurly:
 		block, err := p.block()
 		if err != nil {

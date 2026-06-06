@@ -222,6 +222,7 @@ type StatementFor struct {
 	Expr     Expr
 	PostExpr Expr
 	Body     Statement
+	token    Token
 }
 
 type StatementForIn struct {
@@ -260,6 +261,6 @@ func (stmt *StatementNext) Token() Token     { return stmt.token }
 func (stmt *StatementExit) Token() Token     { return stmt.token }
 func (stmt *StatementIf) Token() Token       { return stmt.Expr.Token() }
 func (stmt *StatementWhile) Token() Token    { return stmt.Expr.Token() }
-func (stmt *StatementFor) Token() Token      { return stmt.Expr.Token() }
+func (stmt *StatementFor) Token() Token      { return stmt.token }
 func (stmt *StatementForIn) Token() Token    { return stmt.Ident.Token() }
 func (stmt *StatementLet) Token() Token      { return stmt.Ident.Token() }
