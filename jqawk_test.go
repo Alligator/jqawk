@@ -428,12 +428,38 @@ s |Jan       |
 		prog: `
 			BEGIN {
 				for (i = 0; i < 5; i += 1) {
-					print i;
+					printf("%d ", i)
+				}
+				printf("\n")
+
+				j = 0
+				for (; j < 4; j++) {
+					printf("%d ", j)
+				}
+				printf("\n")
+
+				k = 0
+				for(;;k++) {
+					if (k >= 3)
+						break
+					printf("%d ", k)
+				}
+				printf("\n")
+
+				l = 0
+				for (;;) {
+					if (l >= 2)
+						break
+					printf("%d ", l)
+					l++
 				}
 			}
 		`,
-		json:     "[]",
-		expected: "0\n1\n2\n3\n4\n",
+		json: "[]",
+		expected: `0 1 2 3 4 
+0 1 2 3 
+0 1 2 
+0 1 `,
 	},
 	{
 		name: "for in",

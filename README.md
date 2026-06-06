@@ -445,6 +445,9 @@ for (<preexpression>; <checkexpression>; <postexpression>) <body>
   execute <preexpression>, then execute { <body>; <postexpression> } until
   <checkexpression> is falsy
 
+  all three expressions are optional. if <checkexpression> is missing, it is
+  taken to always be true. for (;;) is an infinite loop
+
 for (<identifier> in <expression>) <body>
   execute <body> for each item in <expression> with <identifier> set to it's
   value.

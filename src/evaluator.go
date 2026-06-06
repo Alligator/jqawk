@@ -1061,14 +1061,23 @@ func (e *Evaluator) evalStatement(stmt Statement) error {
 			loopCount++
 		}
 	case *StatementFor:
-		e.evalExpr(st.PreExpr)
+		if st.PreExpr != nil {
+			e.evalExpr(st.PreExpr)
+		}
+
+		var err error
+
 		loopCount := 0
 		for {
-			value, err := e.evalExpr(st.Expr)
-			if err != nil {
-				return err
+			var value Value
+			if st.Expr != nil {
+				value, err = e.evalExpr(st.Expr)
+				if err != nil {
+					return err
+				}
 			}
-			if value.isTruthy() {
+
+			if st.Expr == nil || value.isTruthy() {
 				err := e.evalStatement(st.Body)
 				if err == errBreak {
 					break
@@ -1076,9 +1085,11 @@ func (e *Evaluator) evalStatement(stmt Statement) error {
 					return err
 				}
 
-				_, err = e.evalExpr(st.PostExpr)
-				if err != nil {
-					return err
+				if st.PostExpr != nil {
+					_, err = e.evalExpr(st.PostExpr)
+					if err != nil {
+						return err
+					}
 				}
 			} else {
 				break
@@ -1092,19 +1103,6 @@ func (e *Evaluator) evalStatement(stmt Statement) error {
 			}
 		}
 	case *StatementForIn:
-		// local, err := e.getVariable(st.Ident.Ident)
-		// if err != nil {
-		// 	return e.error(st.Token(), err.Error())
-		// }
-
-		// var indexLocal Value
-		// if st.IndexIdent != nil {
-		// 	indexLocal, err = e.getVariable(st.IndexIdent.Ident)
-		// 	if err != nil {
-		// 		return e.error(st.Token(), err.Error())
-		// 	}
-		// }
-
 		iterable, err := e.evalExpr(st.Iterable)
 		if err != nil {
 			return err

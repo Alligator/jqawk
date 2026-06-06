@@ -282,9 +282,14 @@ func (p *Parser) statement() (Statement, error) {
 			return nil, err
 		}
 
-		preExpr, err := p.expression()
-		if err != nil {
-			return nil, err
+		var preExpr Expr = nil
+		var err error
+
+		if p.current.Tag != SemiColon {
+			preExpr, err = p.expression()
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		// try to parse for (ident[, ident] in expr)
@@ -324,17 +329,24 @@ func (p *Parser) statement() (Statement, error) {
 			return nil, err
 		}
 
-		expr, err := p.expression()
-		if err != nil {
-			return nil, err
+		var expr Expr
+		if p.current.Tag != SemiColon {
+			expr, err = p.expression()
+			if err != nil {
+				return nil, err
+			}
 		}
+
 		if err := p.consume(SemiColon); err != nil {
 			return nil, err
 		}
 
-		postExpr, err := p.expression()
-		if err != nil {
-			return nil, err
+		var postExpr Expr
+		if p.current.Tag != RParen {
+			postExpr, err = p.expression()
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		if err := p.consume(RParen); err != nil {
