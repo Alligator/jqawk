@@ -2299,4 +2299,14 @@ Africa:1888
 		json:     countries,
 		expected: "120\n3628800\n",
 	})
+
+	test(t, testCase{
+		name: "t.incr",
+		prog: `
+			{ ++i; --j; k++; l-- }
+			ENDFILE { print $.length(), i, j, k, l }
+		`,
+		json:     "[1, 2, 3, 4, 5]",
+		expected: "5 5 -5 5 -5\n",
+	})
 }
