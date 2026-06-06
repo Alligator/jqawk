@@ -867,7 +867,7 @@ func binary(p *Parser, left Expr) (Expr, error) {
 	}
 	opToken := *p.previous
 
-	expr, err := p.expressionWithPrec(p.rule(opToken.Tag).prec)
+	expr, err := p.expressionWithPrec(p.rule(opToken.Tag).prec + 1)
 	if err != nil {
 		return nil, err
 	}
@@ -1009,7 +1009,7 @@ func assign(p *Parser, left Expr) (Expr, error) {
 	}
 	expr.Target = target
 
-	val, err := p.expressionWithPrec(PrecAssign - 1)
+	val, err := p.expressionWithPrec(PrecAssign)
 	if err != nil {
 		return nil, err
 	}

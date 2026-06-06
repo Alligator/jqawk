@@ -146,6 +146,14 @@ false
 `,
 	},
 	{
+		name: "associativty",
+		prog: `BEGIN {
+			print 3 - 2 -1
+			print 8 / 4 / 2
+		}`,
+		expected: "0\n1\n",
+	},
+	{
 		name: "pre/postfix operators",
 		prog: `BEGIN {
 			for (i = 0; i < 4; i++) {
@@ -2143,8 +2151,8 @@ Canada 3852 24 North America 6.230529595015576
 China 3692 866 Asia 234.56121343445287
 USA 3615 219 North America 60.58091286307054
 Brazil 3286 116 South America 35.30127814972611
-Australia 2968 14 Australia 4.716981132075471
-India 1269 637 Asia 501.97005516154445
+Australia 2968 14 Australia 4.716981132075472
+India 1269 637 Asia 501.9700551615445
 Argentina 1072 26 South America 24.253731343283583
 Sudan 968 19 Africa 19.628099173553718
 Algeria 920 18 Africa 19.565217391304348
