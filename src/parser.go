@@ -31,6 +31,7 @@ const (
 	PrecComparison
 	PrecAddition
 	PrecMultiplication
+	PrecPower
 	PrecPostfix
 	PrecUnary
 	PrecCall
@@ -53,31 +54,32 @@ func NewParser(l *Lexer) Parser {
 		LSquare:       {PrecCall, array, computedMember},
 		Dot:           {PrecCall, nil, member},
 		LParen:        {PrecGroup, group, call},
-		LessThan:      {PrecComparison, nil, binary},
-		GreaterThan:   {PrecComparison, nil, binary},
-		EqualEqual:    {PrecComparison, nil, binary},
-		BangEqual:     {PrecComparison, nil, binary},
-		LessEqual:     {PrecComparison, nil, binary},
-		GreaterEqual:  {PrecComparison, nil, binary},
-		Tilde:         {PrecComparison, nil, binary},
-		BangTilde:     {PrecComparison, nil, binary},
+		LessThan:      {PrecComparison, nil, binaryLeftAssoc},
+		GreaterThan:   {PrecComparison, nil, binaryLeftAssoc},
+		EqualEqual:    {PrecComparison, nil, binaryLeftAssoc},
+		BangEqual:     {PrecComparison, nil, binaryLeftAssoc},
+		LessEqual:     {PrecComparison, nil, binaryLeftAssoc},
+		GreaterEqual:  {PrecComparison, nil, binaryLeftAssoc},
+		Tilde:         {PrecComparison, nil, binaryLeftAssoc},
+		BangTilde:     {PrecComparison, nil, binaryLeftAssoc},
 		Equal:         {PrecAssign, nil, assign},
-		Plus:          {PrecAddition, unary, binary},
-		Minus:         {PrecAddition, unary, binary},
-		Multiply:      {PrecMultiplication, nil, binary},
-		Divide:        {PrecMultiplication, regex, binary},
-		PlusEqual:     {PrecAssign, nil, binary},
-		MinusEqual:    {PrecAssign, nil, binary},
-		MultiplyEqual: {PrecAssign, nil, binary},
-		DivideEqual:   {PrecAssign, nil, binary},
-		AmpAmp:        {PrecLogical, nil, binary},
-		PipePipe:      {PrecLogical, nil, binary},
+		Plus:          {PrecAddition, unary, binaryLeftAssoc},
+		Minus:         {PrecAddition, unary, binaryLeftAssoc},
+		Multiply:      {PrecMultiplication, nil, binaryLeftAssoc},
+		Power:         {PrecPower, nil, binaryRightAssoc},
+		Divide:        {PrecMultiplication, regex, binaryLeftAssoc},
+		PlusEqual:     {PrecAssign, nil, binaryLeftAssoc},
+		MinusEqual:    {PrecAssign, nil, binaryLeftAssoc},
+		MultiplyEqual: {PrecAssign, nil, binaryLeftAssoc},
+		DivideEqual:   {PrecAssign, nil, binaryLeftAssoc},
+		AmpAmp:        {PrecLogical, nil, binaryLeftAssoc},
+		PipePipe:      {PrecLogical, nil, binaryLeftAssoc},
 		Match:         {PrecNone, match, nil},
 		Bang:          {PrecUnary, unary, nil},
 		PlusPlus:      {PrecPostfix, unaryAssign, postfixAssign},
 		MinusMinus:    {PrecPostfix, unaryAssign, postfixAssign},
 		LCurly:        {PrecNone, object, nil},
-		Percent:       {PrecMultiplication, nil, binary},
+		Percent:       {PrecMultiplication, nil, binaryLeftAssoc},
 		Is:            {PrecComparison, nil, is},
 		Function:      {PrecNone, function, nil},
 	}
@@ -803,7 +805,7 @@ func unary(p *Parser) (Expr, error) {
 	}
 	opToken := *p.previous
 
-	expr, err := p.expressionWithPrec(PrecUnary)
+	expr, err := p.expressionWithPrec(PrecPower)
 	if err != nil {
 		return nil, err
 	}
@@ -860,14 +862,27 @@ func postfixAssign(p *Parser, left Expr) (Expr, error) {
 	}, nil
 }
 
-func binary(p *Parser, left Expr) (Expr, error) {
+func binaryLeftAssoc(p *Parser, left Expr) (Expr, error) {
+	return binary(p, left, true)
+}
+
+func binaryRightAssoc(p *Parser, left Expr) (Expr, error) {
+	return binary(p, left, false)
+}
+
+func binary(p *Parser, left Expr, leftAssoc bool) (Expr, error) {
 	_, err := p.advance()
 	if err != nil {
 		return nil, err
 	}
 	opToken := *p.previous
 
-	expr, err := p.expressionWithPrec(p.rule(opToken.Tag).prec + 1)
+	prec := p.rule(opToken.Tag).prec
+	if leftAssoc {
+		prec += 1
+	}
+
+	expr, err := p.expressionWithPrec(prec)
 	if err != nil {
 		return nil, err
 	}

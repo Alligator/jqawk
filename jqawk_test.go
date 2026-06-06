@@ -107,6 +107,11 @@ Total    337.5
 			print 6 / 2 - 1 * 3
 			print 4 % 3
 			print -4 % 3
+			print 2 ** 2
+			print 2 ** 4
+			print 2 ** -1
+			print -2 ** 2
+			print 2 ** -2
 			print '';
 
 			print 3 < 4;
@@ -131,6 +136,11 @@ Total    337.5
 0
 1
 -1
+4
+16
+0.5
+-4
+0.25
 
 true
 true
@@ -150,8 +160,9 @@ false
 		prog: `BEGIN {
 			print 3 - 2 -1
 			print 8 / 4 / 2
+			print 2 ** 2 ** 3
 		}`,
-		expected: "0\n1\n",
+		expected: "0\n1\n256\n",
 	},
 	{
 		name: "pre/postfix operators",

@@ -58,25 +58,26 @@ func _() {
 	_ = x[Plus-47]
 	_ = x[Minus-48]
 	_ = x[Multiply-49]
-	_ = x[Divide-50]
-	_ = x[PlusEqual-51]
-	_ = x[MinusEqual-52]
-	_ = x[MultiplyEqual-53]
-	_ = x[DivideEqual-54]
-	_ = x[Tilde-55]
-	_ = x[BangTilde-56]
-	_ = x[AmpAmp-57]
-	_ = x[PipePipe-58]
-	_ = x[Arrow-59]
-	_ = x[Bang-60]
-	_ = x[PlusPlus-61]
-	_ = x[MinusMinus-62]
-	_ = x[Percent-63]
+	_ = x[Power-50]
+	_ = x[Divide-51]
+	_ = x[PlusEqual-52]
+	_ = x[MinusEqual-53]
+	_ = x[MultiplyEqual-54]
+	_ = x[DivideEqual-55]
+	_ = x[Tilde-56]
+	_ = x[BangTilde-57]
+	_ = x[AmpAmp-58]
+	_ = x[PipePipe-59]
+	_ = x[Arrow-60]
+	_ = x[Bang-61]
+	_ = x[PlusPlus-62]
+	_ = x[MinusMinus-63]
+	_ = x[Percent-64]
 }
 
-const _TokenTag_name = "EOFErrorIdentStrRegexNumBeginEndBeginFileEndFilePrintFunctionReturnIfElseForWhileInMatchBreakContinueNextNewlineExitNullIsLettruefalse{}[]()<>$,.===!=<=>=:;+-*/+=-=*=/=~!~&&||=>!++--%"
+const _TokenTag_name = "EOFErrorIdentStrRegexNumBeginEndBeginFileEndFilePrintFunctionReturnIfElseForWhileInMatchBreakContinueNextNewlineExitNullIsLettruefalse{}[]()<>$,.===!=<=>=:;+-***/+=-=*=/=~!~&&||=>!++--%"
 
-var _TokenTag_index = [...]uint8{0, 3, 8, 13, 16, 21, 24, 29, 32, 41, 48, 53, 61, 67, 69, 73, 76, 81, 83, 88, 93, 101, 105, 112, 116, 120, 122, 125, 129, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 148, 150, 152, 154, 155, 156, 157, 158, 159, 160, 162, 164, 166, 168, 169, 171, 173, 175, 177, 178, 180, 182, 183}
+var _TokenTag_index = [...]uint8{0, 3, 8, 13, 16, 21, 24, 29, 32, 41, 48, 53, 61, 67, 69, 73, 76, 81, 83, 88, 93, 101, 105, 112, 116, 120, 122, 125, 129, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 148, 150, 152, 154, 155, 156, 157, 158, 159, 161, 162, 164, 166, 168, 170, 171, 173, 175, 177, 179, 180, 182, 184, 185}
 
 func (i TokenTag) String() string {
 	if i >= TokenTag(len(_TokenTag_index)-1) {

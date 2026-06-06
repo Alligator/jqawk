@@ -370,6 +370,7 @@ is     is of type. value type names are:
 /      divide
 *      multiply
 %      modulo
+**     power
 
 ++     pre/postfix increment
 --     pre/postfix decrement

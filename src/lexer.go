@@ -59,6 +59,7 @@ const (
 	Plus          // +
 	Minus         // -
 	Multiply      // *
+	Power         // **
 	Divide        // /
 	PlusEqual     // +=
 	MinusEqual    // -=
@@ -371,11 +372,16 @@ func (l *Lexer) Next() (Token, error) {
 			return l.simpleToken(Minus), nil
 		}
 	case '*':
-		if l.peek() == '=' {
+		switch l.peek() {
+		case '*':
+			l.advance()
+			return l.simpleToken(Power), nil
+		case '=':
 			l.advance()
 			return l.simpleToken(MultiplyEqual), nil
+		default:
+			return l.simpleToken(Multiply), nil
 		}
-		return l.simpleToken(Multiply), nil
 	case '/':
 		if l.peek() == '=' {
 			l.advance()

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"maps"
+	"math"
 	"regexp"
 	"strconv"
 	"strings"
@@ -896,7 +897,7 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (Value, error) {
 		default:
 			panic("unhandled comparison operator")
 		}
-	case Plus, Minus, Multiply, Divide, Percent:
+	case Plus, Minus, Multiply, Divide, Percent, Power:
 		if expr.OpToken.Tag == Plus && (left.Tag == ValueStr || right.Tag == ValueStr) {
 			// string concat
 			leftStr := left.String()
@@ -925,6 +926,8 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (Value, error) {
 				return Value{}, e.error(expr.OpToken, "divide by zero")
 			}
 			return NewValue(leftInt % rightInt), nil
+		case Power:
+			return NewValue(math.Pow(leftNum, rightNum)), nil
 		default:
 			panic("unhandled operator")
 		}
