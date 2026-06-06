@@ -417,7 +417,8 @@ func (e *Evaluator) evalExpr(expr Expr) (Value, error) {
 		if err != nil {
 			return Value{}, err
 		}
-		cell, err := e.assignToTarget(exp.Target, val)
+
+		cell, err := e.assignToTarget(exp.Target, val, exp.OpToken)
 		if err != nil {
 			return Value{}, err
 		}
@@ -531,10 +532,28 @@ func (e *Evaluator) evalAssignTarget(target AssignTarget) (LValue, error) {
 	panic("unreachable")
 }
 
-func (e *Evaluator) assignToTarget(target AssignTarget, value Value) (Value, error) {
+func (e *Evaluator) assignToTarget(target AssignTarget, value Value, opToken Token) (Value, error) {
 	lv, err := e.evalAssignTarget(target)
 	if err != nil {
 		return Value{}, err
+	}
+
+	switch opToken.Tag {
+	case PlusEqual, MinusEqual, MultiplyEqual, DivideEqual:
+		oldVal := lv.Get()
+		oldNum := oldVal.asFloat64()
+		rhs := value.asFloat64()
+
+		switch opToken.Tag {
+		case PlusEqual:
+			value = NewValue(oldNum + rhs)
+		case MinusEqual:
+			value = NewValue(oldNum - rhs)
+		case MultiplyEqual:
+			value = NewValue(oldNum * rhs)
+		case DivideEqual:
+			value = NewValue(oldNum / rhs)
+		}
 	}
 
 	lv.Set(value)
@@ -671,7 +690,7 @@ func (e *Evaluator) evalUnaryExpr(expr *ExprUnary) (Value, error) {
 		}
 
 		oldValue := val
-		value, err := e.assignToTarget(expr.Target, newValue)
+		value, err := e.assignToTarget(expr.Target, newValue, expr.OpToken)
 		if err != nil {
 			return Value{}, err
 		}

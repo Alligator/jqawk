@@ -109,9 +109,9 @@ type ExprMatch struct {
 }
 
 type ExprAssign struct {
-	token  Token
-	Target AssignTarget
-	Value  Expr
+	Target  AssignTarget
+	Value   Expr
+	OpToken Token
 }
 
 type ExprRange struct {
@@ -146,7 +146,7 @@ func (expr *ExprBinary) Token() Token     { return expr.Left.Token() }
 func (expr *ExprCall) Token() Token       { return expr.Func.Token() }
 func (expr *ExprFunction) Token() Token   { return expr.token }
 func (expr *ExprMatch) Token() Token      { return expr.token }
-func (expr *ExprAssign) Token() Token     { return expr.token }
+func (expr *ExprAssign) Token() Token     { return expr.OpToken }
 func (expr *ExprRange) Token() Token      { return expr.token }
 
 func (expr *ExprLiteral) String() string    { return "literal" }

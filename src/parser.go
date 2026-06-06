@@ -68,10 +68,10 @@ func NewParser(l *Lexer) Parser {
 		Multiply:      {PrecMultiplication, nil, binaryLeftAssoc},
 		Power:         {PrecPower, nil, binaryRightAssoc},
 		Divide:        {PrecMultiplication, regex, binaryLeftAssoc},
-		PlusEqual:     {PrecAssign, nil, binaryLeftAssoc},
-		MinusEqual:    {PrecAssign, nil, binaryLeftAssoc},
-		MultiplyEqual: {PrecAssign, nil, binaryLeftAssoc},
-		DivideEqual:   {PrecAssign, nil, binaryLeftAssoc},
+		PlusEqual:     {PrecAssign, nil, assign},
+		MinusEqual:    {PrecAssign, nil, assign},
+		MultiplyEqual: {PrecAssign, nil, assign},
+		DivideEqual:   {PrecAssign, nil, assign},
 		AmpAmp:        {PrecLogical, nil, binaryLeftAssoc},
 		PipePipe:      {PrecLogical, nil, binaryLeftAssoc},
 		Match:         {PrecNone, match, nil},
@@ -887,16 +887,11 @@ func binary(p *Parser, left Expr, leftAssoc bool) (Expr, error) {
 		return nil, err
 	}
 
-	switch opToken.Tag {
-	case PlusEqual, MinusEqual, MultiplyEqual, DivideEqual:
-		return p.rewriteCompundAssingment(left, expr, opToken)
-	default:
-		return &ExprBinary{
-			Left:    left,
-			Right:   expr,
-			OpToken: opToken,
-		}, nil
-	}
+	return &ExprBinary{
+		Left:    left,
+		Right:   expr,
+		OpToken: opToken,
+	}, nil
 }
 
 func is(p *Parser, left Expr) (Expr, error) {
@@ -917,50 +912,6 @@ func is(p *Parser, left Expr) (Expr, error) {
 		Left:    left,
 		Right:   &ident,
 		OpToken: *opToken,
-	}, nil
-}
-
-func (p *Parser) rewriteCompundAssingment(left Expr, right Expr, opToken Token) (Expr, error) {
-	// a += b -> a = a + b
-	var opTag TokenTag
-	switch opToken.Tag {
-	case PlusEqual:
-		opTag = Plus
-	case MinusEqual:
-		opTag = Minus
-	case MultiplyEqual:
-		opTag = Multiply
-	case DivideEqual:
-		opTag = Divide
-	default:
-		panic(fmt.Errorf("attempted compound assignment with %s", opToken.Tag))
-	}
-
-	target, err := p.buildAssignTarget(left)
-	if err != nil {
-		return nil, err
-	}
-
-	value := &ExprBinary{
-		Left:  left,
-		Right: right,
-		OpToken: Token{
-			lex: p.lexer,
-			Tag: opTag,
-			Pos: opToken.Pos,
-			Len: opToken.Len,
-		},
-	}
-
-	return &ExprAssign{
-		token: Token{
-			lex: p.lexer,
-			Tag: Equal,
-			Pos: opToken.Pos,
-			Len: opToken.Len,
-		},
-		Target: target,
-		Value:  value,
 	}, nil
 }
 
@@ -1011,12 +962,14 @@ func (p *Parser) buildAssignTarget(expr Expr) (AssignTarget, error) {
 }
 
 func assign(p *Parser, left Expr) (Expr, error) {
-	if err := p.consume(Equal); err != nil {
+	_, err := p.advance()
+	if err != nil {
 		return nil, err
 	}
+
 	opToken := p.previous
 
-	expr := ExprAssign{token: *opToken}
+	expr := ExprAssign{OpToken: *opToken}
 
 	target, err := p.buildAssignTarget(left)
 	if err != nil {

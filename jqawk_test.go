@@ -1424,6 +1424,17 @@ false true
 		prog:          "BEGIN { 'abc'[false] }",
 		expectedError: "strings can only be indexed with numbers, got bool",
 	},
+	{
+		name: "bug: chained compound assignment causes syntax error",
+		prog: `BEGIN {
+			a = 4
+			b = 3
+			c = 2
+			a -= b -= c
+			print a, b, c
+		}`,
+		expected: "3 1 2\n",
+	},
 }
 
 func FuzzJqawkWithJson(f *testing.F) {
