@@ -427,14 +427,14 @@ s |Jan       |
 		name: "for",
 		prog: `
 			BEGIN {
-				for (i = 0; i < 5; i += 1) {
-					printf("%d ", i)
+				for (i = 0; i < 3; i += 1) {
+					printf("%d", i)
 				}
 				printf("\n")
 
 				j = 0
-				for (; j < 4; j++) {
-					printf("%d ", j)
+				for (; j < 3; j++) {
+					printf("%d", j)
 				}
 				printf("\n")
 
@@ -442,24 +442,32 @@ s |Jan       |
 				for(;;k++) {
 					if (k >= 3)
 						break
-					printf("%d ", k)
+					printf("%d", k)
 				}
 				printf("\n")
 
 				l = 0
 				for (;;) {
-					if (l >= 2)
+					if (l >= 3)
 						break
-					printf("%d ", l)
+					printf("%d", l)
 					l++
+				}
+				printf("\n")
+
+				for (m = 0;;m++) {
+					if (m >= 3)
+						break
+					printf("%d", m)
 				}
 			}
 		`,
 		json: "[]",
-		expected: `0 1 2 3 4 
-0 1 2 3 
-0 1 2 
-0 1 `,
+		expected: `012
+012
+012
+012
+012`,
 	},
 	{
 		name: "for in",
@@ -629,6 +637,28 @@ s |Jan       |
 		expected: "0\n1\n2\n3\n",
 	},
 	{
+		name: "break nested",
+		prog: `
+			BEGIN {
+				for (i = 0; i < 3; i++) {
+					for (j = 0; j < 3; j++) {
+						if (j == 2)
+							break;
+						print i, j;
+					}
+				}
+			}
+		`,
+		json: "[]",
+		expected: `0 0
+0 1
+1 0
+1 1
+2 0
+2 1
+`,
+	},
+	{
 		name: "continue",
 		prog: `
 			BEGIN {
@@ -642,6 +672,19 @@ s |Jan       |
 		`,
 		json:     "[]",
 		expected: "0\n1\n3\n",
+	},
+	{
+		name: "continue nested",
+		prog: `
+			BEGIN {
+				for (i = 0; i < 5; i++) {
+					if (i < 2)
+						continue
+					print i
+				}
+			}
+		`,
+		expected: "2\n3\n4\n",
 	},
 	{
 		name:     "next",
