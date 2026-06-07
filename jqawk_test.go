@@ -410,6 +410,8 @@ s |Jan       |
 
 			function log(a) { print a }
 
+			function missing_args(a, b, c) { print a, b, c }
+
 			BEGIN {
 				function in_rule() {
 					print 'in rule'
@@ -424,10 +426,12 @@ s |Jan       |
 				empty_return(5, 6)
 				in_rule()
 				first_class()
+
+				missing_args(1)
 			}
 		`,
 		json:     "[]",
-		expected: "7\nhello\n5\nin rule\nfirst class\n",
+		expected: "7\nhello\n5\nin rule\nfirst class\n1 null null\n",
 	},
 	{
 		name: "if",
