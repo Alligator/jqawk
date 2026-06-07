@@ -311,6 +311,8 @@ func (e *Evaluator) evalExpr(expr Expr) (Value, error) {
 		return e.evalUnaryExpr(exp)
 	case *ExprBinary:
 		return e.evalBinaryExpr(exp)
+	case *ExprTernary:
+		return e.evalTernaryExpr(exp)
 	case *ExprIdentifier:
 		return e.getIdentifier(exp)
 	case *ExprCall:
@@ -979,6 +981,19 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (Value, error) {
 	default:
 		return Value{}, e.error(expr.OpToken, fmt.Sprintf("unknown operator %s", expr.OpToken.Tag))
 	}
+}
+
+func (e *Evaluator) evalTernaryExpr(expr *ExprTernary) (Value, error) {
+	cond, err := e.evalExpr(expr.Cond)
+	if err != nil {
+		return Value{}, err
+	}
+
+	if cond.isTruthy() {
+		return e.evalExpr(expr.TrueExpr)
+	}
+
+	return e.evalExpr(expr.FalseExpr)
 }
 
 func (e *Evaluator) evalExprList(exprs []Expr) ([]Value, error) {

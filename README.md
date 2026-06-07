@@ -362,7 +362,7 @@ A rough jqawk language reference.
 <=     less or equal
 >      greater
 >=     greater or equal
-is     is of type. value type names are:
+is     is of type. valid type names are:
        string, bool, number, array, object, function, regex, unknown
 
 +      add
@@ -384,6 +384,8 @@ a[x]   index
 a[-x]  index backwards from the end of the array
 a[x:y] slice
 a.x    property
+
+? :    ternary
 ```
 
 ### Literals

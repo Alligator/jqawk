@@ -90,6 +90,12 @@ type ExprBinary struct {
 	OpToken Token
 }
 
+type ExprTernary struct {
+	Cond      Expr
+	TrueExpr  Expr
+	FalseExpr Expr
+}
+
 type ExprCall struct {
 	Func Expr
 	Args []Expr
@@ -131,6 +137,7 @@ func (*ExprArray) exprNode()      {}
 func (*ExprObject) exprNode()     {}
 func (*ExprUnary) exprNode()      {}
 func (*ExprBinary) exprNode()     {}
+func (*ExprTernary) exprNode()    {}
 func (*ExprCall) exprNode()       {}
 func (*ExprFunction) exprNode()   {}
 func (*ExprMatch) exprNode()      {}
@@ -143,6 +150,7 @@ func (expr *ExprArray) Token() Token      { return expr.token }
 func (expr *ExprObject) Token() Token     { return expr.token }
 func (expr *ExprUnary) Token() Token      { return expr.OpToken }
 func (expr *ExprBinary) Token() Token     { return expr.Left.Token() }
+func (expr *ExprTernary) Token() Token    { return expr.Cond.Token() }
 func (expr *ExprCall) Token() Token       { return expr.Func.Token() }
 func (expr *ExprFunction) Token() Token   { return expr.token }
 func (expr *ExprMatch) Token() Token      { return expr.token }
@@ -155,6 +163,7 @@ func (expr *ExprArray) String() string      { return "array" }
 func (expr *ExprObject) String() string     { return "object" }
 func (expr *ExprUnary) String() string      { return "<unary expression>" }
 func (expr *ExprBinary) String() string     { return "<binary expression>" }
+func (expr *ExprTernary) String() string    { return "<ternary expression>" }
 func (expr *ExprCall) String() string       { return "<call expression>" }
 func (expr *ExprFunction) String() string   { return "function" }
 func (expr *ExprMatch) String() string      { return "match" }

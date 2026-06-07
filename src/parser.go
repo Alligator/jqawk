@@ -27,6 +27,7 @@ type Precedence uint8
 const (
 	PrecNone Precedence = iota
 	PrecAssign
+	PrecTernary
 	PrecLogical
 	PrecComparison
 	PrecAddition
@@ -82,6 +83,7 @@ func NewParser(l *Lexer) Parser {
 		Percent:       {PrecMultiplication, nil, binaryLeftAssoc},
 		Is:            {PrecComparison, nil, is},
 		Function:      {PrecNone, function, nil},
+		Question:      {PrecTernary, nil, ternary},
 	}
 	return p
 }
@@ -995,6 +997,28 @@ func function(p *Parser) (Expr, error) {
 		return nil, err
 	}
 	return &fn, nil
+}
+
+func ternary(p *Parser, left Expr) (Expr, error) {
+	if err := p.consume(Question); err != nil {
+		return nil, err
+	}
+
+	trueExpr, err := p.expressionWithPrec(PrecTernary)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := p.consume(Colon); err != nil {
+		return nil, err
+	}
+
+	falseExpr, err := p.expressionWithPrec(PrecTernary)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ExprTernary{left, trueExpr, falseExpr}, nil
 }
 
 func (p *Parser) parseRule() (Rule, error) {

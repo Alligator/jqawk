@@ -212,6 +212,23 @@ false
 		expected: "true false\n-3 -3\n",
 	},
 	{
+		name: "ternary",
+		prog: `BEGIN {
+			a = 4
+			print a > 7 ? 't' : 'f'
+			print a == 4 ? 't' : 'f'
+
+			b = a == 4 ? 2 : 3
+			print b
+
+			# test nesting
+			print true ? true ? 't' : 'f': 'nope'
+			print true ? false ? 't' : 'f': 'nope'
+			print false ? true ? 't' : 'f': 'nope'
+		}`,
+		expected: "f\nt\n2\nt\nf\nnope\n",
+	},
+	{
 		name:     "dot",
 		prog:     "{ print $.name }",
 		json:     `[{ "name": "gate" }, { "name": "sponge" }]`,
