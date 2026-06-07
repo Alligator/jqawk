@@ -229,6 +229,28 @@ false
 		expected: "f\nt\n2\nt\nf\nnope\n",
 	},
 	{
+		name: "short circuiting",
+		prog: `
+			function a(r) {
+				print 'a'
+				return r
+			}
+
+			function b() {
+				print 'b'
+				return true
+			}
+
+			BEGIN {
+				a(true) || b()
+				a(false) || b()
+				a(false) && b()
+				a(true) && b()
+			}
+		`,
+		expected: "a\na\nb\na\na\nb\n",
+	},
+	{
 		name:     "dot",
 		prog:     "{ print $.name }",
 		json:     `[{ "name": "gate" }, { "name": "sponge" }]`,
