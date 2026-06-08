@@ -26,7 +26,65 @@ type testCase struct {
 	args          []string
 }
 
-var tests []testCase = []testCase{
+// basic tests with no JSON input
+var basicTests = []struct {
+	prog     string
+	expected string
+}{
+	// BEGIN and END
+	{"BEGIN { print 'hello' }", "hello\n"},
+	{"BEGIN { print 'hello' } BEGIN { print 'other hello' }", "hello\nother hello\n"},
+	{"END { print 'bye' }", "bye\n"},
+	{"BEGIN { print 'hello' } END { print 'bye' }", "hello\nbye\n"},
+
+	// operators
+	{"BEGIN { print 2 + 3 }", "5\n"},
+	{"BEGIN { print 2 - 3 }", "-1\n"},
+	{"BEGIN { print 2 * 3 }", "6\n"},
+	{"BEGIN { print 6 / 3 }", "2\n"},
+	{"BEGIN { print 6 / 2 - 1 * 3 }", "0\n"},
+	{"BEGIN { print 4 % 3 }", "1\n"},
+	{"BEGIN { print -4 % 3 }", "-1\n"},
+	{"BEGIN { print 2 ** 2 }", "4\n"},
+	{"BEGIN { print 2 ** 4 }", "16\n"},
+	{"BEGIN { print 2 ** -1 }", "0.5\n"},
+	{"BEGIN { print -2 ** 2 }", "-4\n"},
+	{"BEGIN { print 2 ** -2 }", "0.25\n"},
+
+	{"BEGIN { print 3 < 4 }", "true\n"},
+	{"BEGIN { print 3 <= 3 }", "true\n"},
+	{"BEGIN { print 3 > 2 }", "true\n"},
+	{"BEGIN { print 3 >= 3 }", "true\n"},
+	{"BEGIN { print false && true; }", "false\n"},
+	{"BEGIN { print false || true; }", "true\n"},
+
+	{"BEGIN { obj = { a: 1 }; print !obj.a }", "false\n"},
+	{"BEGIN { obj = { a: 1 }; print -obj.a + 2 }", "1\n"},
+	{"BEGIN { obj = { a: 1 }; print -(obj.a + 2) }", "-3\n"},
+
+	{"BEGIN { for(i = 0; i < 2; i++) print a++, b--, b--, ++c, --d, --d }", "0 0 -1 1 -1 -2\n1 -2 -3 2 -3 -4\n"},
+	{"BEGIN { a = 3; a += 3; print a }", "6\n"},
+	{"BEGIN { a = 3; a -= 3; print a }", "0\n"},
+	{"BEGIN { a = 3; a *= 3; print a }", "9\n"},
+	{"BEGIN { a = 3; a /= 3; print a }", "1\n"},
+	{"BEGIN { a = 3; b = 2; a -= b -= 1; print a }", "2\n"},
+
+	{"BEGIN { print !false, !true }", "true false\n"},
+	{"BEGIN { n = -3; p = 3; print +n, -p }", "-3 -3\n"},
+
+	{"BEGIN { print 4 > 7 ? 't' : 'f' }", "f\n"},
+	{"BEGIN { print 4 == 4 ? 't' : 'f' }", "t\n"},
+
+	// associativity
+	{"BEGIN { print 3 - 2 -1 }", "0\n"},
+	{"BEGIN { print 8 / 4 / 2 }", "1\n"},
+	{"BEGIN { print 2 ** 2 ** 3 }", "256\n"},
+
+	// printf %v
+	{"BEGIN { printf('v %v %v %v %v\n', 1, 'one', [1, 2, 3], function() { }) }", "v 1 one [1, 2, 3] <function>\n"},
+}
+
+var tests = []testCase{
 	{
 		name: "README example",
 		prog: `
@@ -88,145 +146,9 @@ Total    337.5
 		expected: "part 1: 142\n",
 	},
 	{
-		name:     "begin",
-		prog:     "BEGIN { print 'hello' } BEGIN { print 'other hello' }",
-		expected: "hello\nother hello\n",
-	},
-	{
 		name:     "comments",
 		prog:     "BEGIN { print 'hello' } # prints hello\n# goodbye",
 		expected: "hello\n",
-	},
-	{
-		name: "operators",
-		prog: `BEGIN {
-			print 2 + 3
-			print 2 - 3
-			print 2 * 3
-			print 6 / 3
-			print 6 / 2 - 1 * 3
-			print 4 % 3
-			print -4 % 3
-			print 2 ** 2
-			print 2 ** 4
-			print 2 ** -1
-			print -2 ** 2
-			print 2 ** -2
-			print '';
-
-			print 3 < 4;
-			print 3 <= 3;
-			print 3 > 2;
-			print 3 >= 3;
-			print '';
-
-			print false && true;
-			print false || true;
-			print '';
-			
-			obj = { a: 1 }
-			print !obj.a
-			print -obj.a + 2
-			print -(obj.a + 2)
-		}`,
-		expected: `5
--1
-6
-2
-0
-1
--1
-4
-16
-0.5
--4
-0.25
-
-true
-true
-true
-true
-
-false
-true
-
-false
-1
--3
-`,
-	},
-	{
-		name: "associativty",
-		prog: `BEGIN {
-			print 3 - 2 -1
-			print 8 / 4 / 2
-			print 2 ** 2 ** 3
-		}`,
-		expected: "0\n1\n256\n",
-	},
-	{
-		name: "pre/postfix operators",
-		prog: `BEGIN {
-			for (i = 0; i < 4; i++) {
-				print a++, b--, b--, ++c, --d, --d;
-			}
-		}`,
-		expected: "0 0 -1 1 -1 -2\n1 -2 -3 2 -3 -4\n2 -4 -5 3 -5 -6\n3 -6 -7 4 -7 -8\n",
-	},
-	{
-		name: "compound operators",
-		prog: `
-		BEGIN {
-			prod = 1;
-			div = 8;
-			sub = 16
-		}
-
-		{
-			sum += $;
-			prod *= $;
-		}
-
-		$ > 3 {
-			div /= $;
-			sub -= $;
-		}
-
-		END {
-			print sum;
-			print prod;
-			print div;
-			print sub;
-		}`,
-		json:     "[2, 3, 4]",
-		expected: "9\n24\n2\n12\n",
-	},
-	{
-		name: "unary operators",
-		prog: `BEGIN {
-			print !false, !true;
-			n = -3
-			p = 3
-			print +n, -p;
-		}`,
-		expected: "true false\n-3 -3\n",
-	},
-	{
-		name: "ternary",
-		prog: `BEGIN {
-			a = 4
-			print a > 7 ? 't' : 'f'
-			print a == 4 ? 't' : 'f'
-
-			b = a == 4 ? 2 : 3
-			print b
-
-			# test nesting
-			print true ? true ? 't' : 'f': 'nope'
-			print true ? false ? 't' : 'f': 'nope'
-			print false ? true ? 't' : 'f': 'nope'
-		}`,
-		expected: "f\nt\n2\nt\nf\nnope\n",
 	},
 	{
 		name: "short circuiting",
@@ -309,67 +231,6 @@ false
 		prog:     "{ print 'name: ' + $.name, 'age: ' + $.age }",
 		json:     `[{ "name": "gate", "age": 1 }, { "name": "sponge", "age": 2 }]`,
 		expected: "name: gate age: 1\nname: sponge age: 2\n",
-	},
-	{
-		name: "printf",
-		prog: `
-		BEGIN {
-			printf('no fmt\n')
-			printf('percent %%\n')
-
-			printf('str %s\n', 'goes here')
-			printf('str lpad _%10s_\n', '12345')
-			printf('str rpad _%-10s_\n', '12345')
-
-			printf('flt %f\n', 123.456)
-			printf('flt lpad _%10f_\n', 123.456)
-			printf('flt rpad _%-10f_\n', 123.456)
-			printf('flt prec %10.1f %.2f\n', 123.456, 123.456)
-
-			printf('v %v %v %v %v\n', 1, 'one', [1, 2, 3], function() { })
-
-			# awk book examples
-			printf('c %c\n', 97)
-			printf('d %d\n', 97.5)
-			printf('d %5d\n', 97.5)
-			printf('f %f\n', 97.5)
-			printf('f %7.2f\n', 97.5)
-			printf('o %o\n', 97)
-			printf('o %06o\n', 97)
-			printf('x %x\n', 97)
-			printf('s |%s|\n', 'January')
-			printf('s |%10s|\n', 'January')
-			printf('s |%-10s|\n', 'January')
-			printf('s |%.3s|\n', 'January')
-			printf('s |%10.3s|\n', 'January')
-			printf('s |%-10.3s|\n', 'January')
-		}`,
-		json: `[]`,
-		expected: `no fmt
-percent %
-str goes here
-str lpad _     12345_
-str rpad _12345     _
-flt 123.456
-flt lpad _   123.456_
-flt rpad _123.456   _
-flt prec      123.5 123.46
-v 1 one [1, 2, 3] <function>
-c a
-d 97
-d    97
-f 97.5
-f   97.50
-o 141
-o 000141
-x 61
-s |January|
-s |   January|
-s |January   |
-s |Jan|
-s |       Jan|
-s |Jan       |
-`,
 	},
 	{
 		name: "equal, not equal",
@@ -1629,6 +1490,15 @@ func testCli(t *testing.T, tc testCase) {
 }
 
 func TestJqawk(t *testing.T) {
+	for _, bt := range basicTests {
+		tc := testCase{
+			name:     bt.prog,
+			prog:     bt.prog,
+			expected: bt.expected,
+		}
+		test(t, tc)
+	}
+
 	for _, tc := range tests {
 		test(t, tc)
 	}
@@ -1641,6 +1511,7 @@ type printfTest struct {
 }
 
 var printfTests []printfTest = []printfTest{
+	{"no fmt", "", "no fmt"},
 	{"%%", "", "%"},
 
 	{"%c", "65", "A"},
@@ -1655,10 +1526,12 @@ var printfTests []printfTest = []printfTest{
 	{"%04d", "123.456", "0123"},
 
 	{"%o", "123", "173"},
+	{"%06o", "97", "000141"},
 	{"%x", "123", "7b"},
 
 	{"%f", "123.456", "123.456"},
 	{"%8f", "123.456", " 123.456"},
+	{"%-8f", "123.456", "123.456 "},
 	{"%08f", "123.456", "0123.456"},
 	{"%08.2f", "123.456", "00123.46"},
 	{"%-8.2f", "123.456", "123.46  "},
@@ -1669,6 +1542,8 @@ var printfTests []printfTest = []printfTest{
 	{"%5s", "'beep'", " beep"},
 	{"%5.2s", "'beep'", "   be"},
 	{"%-5s", "'beep'", "beep "},
+	{"%.3s", "'January'", "Jan"},
+	{"%-10.3s", "'January'", "Jan       "},
 
 	{"%v", "'beep'", "beep"},
 	{"%v", "123.456", "123.456"},
