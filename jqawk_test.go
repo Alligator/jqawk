@@ -1364,6 +1364,10 @@ func FuzzJqawkWithJson(f *testing.F) {
 		f.Add(seed.prog, seed.json)
 	}
 
+	for _, tc := range basicTests {
+		f.Add(tc.prog, "")
+	}
+
 	for _, tc := range tests {
 		if len(tc.prog) > 1000 {
 			continue
