@@ -26,18 +26,17 @@ const (
 )
 
 type Value struct {
-	Tag       ValueTag
-	Str       *string // used by ValueStr and ValueRegex
-	Num       *float64
-	Bool      *bool
-	Array     *Array
-	Obj       *Object
-	NativeFn  func(*Evaluator, []*Value, *Value) (*Value, error)
-	Fn        FnWithContext
-	Regexp    *regexp.Regexp
-	Proto     *Value
-	Binding   *Value
-	ParentObj *Value
+	Tag      ValueTag
+	Str      *string
+	Num      *float64
+	Bool     *bool
+	Array    *Array
+	Obj      *Object
+	NativeFn func(*Evaluator, []*Value, *Value) (*Value, error)
+	Fn       FnWithContext
+	Regexp   *regexp.Regexp
+	Proto    *Value
+	Binding  *Value
 }
 
 type Array struct {
