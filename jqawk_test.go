@@ -1436,19 +1436,17 @@ func testInternal(t testing.TB, tc testCase) {
 	}
 
 	if sb.String() != tc.expected {
-		actualLines := strings.Split(sb.String(), "\n")
-		expectedLines := strings.Split(tc.expected, "\n")
-		for i, line := range actualLines {
-			if len(expectedLines) < i {
-				t.Logf("\x1b[92m+ %s\x1b[0m\n", line)
-			} else if len(expectedLines) > i && line != expectedLines[i] {
-				t.Logf("\x1b[91m- %s\x1b[0m\n", expectedLines[i])
-				t.Logf("\x1b[92m+ %s\x1b[0m\n", line)
-			} else {
-				t.Logf("  %s\n", line)
-			}
+		t.Logf("expected\n")
+		for line := range strings.Lines(tc.expected) {
+			t.Logf("  \x1b[92m%q\x1b[0m\n", line)
 		}
-		t.Fatalf("unexpected result")
+
+		t.Logf("actual\n")
+		for line := range strings.Lines(sb.String()) {
+			t.Logf("  \x1b[91m%q\x1b[0m\n", line)
+		}
+
+		t.Fatalf("expected does not match actual")
 	}
 }
 
