@@ -899,6 +899,18 @@ false true
 		expected: "[[\"a\", 1], [\"b\", \"two\"]]\n",
 	},
 	{
+		name:     "object.keys",
+		prog:     "{ print $.keys() }",
+		json:     `[{ "a": 1, "b": "two" }]`,
+		expected: "[\"a\", \"b\"]\n",
+	},
+	{
+		name:     "object.values",
+		prog:     "{ print $.values() }",
+		json:     `[{ "a": 1, "b": "two" }]`,
+		expected: "[1, \"two\"]\n",
+	},
+	{
 		name: "closures",
 		prog: `
 			function outer() {

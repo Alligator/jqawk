@@ -353,6 +353,29 @@ func getObjPrototype() *Value {
 			},
 		})
 
+		proto.Obj.Set("keys", Value{
+			Tag: ValueNativeFn,
+			NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
+				newArray := NewArray()
+				for _, key := range this.Obj.Keys {
+					newArray.Array.Add(NewValue(key))
+				}
+				return &newArray, nil
+			},
+		})
+
+		proto.Obj.Set("values", Value{
+			Tag: ValueNativeFn,
+			NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
+				newArray := NewArray()
+				for _, key := range this.Obj.Keys {
+					v, _ := this.Obj.Get(key)
+					newArray.Array.Add(*v)
+				}
+				return &newArray, nil
+			},
+		})
+
 		objPrototype = &proto
 	}
 	return objPrototype

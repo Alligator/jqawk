@@ -535,6 +535,15 @@ object.length()
 object.pluck(k1, k2, ...)
   return a shallow copy of the object containing only the given keys
 
+object.keys()
+  return the keys of an object as a list
+
+object.values()
+  return the values of an object as a list
+
+object.pairs()
+  return a list of [key, value] for each entry in the object
+
 
 array.length()
   return the length
