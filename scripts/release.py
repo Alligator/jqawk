@@ -1,11 +1,12 @@
 # release script
 # usage:
-#   1. update the version in jqawk.go
-#   2. push a version commit
-#   3. create and push a tag (vX.Y.Z)
-#   4. python scripts/release.py
-#   5. create a release on github
-#   6. upload the files in ./build
+#   1. update docs via scripts/generate-docs.py
+#   2. update the version in jqawk.go
+#   3. push a version commit
+#   4. create and push a tag (vX.Y.Z)
+#   5. python scripts/release.py
+#   6. create a release on github
+#   7. upload the files in ./build
 
 import subprocess
 import os

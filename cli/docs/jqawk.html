@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>JQAWK(1)</title>
+  <style>
+
+html {
+color: #1a1a1a;
+background-color: #fdfdfd;
+}
+body {
+margin: 0 auto;
+max-width: 36em;
+padding-left: 50px;
+padding-right: 50px;
+padding-top: 50px;
+padding-bottom: 50px;
+hyphens: auto;
+overflow-wrap: break-word;
+text-rendering: optimizeLegibility;
+font-kerning: normal;
+}
+@media (max-width: 600px) {
+body {
+font-size: 0.9em;
+padding: 12px;
+}
+h1 {
+font-size: 1.8em;
+}
+}
+@media print {
+html {
+background-color: white;
+}
+body {
+background-color: transparent;
+color: black;
+font-size: 12pt;
+}
+p, h2, h3 {
+orphans: 3;
+widows: 3;
+}
+h2, h3, h4 {
+page-break-after: avoid;
+}
+}
+p {
+margin: 1em 0;
+}
+a {
+color: #1a1a1a;
+}
+a:visited {
+color: #1a1a1a;
+}
+img {
+max-width: 100%;
+}
+svg {
+height: auto;
+max-width: 100%;
+}
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.4em;
+}
+h5, h6 {
+font-size: 1em;
+font-style: italic;
+}
+h6 {
+font-weight: normal;
+}
+ol, ul {
+padding-left: 1.7em;
+margin-top: 1em;
+}
+li > ol, li > ul {
+margin-top: 0;
+}
+blockquote {
+margin: 1em 0 1em 1.7em;
+padding-left: 1em;
+border-left: 2px solid #e6e6e6;
+color: #606060;
+}
+code {
+white-space: pre-wrap;
+font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+font-size: 85%;
+margin: 0;
+hyphens: manual;
+}
+pre {
+margin: 1em 0;
+overflow: auto;
+}
+pre code {
+padding: 0;
+overflow: visible;
+overflow-wrap: normal;
+}
+.sourceCode {
+background-color: transparent;
+overflow: visible;
+}
+hr {
+border: none;
+border-top: 1px solid #1a1a1a;
+height: 1px;
+margin: 1em 0;
+}
+table {
+margin: 1em 0;
+border-collapse: collapse;
+width: 100%;
+overflow-x: auto;
+display: block;
+font-variant-numeric: lining-nums tabular-nums;
+}
+table caption {
+margin-bottom: 0.75em;
+}
+tbody {
+margin-top: 0.5em;
+border-top: 1px solid #1a1a1a;
+border-bottom: 1px solid #1a1a1a;
+}
+th {
+border-top: 1px solid #1a1a1a;
+padding: 0.25em 0.5em 0.25em 0.5em;
+}
+td {
+padding: 0.125em 0.5em 0.25em 0.5em;
+}
+header {
+margin-bottom: 4em;
+text-align: center;
+}
+#TOC li {
+list-style: none;
+}
+#TOC ul {
+padding-left: 1.3em;
+}
+#TOC > ul {
+padding-left: 0;
+}
+#TOC a:not(:hover) {
+text-decoration: none;
+}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+</style>
+  <style type="text/css">html {
+background-color: #222;
+color: #eee;
+font-family: sans-serif;
+font-size: 12pt;
+line-height: 1.35;
+}
+body {
+padding: 1rem 0;
+max-width: 100ex;
+}
+header {
+margin-bottom: 1rem;
+}
+header > p {
+margin: 0;
+}
+a, a:visited {
+color: dodgerblue;
+}
+h2 {
+text-transform: captialize;
+}
+h1 { font-size: 16pt; margin-top: 2rem; }
+h2 { font-size: 14pt; margin-top: 2rem; }
+h3 { font-size: 12pt; margin-top: 1rem; }
+pre {
+font-size: 12pt;
+padding: 7px 12px;
+background-color: #333;
+overflow-x: auto;
+}
+code, pre {
+white-space: pre;
+}
+.jqawk-header {
+display: flex;
+gap: 1rem;
+
+}
+.jqawk-header img {
+width: 72px;
+height: 72px;
+}
+.jqawk-header h1 {
+font-size: 20pt;
+margin-top: 16px;
+color: #7cd879;
+}
+
+.tip {
+border-left: .25em solid #6b6;
+padding: .25rem .5rem;
+}
+.tip .title {
+color: #6b6;
+}
+.tip p:first-child {
+margin-top: 0;
+}
+</style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">JQAWK(1)</h1>
+</header>
+<h1 id="name">NAME</h1>
+<p>jqawk - awk + JSON</p>
+<h1 id="synopsis">SYNOPSIS</h1>
+<p><code>jqawk [flags] &lt;program&gt; &lt;file&gt;...</code></p>
+<h1 id="options">OPTIONS</h1>
+<dl>
+<dt><strong><code>-e</code></strong> <code>EXPRESSION</code></dt>
+<dd>
+Evaluate <code>EXPRESSION</code> and print the result.
+<strong><code>$</code></strong> is set to the root value of the input
+file.
+</dd>
+<dt><strong><code>-f</code></strong> <code>FILE</code></dt>
+<dd>
+Run the jqawk program in <code>FILE</code>
+</dd>
+<dt><strong><code>-i</code></strong></dt>
+<dd>
+Start the interactive REPL
+</dd>
+<dt><strong><code>-o</code></strong> <code>FILE</code></dt>
+<dd>
+Write JSON to <code>FILE</code>. Use <code>-</code> to write to stdout
+</dd>
+<dt><strong><code>-c</code></strong></dt>
+<dd>
+Output compact JSON when the <strong><code>-o</code></strong> flag is
+given
+</dd>
+<dt><strong><code>-r</code></strong> <code>SELECTOR</code></dt>
+<dd>
+Select the root value. <code>SELECTOR</code> is any valid expression
+</dd>
+<dt><strong><code>--version</code></strong></dt>
+<dd>
+Print version information
+</dd>
+<dt><strong><code>--profile</code></strong></dt>
+<dd>
+Record a cpu profile in <code>jqawk.prof</code>
+</dd>
+<dt><strong><code>--dbg-ast</code></strong></dt>
+<dd>
+Print the AST of the program and exit
+</dd>
+<dt><strong><code>--dbg-lex</code></strong></dt>
+<dd>
+Print the parsed tokens of the program and exit
+</dd>
+</dl>
+<h1 id="description">DESCRIPTION</h1>
+<p><strong>jqawk</strong> is an awk-inspired programming language for
+wrangling JSON.</p>
+<h2 id="program-structure">Program structure</h2>
+<p>A jqawk program is a series of rules, of the form</p>
+<pre><code>pattern { body }</code></pre>
+<p><code>pattern</code> can be any expression, and <code>body</code> is
+a sequence of statements. If <code>pattern</code> evaluates to a truthy
+value, <code>body</code> is evaluated.</p>
+<p>There are also some special patterns:</p>
+<p><strong><code>BEGIN</code></strong> and
+<strong><code>END</code></strong> run before and after processing all
+files<br />
+<strong><code>BEGINFILE</code></strong> and
+<strong><code>ENDFILE</code></strong> run before after processing each
+file</p>
+<p>All other rules are run for each value in the file.</p>
+<h2 id="variables">Variables</h2>
+<p>Some variables are pre-defined in the body of a rule. If the input is
+an array:</p>
+<p><strong><code>$</code></strong> is the current item<br />
+<strong><code>$index</code></strong> is the array index of that item</p>
+<p>If the input is anything else:</p>
+<p><strong><code>$</code></strong> is the root value</p>
+<h2 id="statements">Statements</h2>
+<p>The following statements are valid:</p>
+<dl>
+<dt><code>print &lt;expression&gt;, &lt;expression&gt;, ...</code></dt>
+<dd>
+print <expression>s, separated by spaces <br><br>
+</dd>
+<dt><code>return &lt;expression&gt;</code></dt>
+<dd>
+return from the current function, optionally returning the value of
+<expression> <br><br>
+</dd>
+<dt><code>break</code></dt>
+<dd>
+exit the enclosing for or while loop <br><br>
+</dd>
+<dt><code>continue</code></dt>
+<dd>
+immediately begin the next iteration of the enclosing loop <br><br>
+</dd>
+<dt><code>next</code></dt>
+<dd>
+immediately exit the rule and process no further rules for the current
+item <br><br>
+</dd>
+<dt><code>exit</code></dt>
+<dd>
+immediately exit the program <br><br>
+</dd>
+<dt><code>if (&lt;expression&gt;) &lt;body&gt; else &lt;elsebody&gt;</code></dt>
+<dd>
+execute <code>&lt;body&gt;</code> if <code>&lt;expression&gt;</code> is
+truthy. If the value is falsy and the else is present, execute
+<code>&lt;elsebody&gt;</code> <br><br>
+</dd>
+<dt><code>while (&lt;expression&gt;) &lt;body&gt;</code></dt>
+<dd>
+execute the body until <code>&lt;expression&gt;</code> is falsy <br><br>
+</dd>
+<dt><code>for (&lt;preexpression&gt;; &lt;checkexpression&gt;; &lt;postexpression&gt;) &lt;body&gt;</code></dt>
+<dd>
+execute <code>&lt;preexpression&gt;</code>, then execute
+<code>{ &lt;body&gt;; &lt;postexpression&gt; }</code> until
+<code>&lt;checkexpression&gt;</code> is falsy
+<br><br>
+all three expressions are optional. if
+<code>&lt;checkexpression&gt;</code> is missing, it is taken to always
+be true. <code>for (;;)</code> is an infinite loop <br><br>
+</dd>
+<dt><code>for (&lt;identifier&gt; in &lt;expression&gt;) &lt;body&gt;</code></dt>
+<dd>
+execute <code>&lt;body&gt;</code> for each item in
+<code>&lt;expression&gt;</code> with <code>&lt;identifier&gt;</code> set
+to it’s value.
+<br><br>
+if <code>&lt;expression&gt;</code> is an array,
+<code>&lt;identifier&gt;</code> is each item.<br />
+if it’s an object, <code>&lt;identifier&gt;</code> is each key.<br />
+if it’s a string, <code>&lt;identifier&gt;</code> is each
+character.<br />
+<br><br>
+</dd>
+<dt><code>for (&lt;identifier&gt;, &lt;indexidentifier&gt; in &lt;expression&gt;) &lt;body&gt;</code></dt>
+<dd>
+same as above, with <code>&lt;indexindeitifer&gt;</code> set to the
+index of the item for arrays or the value for objects
+</dd>
+</dl>
+<h2 id="built-in-functions">Built-in functions</h2>
+<dl>
+<dt><code>printf(format_string, args...)</code></dt>
+<dd>
+format and print a string according to the format specifier. the
+following format codes are supported:
+<pre><code>  %% - a literal %
+  %c - the character represented by the given number
+  %d - integer
+  %i - integer
+  %o - octal integer
+  %x - hexidecimal integer
+  %f - floating-point number
+  %s - string
+  %v - the value in its default format</code></pre>
+</dd>
+<dt><code>json(arg)</code></dt>
+<dd>
+return arg converted to an indented JSON string <br><br>
+</dd>
+<dt><code>parseJson(string)</code></dt>
+<dd>
+return the string parsed as a JSON value <br><br>
+</dd>
+<dt><code>num(arg)</code></dt>
+<dd>
+convert arg to a number (64-bit float). returns null if the conversion
+fails <br><br>
+</dd>
+</dl>
+<h2 id="methods">Methods</h2>
+<h3 id="string">String</h3>
+<dl>
+<dt><code>string.length()</code></dt>
+<dd>
+return the length <br><br>
+</dd>
+<dt><code>string.upper()</code></dt>
+<dd>
+return an uppercase copy of the string <br><br>
+</dd>
+<dt><code>string.lower()</code></dt>
+<dd>
+return a lowercase copy of the string <br><br>
+</dd>
+<dt><code>string.split(separator)</code></dt>
+<dd>
+split the string into substrings on a separator. the separator may be a
+string or a regex literal <br><br>
+</dd>
+<dt><code>strings.trim()</code></dt>
+<dd>
+return the string with leading and trailing whitespace removed
+</dd>
+</dl>
+<h3 id="number">Number</h3>
+<dl>
+<dt><code>number.floor()</code></dt>
+<dd>
+floor the given number <br><br>
+</dd>
+<dt><code>number.ceil()</code></dt>
+<dd>
+ceil or round the given number <br><br>
+</dd>
+<dt><code>number.round()</code></dt>
+<dd>
+round the given number. halves are rounded away from zero <br><br>
+</dd>
+<dt><code>number.abs()</code></dt>
+<dd>
+return tbe absolute value of the number <br><br>
+</dd>
+<dt><code>number.mod(n)</code></dt>
+<dd>
+return the number wrapped into the range [0, n]. unlike the modulo
+operator, the result is never negative <br><br>
+</dd>
+<dt><code>number.format(thousandsSeparator, decimalSeparator)</code></dt>
+<dd>
+format a number with thousands and decimal separators. if no separators
+are given <code>,</code> is used for thousands and <code>.</code> is
+used for decimals
+</dd>
+</dl>
+<h3 id="object">Object</h3>
+<dl>
+<dt><code>object.length()</code></dt>
+<dd>
+return the number of keys <br><br>
+</dd>
+<dt><code>object.pluck(k1, k2, ...)</code></dt>
+<dd>
+return a shallow copy of the object containing only the given keys
+<br><br>
+</dd>
+<dt><code>object.keys()</code></dt>
+<dd>
+return the keys of an object as a list <br><br>
+</dd>
+<dt><code>object.values()</code></dt>
+<dd>
+return the values of an object as a list <br><br>
+</dd>
+<dt><code>object.pairs()</code></dt>
+<dd>
+return a list of [key, value] for each entry in the object
+</dd>
+</dl>
+<h3 id="array">Array</h3>
+<dl>
+<dt><code>array.length()</code></dt>
+<dd>
+return the length <br><br>
+</dd>
+<dt><code>array.push(value)</code></dt>
+<dd>
+push value to the end of the array <br><br>
+</dd>
+<dt><code>array.pop()</code></dt>
+<dd>
+remove and return the last value in the array <br><br>
+</dd>
+<dt><code>array.popfirst()</code></dt>
+<dd>
+remove and return the first value in the array <br><br>
+</dd>
+<dt><code>array.contains(value)</code></dt>
+<dd>
+return true if value is in the array <br><br>
+</dd>
+<dt><code>array.sort(fn)</code></dt>
+<dd>
+return a sorted copy of the array.
+<br><br>
+with no fn given the array is sorted by string value, or numerically if
+all the values are nunbers.
+<br><br>
+with fn(a, b) provided, the array is sorted according to fn’s return
+value:<br />
+1 means a &lt; b<br />
+0 means a == b<br />
+1 means a &gt; b <br><br>
+</dd>
+<dt><code>array.sortKey(string|fn)</code></dt>
+<dd>
+return a sorted copy of the array sorted by a key taken from each
+element.
+<br><br>
+with a string argument, the key is <code>item[string]</code> with a
+function argument, the key is the result of <code>fn(item)</code>
+<br><br>
+</dd>
+<dt><code>array.reverse()</code></dt>
+<dd>
+return a reversed copy of the array
+</dd>
+</dl>
+<h1 id="see-also">SEE ALSO</h1>
+<p>Project homepage <a href="http://github.com/alligator/jqawk">http://github.com/alligator/jqawk</a></p>
+</body>
+</html>

@@ -1,6 +1,12 @@
-# jqawk
+<div align="center" class="jqawk-header">
+  <img src="docs/favicon.svg" />
+  <h1>jqawk</h1>
+</div>
 
 jqawk is an awk-inspired programming language for wrangling JSON.
+
+- [Project homepage](https://alligator.github.io/jqawk/)
+- [GitHub repo](https://github.com/Alligator/jqawk)
 
 ## Installing
 
@@ -94,7 +100,7 @@ $.hours > 0 {
 
 END {
   print '----------------'
-  print'Total   ', total
+  print 'Total   ', total
 }
 ```
 
@@ -470,7 +476,7 @@ for (<identifier>, <indexidentifier> in <expression>) <body>
 printf(format_string, args...)
   format and print a string according to the format specifier
 
-  the follow format codes are supported:
+  the following format codes are supported:
 
     %% - a literal %
     %c - the character represented by the given number

@@ -95,6 +95,7 @@ func Run(version string, args []string, stdin io.Reader, stdout, stderr io.Write
 	showVersion := fs.Bool("version", false, "print version information")
 	interactive := fs.Bool("i", false, "start interactive REPL")
 	expr := fs.String("e", "", "evaluate an `expression` and print the result")
+	docs := fs.Bool("docs", false, "show documentation")
 
 	fs.Usage = usage(fs)
 	fs.SetOutput(stderr)
@@ -103,6 +104,15 @@ func Run(version string, args []string, stdin io.Reader, stdout, stderr io.Write
 
 	if *showVersion {
 		fmt.Fprintf(stdout, "jqawk %s\n", formatVersion(version))
+		return 0
+	}
+
+	if *docs {
+		err := PrintDocs()
+		if err != nil {
+			fmt.Fprintf(stderr, "%s\n", err)
+			return 1
+		}
 		return 0
 	}
 
