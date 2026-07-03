@@ -22,13 +22,20 @@ subprocess.check_call([
 
 # gen website index
 os.chdir(root)
+footer = '''
+<footer>
+    <div>a thing by <a href="https://alligatr.co.uk">alligator</a></div>
+</footer>
+'''
+
 subprocess.check_call([
     'pandoc',
     '-s',
-    '-t', 'html',
+    '-t', 'html5',
     '-f', 'gfm',
     '-M', 'document-css=true',
     '-V', 'header-includes=<link rel="icon" href="docs/favicon.svg" type="image/svg+xml">',
+    '-V', f'include-after={footer}',
     '-V', 'pagetitle=jqawk - awk + JSON',
     '--embed-resources=true',
     '--syntax-highlighting=zenburn',

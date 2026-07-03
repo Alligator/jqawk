@@ -232,7 +232,7 @@ code span.vs { color: #cc9393; }
 code span.wa { color: #7f9f7f; font-weight: bold; } 
 </style>
   <style type="text/css">html {
-background-color: #222;
+background-color: #181d2b;
 color: #eee;
 font-family: sans-serif;
 font-size: 12pt;
@@ -248,8 +248,21 @@ margin-bottom: 1rem;
 header > p {
 margin: 0;
 }
+footer {
+background-color: #080d1b;
+position: absolute;
+text-align: center;
+left: 0;
+right: 0;
+padding: 2rem;
+}
+footer > div {
+max-width: 100ex;
+margin: 0 auto;
+}
 a, a:visited {
 color: dodgerblue;
+text-decoration: none;
 }
 h2 {
 text-transform: captialize;
@@ -257,11 +270,16 @@ text-transform: captialize;
 h1 { font-size: 16pt; margin-top: 2rem; }
 h2 { font-size: 14pt; margin-top: 2rem; }
 h3 { font-size: 12pt; margin-top: 1rem; }
+h1, h2, h3 {
+color: #7cd879;
+}
 pre {
 font-size: 12pt;
 padding: 7px 12px;
-background-color: #333;
 overflow-x: auto;
+}
+pre, .sourceCode {
+background-color: #282d3b;
 }
 code, pre {
 white-space: pre;
@@ -269,7 +287,8 @@ white-space: pre;
 .jqawk-header {
 display: flex;
 gap: 1rem;
-
+padding-bottom: 1rem;
+border-bottom: .25rem solid #7cd879;
 }
 .jqawk-header img {
 width: 72px;
@@ -788,5 +807,9 @@ array.sortKey(string|fn)
 
 array.reverse()
   return a reversed copy of the array</code></pre>
+
+<footer>
+    <div>a thing by <a href="https://alligatr.co.uk">alligator</a></div>
+</footer>
 </body>
 </html>
