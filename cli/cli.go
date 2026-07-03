@@ -117,7 +117,12 @@ func Run(version string, args []string, stdin io.Reader, stdout, stderr io.Write
 	}
 
 	if *profile {
-		f, _ := os.Create("jqawk.prof")
+		f, err := os.Create("jqawk.prof")
+		if err != nil {
+			fmt.Fprintf(stderr, "error creating jqawk.prof: %s", err)
+			return 1
+		}
+		defer f.Close()
 		pprof.StartCPUProfile(f)
 		defer pprof.StopCPUProfile()
 	}
@@ -236,6 +241,7 @@ func Run(version string, args []string, stdin io.Reader, stdout, stderr io.Write
 				fmt.Fprintf(stderr, "error writing JSON: %s\n", err.Error())
 				return 1
 			}
+			defer file.Close()
 
 			_, err = file.WriteString(j)
 			if err != nil {
