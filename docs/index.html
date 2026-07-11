@@ -375,8 +375,8 @@ can be read from stdin too.</p>
 <code>hours</code> property is &gt; 15. The body
 <code>{ print $.name }</code> prints the <code>name</code> property.</p>
 <p>If you know awk, this should be familiar.</p>
-<p>If the input is an array, each rule will run for each item in the
-array, with <code>$</code> set to that item.</p>
+<p>If the input is an array, each rule will run for each element in the
+array, with <code>$</code> set to that element.</p>
 <p>If the input is any other type, each rule is run once with
 <code>$</code> set to the input.</p>
 <p>Here&#39;s a more complex program that calculates the pay (rate times
@@ -560,8 +560,8 @@ passed as parameters:</p>
 <h2 id="-variables"><code>$</code> Variables</h2>
 <p>If the input is an array, jqawk sets two variables:</p>
 <ul>
-<li><code>$</code> is the current item in the array</li>
-<li><code>$index</code> is the array index of that item</li>
+<li><code>$</code> is the current element in the array</li>
+<li><code>$index</code> is the array index of that element</li>
 </ul>
 <p>and, if the input is anything else:</p>
 <ul>
@@ -651,8 +651,8 @@ BEGIN { body }      runs before the input is processed
 END { body}         runs after the input is processed
 BEGINFILE { body }  runs before each file is processed
 ENDFILE { body}     runs after each file is processed</code></pre>
-<p>If the input is an array, each pattern rule runs for each item in the
-array.</p>
+<p>If the input is an array, each pattern rule runs for each element in
+the array.</p>
 <p>If the input is not an array, each pattern rule runs once.</p>
 <h3 id="statements">Statements</h3>
 <pre><code>print &lt;expression&gt;, &lt;expression&gt;, ...
@@ -668,7 +668,7 @@ continue
   immediately begin the next iteration of the enclosing loop
 
 next
-  immediately exit the rule and process no further rules for the current item
+  immediately exit the rule and process no further rules for the current element
 
 exit
   immediately exit the program
@@ -688,16 +688,16 @@ for (&lt;preexpression&gt;; &lt;checkexpression&gt;; &lt;postexpression&gt;) &lt
   taken to always be true. for (;;) is an infinite loop
 
 for (&lt;identifier&gt; in &lt;expression&gt;) &lt;body&gt;
-  execute &lt;body&gt; for each item in &lt;expression&gt; with &lt;identifier&gt; set to it&#39;s
+  execute &lt;body&gt; for each element in &lt;expression&gt; with &lt;identifier&gt; set to its
   value.
   
-  if &lt;expression&gt; is an array, &lt;identifier&gt; is each item.
+  if &lt;expression&gt; is an array, &lt;identifier&gt; is each element.
   if it&#39;s an object, &lt;identifier&gt; is each key.
   if it&#39;s a string, &lt;identifier&gt; is each character.
 
 for (&lt;identifier&gt;, &lt;indexidentifier&gt; in &lt;expression&gt;) &lt;body&gt;
-  same as above, with &lt;indexindeitifer&gt; set to the index of the item for arrays
-  or the value for objects</code></pre>
+  same as above, with &lt;indexindeitifer&gt; set to the index of the element for
+  arrays or the value for objects</code></pre>
 <h3 id="built-in-functions">Built-in functions</h3>
 <pre><code>printf(format_string, args...)
   format and print a string according to the format specifier
@@ -780,10 +780,10 @@ array.push(value)
   push value to the end of the array
 
 array.pop()
-  remove and return the last value in the array
+  remove and return the last element in the array
 
 array.popfirst()
-  remove and return the first value in the array
+  remove and return the first element in the array
 
 array.contains(value)
   return true if value is in the array
@@ -792,7 +792,7 @@ array.sort(fn)
   return a sorted copy of the array.
 
   with no fn given the array is sorted by string value or numerically if all
-  the values are nunbers.
+  the elements are nunbers.
 
   with fn(a, b) provided, the array is sorted according to fn&#39;s return value:
     -1 means a &lt; b
@@ -802,18 +802,18 @@ array.sort(fn)
 array.sortKey(string|fn)
   return a sorted copy of the array sorted by a key taken from each element.
 
-  with a string argument, the key is item[string]
-  with a function argument, the key is the result of fn(item)
+  with a string argument, the key is element[string]
+  with a function argument, the key is the result of fn(element)
 
 array.reverse()
   return a reversed copy of the array
 
 array.map(fn)
-  return a new array that is the result of calling fn on every value in the
-  array
+  return a new array that is the result of calling fn on every element in the
+array
 
 array.filter(fn)
-  return a new array that only includes values where fn(value) is truthy</code></pre>
+  return a new array that only includes elements where fn(value) is truthy</code></pre>
 
 <footer>
     <div>a thing by <a href="https://alligatr.co.uk">alligator</a></div>

@@ -62,8 +62,8 @@ All other rules are run for each value in the file.
 
 Some variables are pre-defined in the body of a rule. If the input is an array:
 
-**`$`** is the current item  
-**`$index`** is the array index of that item  
+**`$`** is the current element
+**`$index`** is the array index of that element
 
 If the input is anything else:
 
@@ -90,7 +90,7 @@ The following statements are valid:
 <br><br>
 
 `next`
-: immediately exit the rule and process no further rules for the current item
+: immediately exit the rule and process no further rules for the current element
 <br><br>
 
 `exit`
@@ -121,7 +121,7 @@ The following statements are valid:
 <br><br>
 
 `for (<identifier> in <expression>) <body>`
-: execute `<body>` for each item in `<expression>` with `<identifier>` set to it's
+: execute `<body>` for each element in `<expression>` with `<identifier>` set to its
   value.
   
   ```{=man}
@@ -130,13 +130,13 @@ The following statements are valid:
   ```{=html}
   <br><br>
   ```
-  if `<expression>` is an array, `<identifier>` is each item.  
+  if `<expression>` is an array, `<identifier>` is each element.  
   if it's an object, `<identifier>` is each key.  
   if it's a string, `<identifier>` is each character.  
 <br><br>
 
 `for (<identifier>, <indexidentifier> in <expression>) <body>`
-: same as above, with `<indexindeitifer>` set to the index of the item for arrays
+: same as above, with `<indexindeitifer>` set to the index of the element for arrays
   or the value for objects
 
 ## Built-in functions
@@ -293,8 +293,8 @@ The following statements are valid:
   ```{=html}
   <br><br>
   ```
-  with a string argument, the key is `item[string]`
-  with a function argument, the key is the result of `fn(item)`
+  with a string argument, the key is `element[string]`
+  with a function argument, the key is the result of `fn(element)`
 <br><br>
 
 `array.reverse()`
@@ -302,11 +302,11 @@ The following statements are valid:
 <br><br>
 
 `array.map(fn)`
-: return a copy of the array where each element is the result of `fn(item)`
+: return a copy of the array where each element is the result of `fn(element)`
 <br><br>
 
 `array.filter(fn)`
-: return a new array that only includes elements where `fn(item)` is truthy
+: return a new array that only includes elements where `fn(element)` is truthy
 
 # SEE ALSO
 

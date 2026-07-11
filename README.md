@@ -81,7 +81,7 @@ The body `{ print $.name }` prints the `name` property.
 
 If you know awk, this should be familiar.
 
-If the input is an array, each rule will run for each item in the array, with `$` set to that item.
+If the input is an array, each rule will run for each element in the array, with `$` set to that element.
 
 If the input is any other type, each rule is run once with `$` set to the input.
 
@@ -307,8 +307,8 @@ BEGIN {
 
 If the input is an array, jqawk sets two variables:
 
-- `$` is the current item in the array
-- `$index` is the array index of that item
+- `$` is the current element in the array
+- `$index` is the array index of that element
 
 and, if the input is anything else:
 
@@ -418,7 +418,7 @@ BEGINFILE { body }  runs before each file is processed
 ENDFILE { body}     runs after each file is processed
 ```
 
-If the input is an array, each pattern rule runs for each item in the array.
+If the input is an array, each pattern rule runs for each element in the array.
 
 If the input is not an array, each pattern rule runs once.
 
@@ -438,7 +438,7 @@ continue
   immediately begin the next iteration of the enclosing loop
 
 next
-  immediately exit the rule and process no further rules for the current item
+  immediately exit the rule and process no further rules for the current element
 
 exit
   immediately exit the program
@@ -458,16 +458,16 @@ for (<preexpression>; <checkexpression>; <postexpression>) <body>
   taken to always be true. for (;;) is an infinite loop
 
 for (<identifier> in <expression>) <body>
-  execute <body> for each item in <expression> with <identifier> set to it's
+  execute <body> for each element in <expression> with <identifier> set to its
   value.
   
-  if <expression> is an array, <identifier> is each item.
+  if <expression> is an array, <identifier> is each element.
   if it's an object, <identifier> is each key.
   if it's a string, <identifier> is each character.
 
 for (<identifier>, <indexidentifier> in <expression>) <body>
-  same as above, with <indexindeitifer> set to the index of the item for arrays
-  or the value for objects
+  same as above, with <indexindeitifer> set to the index of the element for
+  arrays or the value for objects
 ```
 
 ### Built-in functions
@@ -558,10 +558,10 @@ array.push(value)
   push value to the end of the array
 
 array.pop()
-  remove and return the last value in the array
+  remove and return the last element in the array
 
 array.popfirst()
-  remove and return the first value in the array
+  remove and return the first element in the array
 
 array.contains(value)
   return true if value is in the array
@@ -570,7 +570,7 @@ array.sort(fn)
   return a sorted copy of the array.
 
   with no fn given the array is sorted by string value or numerically if all
-  the values are nunbers.
+  the elements are nunbers.
 
   with fn(a, b) provided, the array is sorted according to fn's return value:
     -1 means a < b
@@ -580,16 +580,16 @@ array.sort(fn)
 array.sortKey(string|fn)
   return a sorted copy of the array sorted by a key taken from each element.
 
-  with a string argument, the key is item[string]
-  with a function argument, the key is the result of fn(item)
+  with a string argument, the key is element[string]
+  with a function argument, the key is the result of fn(element)
 
 array.reverse()
   return a reversed copy of the array
 
 array.map(fn)
-  return a new array that is the result of calling fn on every value in the
-  array
+  return a new array that is the result of calling fn on every element in the
+array
 
 array.filter(fn)
-  return a new array that only includes values where fn(value) is truthy
+  return a new array that only includes elements where fn(value) is truthy
 ```

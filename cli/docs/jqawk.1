@@ -69,11 +69,8 @@ All other rules are run for each value in the file.
 Some variables are pre\-defined in the body of a rule.
 If the input is an array:
 .PP
-\f[B]\f[CB]$\f[B]\f[R] is the current item
-.PD 0
-.P
-.PD
-\f[B]\f[CB]$index\f[B]\f[R] is the array index of that item
+\f[B]\f[CB]$\f[B]\f[R] is the current element
+\f[B]\f[CB]$index\f[B]\f[R] is the array index of that element
 .PP
 If the input is anything else:
 .PP
@@ -95,7 +92,7 @@ immediately begin the next iteration of the enclosing loop
 .TP
 \f[CR]next\f[R]
 immediately exit the rule and process no further rules for the current
-item
+element
 .TP
 \f[CR]exit\f[R]
 immediately exit the program
@@ -121,12 +118,12 @@ true.
 .RE
 .TP
 \f[CR]for (<identifier> in <expression>) <body>\f[R]
-execute \f[CR]<body>\f[R] for each item in \f[CR]<expression>\f[R] with
-\f[CR]<identifier>\f[R] set to it\(cqs value.
+execute \f[CR]<body>\f[R] for each element in \f[CR]<expression>\f[R]
+with \f[CR]<identifier>\f[R] set to its value.
 .RS
 .sp
 if \f[CR]<expression>\f[R] is an array, \f[CR]<identifier>\f[R] is each
-item.
+element.
 .PD 0
 .P
 .PD
@@ -142,7 +139,7 @@ if it\(cqs a string, \f[CR]<identifier>\f[R] is each character.
 .TP
 \f[CR]for (<identifier>, <indexidentifier> in <expression>) <body>\f[R]
 same as above, with \f[CR]<indexindeitifer>\f[R] set to the index of the
-item for arrays or the value for objects
+element for arrays or the value for objects
 .SS Built\-in functions
 .TP
 \f[CR]printf(format_string, args...)\f[R]
@@ -274,8 +271,8 @@ return a sorted copy of the array sorted by a key taken from each
 element.
 .RS
 .sp
-with a string argument, the key is \f[CR]item[string]\f[R] with a
-function argument, the key is the result of \f[CR]fn(item)\f[R]
+with a string argument, the key is \f[CR]element[string]\f[R] with a
+function argument, the key is the result of \f[CR]fn(element)\f[R]
 .RE
 .TP
 \f[CR]array.reverse()\f[R]
@@ -283,11 +280,11 @@ return a reversed copy of the array
 .TP
 \f[CR]array.map(fn)\f[R]
 return a copy of the array where each element is the result of
-\f[CR]fn(item)\f[R]
+\f[CR]fn(element)\f[R]
 .TP
 \f[CR]array.filter(fn)\f[R]
-return a new array that only includes elements where \f[CR]fn(item)\f[R]
-is truthy
+return a new array that only includes elements where
+\f[CR]fn(element)\f[R] is truthy
 .SH SEE ALSO
 Project homepage \c
 .UR http://github.com/alligator/jqawk
