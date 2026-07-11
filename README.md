@@ -588,7 +588,7 @@ array.reverse()
 
 array.map(fn)
   return a new array that is the result of calling fn on every element in the
-array
+  array
 
 array.filter(fn)
   return a new array that only includes elements where fn(value) is truthy
