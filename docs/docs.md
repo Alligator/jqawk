@@ -299,6 +299,14 @@ The following statements are valid:
 
 `array.reverse()`
 : return a reversed copy of the array
+<br><br>
+
+`array.map(fn)`
+: return a copy of the array where each element is the result of `fn(item)`
+<br><br>
+
+`array.filter(fn)`
+: return a new array that only includes elements where `fn(item)` is truthy
 
 # SEE ALSO
 

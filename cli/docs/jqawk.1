@@ -280,6 +280,14 @@ function argument, the key is the result of \f[CR]fn(item)\f[R]
 .TP
 \f[CR]array.reverse()\f[R]
 return a reversed copy of the array
+.TP
+\f[CR]array.map(fn)\f[R]
+return a copy of the array where each element is the result of
+\f[CR]fn(item)\f[R]
+.TP
+\f[CR]array.filter(fn)\f[R]
+return a new array that only includes elements where \f[CR]fn(item)\f[R]
+is truthy
 .SH SEE ALSO
 Project homepage \c
 .UR http://github.com/alligator/jqawk

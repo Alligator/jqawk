@@ -288,6 +288,58 @@ func getArrayPrototype() *Value {
 			},
 		})
 
+		proto.Obj.Set("map", Value{
+			Tag: ValueNativeFn,
+			NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
+				if this == nil {
+					return nil, nil
+				}
+
+				fn, err := checkArg(v, 0, ValueFn)
+				if err != nil {
+					return nil, err
+				}
+
+				output := NewArray()
+				for _, val := range this.Array.Items {
+					result, err := e.callFunction(*fn, []*Value{val})
+					if err != nil {
+						return nil, err
+					}
+					output.Array.Add(result)
+				}
+
+				return &output, nil
+			},
+		})
+
+		proto.Obj.Set("filter", Value{
+			Tag: ValueNativeFn,
+			NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
+				if this == nil {
+					return nil, nil
+				}
+
+				fn, err := checkArg(v, 0, ValueFn)
+				if err != nil {
+					return nil, err
+				}
+
+				output := NewArray()
+				for _, val := range this.Array.Items {
+					result, err := e.callFunction(*fn, []*Value{val})
+					if err != nil {
+						return nil, err
+					}
+					if result.isTruthy() {
+						output.Array.Add(*val)
+					}
+				}
+
+				return &output, nil
+			},
+		})
+
 		arrayPrototype = &proto
 	}
 	return arrayPrototype

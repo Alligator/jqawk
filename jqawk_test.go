@@ -780,6 +780,24 @@ rhs not null
 `,
 	},
 	{
+		name: "array map()",
+		prog: `BEGIN {
+			a = [1, 2, 3]
+			print a.map(function(x) { return x * x })
+		}`,
+		json:     "",
+		expected: "[1, 4, 9]\n",
+	},
+	{
+		name: "array filter()",
+		prog: `BEGIN {
+			a = [1, 2, 3]
+			print a.filter(function(x) { return x > 1 })
+		}`,
+		json:     "",
+		expected: "[2, 3]\n",
+	},
+	{
 		name: "beginfile endfile",
 		prog: `
 			BEGINFILE { print 'beginfile', $ }

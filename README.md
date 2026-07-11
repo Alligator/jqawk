@@ -585,4 +585,11 @@ array.sortKey(string|fn)
 
 array.reverse()
   return a reversed copy of the array
+
+array.map(fn)
+  return a new array that is the result of calling fn on every value in the
+  array
+
+array.filter(fn)
+  return a new array that only includes values where fn(value) is truthy
 ```
