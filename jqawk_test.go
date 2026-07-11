@@ -789,6 +789,15 @@ rhs not null
 		expected: "[1, 4, 9]\n",
 	},
 	{
+		name: "array map() nativefn",
+		prog: `BEGIN {
+			a = ['1', '2', '3']
+			print a.map(num)
+		}`,
+		json:     "",
+		expected: "[1, 2, 3]\n",
+	},
+	{
 		name: "array filter()",
 		prog: `BEGIN {
 			a = [1, 2, 3]
@@ -796,6 +805,15 @@ rhs not null
 		}`,
 		json:     "",
 		expected: "[2, 3]\n",
+	},
+	{
+		name: "array filter() nativefn",
+		prog: `BEGIN {
+			a = ["1", "2", "a", "3"]
+			print a.filter(num)
+		}`,
+		json:     "",
+		expected: "[\"1\", \"2\", \"3\"]\n",
 	},
 	{
 		name: "beginfile endfile",

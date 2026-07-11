@@ -140,7 +140,7 @@ func getArrayPrototype() *Value {
 
 				// is there a sort func?
 				if len(v) == 1 {
-					if v[0].Tag != ValueFn {
+					if v[0].Tag != ValueFn && v[0].Tag != ValueNativeFn {
 						return nil, fmt.Errorf("expected a function")
 					}
 					sortFunc := v[0]
@@ -199,7 +199,7 @@ func getArrayPrototype() *Value {
 
 				clone := this.Array.Clone()
 
-				val, err := checkArg(v, 0, ValueStr, ValueFn)
+				val, err := checkArg(v, 0, ValueStr, ValueFn, ValueNativeFn)
 				if err != nil {
 					return nil, err
 				}
@@ -240,7 +240,7 @@ func getArrayPrototype() *Value {
 
 						return result
 					})
-				case ValueFn:
+				case ValueFn, ValueNativeFn:
 					var err error
 					slices.SortStableFunc(clone.Array.Items, func(a *Value, b *Value) int {
 						if err != nil {
@@ -295,7 +295,7 @@ func getArrayPrototype() *Value {
 					return nil, nil
 				}
 
-				fn, err := checkArg(v, 0, ValueFn)
+				fn, err := checkArg(v, 0, ValueFn, ValueNativeFn)
 				if err != nil {
 					return nil, err
 				}
@@ -320,7 +320,7 @@ func getArrayPrototype() *Value {
 					return nil, nil
 				}
 
-				fn, err := checkArg(v, 0, ValueFn)
+				fn, err := checkArg(v, 0, ValueFn, ValueNativeFn)
 				if err != nil {
 					return nil, err
 				}
