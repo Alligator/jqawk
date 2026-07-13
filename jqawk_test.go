@@ -744,13 +744,14 @@ rhs not null
 			}
 
 			END {
-				if (fn is function) print 'function';
-				if (/123/ is regex) print 'regex';
-				if (x is unknown)   print 'unknown';
+				if (fn is function)  print 'function';
+				if (/123/ is regex)  print 'regex';
+				if (x is unknown)    print 'unknown';
+				if (num is function) print 'nativefunction'
 			}
 		`,
 		json:     "[\"1\", false, 2, [3], { \"n\": 4 }, null]",
-		expected: "string\nbool\nnumber\narray\nobject\nnull\nfunction\nregex\nunknown\n",
+		expected: "string\nbool\nnumber\narray\nobject\nnull\nfunction\nregex\nunknown\nnativefunction\n",
 	},
 	{
 		name: "array sort",
@@ -1394,6 +1395,11 @@ false true
 			print a, b, c
 		}`,
 		expected: "3 1 2\n",
+	},
+	{
+		name:          "bug: is accept invalid type names",
+		prog:          "BEGIN { print 1 is beep }",
+		expectedError: "expected a type name",
 	},
 }
 

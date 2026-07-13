@@ -907,7 +907,7 @@ func is(p *Parser, left Expr) (Expr, error) {
 
 	err := p.consume(Ident, Function, Null)
 	if err != nil {
-		return nil, err
+		return nil, p.error(p.current.Pos, "expected a type name")
 	}
 	rhs := p.previous
 

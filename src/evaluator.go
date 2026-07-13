@@ -758,7 +758,7 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (Value, error) {
 
 			switch exp.token.Tag {
 			case Function:
-				result = left.Tag == ValueFn
+				result = left.Tag == ValueFn || left.Tag == ValueNativeFn
 				return NewValue(result), nil
 			case Null:
 				result = left.Tag == ValueNil
@@ -781,6 +781,8 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (Value, error) {
 				result = left.Tag == ValueRegex
 			case "unknown":
 				result = left.Tag == ValueUnknown
+			default:
+				return Value{}, e.error(expr.Right.Token(), "expected a type name")
 			}
 			return NewValue(result), nil
 		}
