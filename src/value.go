@@ -18,7 +18,7 @@ const (
 	ValueNum                      // number
 	ValueArray                    // array
 	ValueObj                      // object
-	ValueNil                      // nil
+	ValueNil                      // null
 	ValueNativeFn                 // nativefunction
 	ValueFn                       // function
 	ValueRegex                    // regex
@@ -296,26 +296,37 @@ func getSliceIndex(index float64, length int) (int, bool) {
 }
 
 func (v *Value) GetMember(member Value) (Value, bool, error) {
-	var err error
+	// This comment explains the behaviour of GetMember and the reasons why.
+	//
+	// For arrays
+	// - a numerical index looks up that array element, or returns nil if the
+	//   index is outside the bounds of the array
+	// - anything else attempts a prototype lookup
+	//
+	// For objects
+	// - any key attempts a lookup on the object, if that fails a prototype
+	//   lookup is attempted
+	//
+	// The end result is a missing array item, object property, or method returns
+	// null. If a JSON field is sometimes omitted, it's better that $.field
+	// evalutes to nullthan causes a runtime error.
 
 	switch v.Tag {
 	case ValueArray:
 		if member.Tag != ValueNum {
-			err = fmt.Errorf("arrays can only be indexed with numbers, got %s", member.Tag)
 			break
 		}
 
 		index, ok := getArrayIndex(*member.Num, len(v.Array.Items))
 
 		if !ok {
-			break
+			return NewValue(nil), false, nil
 		}
 
 		arr := v.Array
 		return *arr.Items[index], true, nil
 	case ValueObj:
 		if member.Tag != ValueNum && member.Tag != ValueStr {
-			err = fmt.Errorf("objects can only be indexed with numbers or strings, got %s", member.Tag)
 			break
 		}
 
@@ -328,7 +339,6 @@ func (v *Value) GetMember(member Value) (Value, bool, error) {
 		return *value, true, nil
 	case ValueStr:
 		if member.Tag != ValueNum {
-			err = fmt.Errorf("strings can only be indexed with numbers, got %s", member.Tag)
 			break
 		}
 
@@ -350,22 +360,15 @@ func (v *Value) GetMember(member Value) (Value, bool, error) {
 	}
 
 	if v.Proto != nil {
-		result, found, protoErr := v.Proto.GetMember(member)
+		result, found, err := v.Proto.GetMember(member)
 
-		// original error intentionally clobbers this lookup err
-		if protoErr != nil {
-			if err == nil {
-				err = protoErr
-			}
+		if err != nil {
+			return Value{}, false, err
 		}
 
 		if found {
-			return result, found, protoErr
+			return result, found, nil
 		}
-	}
-
-	if err != nil {
-		return Value{}, false, err
 	}
 
 	return NewValue(nil), false, nil

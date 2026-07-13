@@ -20,9 +20,9 @@ func _() {
 	_ = x[ValueUnknown-9]
 }
 
-const _ValueTag_name = "stringboolnumberarrayobjectnilnativefunctionfunctionregexunknown"
+const _ValueTag_name = "stringboolnumberarrayobjectnullnativefunctionfunctionregexunknown"
 
-var _ValueTag_index = [...]uint8{0, 6, 10, 16, 21, 27, 30, 44, 52, 57, 64}
+var _ValueTag_index = [...]uint8{0, 6, 10, 16, 21, 27, 31, 45, 53, 58, 65}
 
 func (i ValueTag) String() string {
 	if i >= ValueTag(len(_ValueTag_index)-1) {

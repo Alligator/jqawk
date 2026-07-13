@@ -82,6 +82,11 @@ var basicTests = []struct {
 
 	// printf %v
 	{"BEGIN { printf('v %v %v %v %v\n', 1, 'one', [1, 2, 3], function() { }) }", "v 1 one [1, 2, 3] <function>\n"},
+
+	// object/array/string indexing
+	{"BEGIN { a = [1]; print a[0], a[1], a.nope }", "1 null null\n"},
+	{"BEGIN { a = { b: 2 }; print a.b, a.a, a.nope, a['b'], a[0] }", "2 null null 2 null\n"},
+	{"BEGIN { a = 't'; print a[0], a[1], a.b, a.length }", "t null null <nativefunction>\n"},
 }
 
 var tests = []testCase{
@@ -1372,11 +1377,6 @@ false true
 		expected: "abcde\n",
 	},
 	{
-		name:          "bug: prototype lookup causing object error on string",
-		prog:          "BEGIN { 'abc'[false] }",
-		expectedError: "strings can only be indexed with numbers, got bool",
-	},
-	{
 		name: "bug: chained compound assignment causes syntax error",
 		prog: `BEGIN {
 			a = 4
@@ -1445,12 +1445,16 @@ func FuzzJqawkWithJson(f *testing.F) {
 }
 
 func testInternal(t testing.TB, tc testCase) {
-	handleError := func(err error) {
+	checkError := func(err error) {
 		if len(tc.expectedError) > 0 {
+			if err == nil {
+				t.Fatalf("expected error %q but got none", tc.expectedError)
+			}
+
 			if err.Error() != tc.expectedError {
 				t.Fatalf("expected error %q\ngot %q\n", tc.expectedError, err.Error())
 			}
-		} else {
+		} else if err != nil {
 			lang.PrintError(err, t.Output())
 			t.Fatalf("unexpected error %q\n", err)
 		}
@@ -1468,15 +1472,12 @@ func testInternal(t testing.TB, tc testCase) {
 
 	var sb strings.Builder
 	ev, err := lang.EvalProgram(tc.prog, inputFiles, nil, &sb, false)
-	if err != nil {
-		handleError(err)
-	}
+	checkError(err)
 
 	if tc.expectedJson != "" {
 		j, err := ev.GetUglyRootJson()
-		if err != nil {
-			handleError(err)
-		}
+		checkError(err)
+
 		if j != tc.expectedJson {
 			t.Fatalf("output json %s did not match %s\n", j, tc.expectedJson)
 		}
