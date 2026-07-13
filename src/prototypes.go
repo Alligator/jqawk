@@ -379,9 +379,9 @@ func getObjPrototype() *Value {
 					}
 
 					if !present {
-						err = newObj.SetMember(*value, NewValue(nil))
+						newObj.Obj.Set(value.String(), NewValue(nil))
 					} else {
-						err = newObj.SetMember(*value, val)
+						newObj.Obj.Set(value.String(), val)
 					}
 
 					if err != nil {

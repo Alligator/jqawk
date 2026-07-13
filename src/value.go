@@ -60,17 +60,17 @@ type Object struct {
 	Keys  []string
 }
 
-func (o *Object) Set(key string, cell Value) {
+func (o *Object) Set(key string, val Value) {
 	_, present := o.Items[key]
-	o.Items[key] = &cell
+	o.Items[key] = &val
 	if !present {
 		o.Keys = append(o.Keys, key)
 	}
 }
 
 func (o *Object) Get(key string) (*Value, bool) {
-	cell, ok := o.Items[key]
-	return cell, ok
+	val, ok := o.Items[key]
+	return val, ok
 }
 
 type FnWithContext struct {
@@ -372,48 +372,6 @@ func (v *Value) GetMember(member Value) (Value, bool, error) {
 	}
 
 	return NewValue(nil), false, nil
-}
-
-func (v *Value) SetMember(member Value, value Value) error {
-	switch v.Tag {
-	case ValueArray:
-		if member.Tag != ValueNum {
-			return fmt.Errorf("array indices must be numbers")
-		}
-
-		index, ok := getArrayIndex(*member.Num, len(v.Array.Items))
-		if !ok {
-			if index < 0 {
-				return fmt.Errorf("index out of range")
-			}
-
-			// past the end of the array
-			if index > 1024*1024 {
-				return fmt.Errorf("index too large to auto-fill array")
-			}
-
-			lastIndex := 0
-			for i := len(v.Array.Items); i <= index; i++ {
-				lastIndex = i
-				v.Array.Add(NewValue(nil))
-			}
-			v.Array.Items[lastIndex] = &value
-
-			return nil
-		}
-
-		err := v.SetMember(member, value)
-		if err != nil {
-			return err
-		}
-		return nil
-	case ValueObj:
-		key := member.String()
-		v.Obj.Set(key, value)
-		return nil
-	default:
-		return fmt.Errorf("cannot set member on a %s", v.Tag)
-	}
 }
 
 func (v *Value) isTruthy() bool {
