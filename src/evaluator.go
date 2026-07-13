@@ -543,6 +543,14 @@ func (e *Evaluator) assignToTarget(target AssignTarget, value Value, opToken Tok
 	switch opToken.Tag {
 	case PlusEqual, MinusEqual, MultiplyEqual, DivideEqual:
 		oldVal := lv.Get()
+
+		if opToken.Tag == PlusEqual && (oldVal.Tag == ValueStr || value.Tag == ValueStr) {
+			oldStr := oldVal.String()
+			valStr := value.String()
+			value = NewValue(oldStr + valStr)
+			break
+		}
+
 		oldNum := oldVal.asFloat64()
 		rhs := value.asFloat64()
 

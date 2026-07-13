@@ -75,6 +75,10 @@ var basicTests = []struct {
 	{"BEGIN { print 4 > 7 ? 't' : 'f' }", "f\n"},
 	{"BEGIN { print 4 == 4 ? 't' : 'f' }", "t\n"},
 
+	{"BEGIN { a = '1'; a += 2; print a }", "12\n"},
+	{"BEGIN { a = 1; a += '2'; print a }", "12\n"},
+	{"BEGIN { a = +'1'; print a is number }", "true\n"},
+
 	// associativity
 	{"BEGIN { print 3 - 2 -1 }", "0\n"},
 	{"BEGIN { print 8 / 4 / 2 }", "1\n"},
@@ -87,6 +91,10 @@ var basicTests = []struct {
 	{"BEGIN { a = [1]; print a[0], a[1], a.nope }", "1 null null\n"},
 	{"BEGIN { a = { b: 2 }; print a.b, a.a, a.nope, a['b'], a[0] }", "2 null null 2 null\n"},
 	{"BEGIN { a = 't'; print a[0], a[1], a.b, a.length }", "t null null <nativefunction>\n"},
+
+	// number conversions
+	{"BEGIN { a = false; b = true; print a + 0, b + 0 }", "0 1\n"},
+	{"BEGIN { a = false; b = true; print a + 0, b + 0 }", "0 1\n"},
 }
 
 var tests = []testCase{
