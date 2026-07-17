@@ -78,6 +78,7 @@ var basicTests = []struct {
 	{"BEGIN { a = '1'; a += 2; print a }", "12\n"},
 	{"BEGIN { a = 1; a += '2'; print a }", "12\n"},
 	{"BEGIN { a = +'1'; print a is number }", "true\n"},
+	{"BEGIN { a = false; a += 1; print a }", "1\n"},
 
 	// associativity
 	{"BEGIN { print 3 - 2 -1 }", "0\n"},
@@ -91,6 +92,9 @@ var basicTests = []struct {
 	{"BEGIN { a = [1]; print a[0], a[1], a.nope }", "1 null null\n"},
 	{"BEGIN { a = { b: 2 }; print a.b, a.a, a.nope, a['b'], a[0] }", "2 null null 2 null\n"},
 	{"BEGIN { a = 't'; print a[0], a[1], a.b, a.length }", "t null null <nativefunction>\n"},
+
+	// indexing edge cases
+	{"BEGIN { a = {}; print a[false] }", "null\n"},
 
 	// number conversions
 	{"BEGIN { a = false; b = true; print a + 0, b + 0 }", "0 1\n"},
@@ -440,6 +444,28 @@ Total    337.5
 		expected: "a 1\n",
 	},
 	{
+		name: "for in break and continue",
+		prog: `
+			function test(x) {
+				let i = 0
+				for (v in x) {
+					i++;
+					if (i == 1) continue;
+					if (i == 3) break;
+					print v;
+				}
+			}
+
+			BEGIN {
+				test([1, 2, 3])
+				test({ a: 1, b: 2, c: 3 })
+				test('hjkl')
+			}
+		`,
+		json:     "",
+		expected: "2\nb\nj\n",
+	},
+	{
 		name: "match",
 		prog: `
 			{
@@ -669,9 +695,29 @@ aBc
 	},
 	{
 		name:     "exit",
-		prog:     "{ print $; exit }",
+		prog:     `{ print $; exit }`,
 		json:     "[1, 2]",
 		expected: "1\n",
+	},
+	{
+		name: "exit BEGINFILE",
+		prog: `
+			BEGINFILE { print 'bf1'; exit }
+			BEGINFILE { print 'bf2' }
+			{ print $ }
+		`,
+		json:     "[1, 2]",
+		expected: "bf1\n",
+	},
+	{
+		name: "exit ENDFILE",
+		prog: `
+			{ print $ }
+			ENDFILE { print 'ef1'; exit }
+			ENDFILE { print 'ef2' }
+		`,
+		json:     "[1, 2]",
+		expected: "1\n2\nef1\n",
 	},
 	{
 		name: "null comparison",
