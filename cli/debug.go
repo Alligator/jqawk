@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go/ast"
 	"io"
+	"strings"
 
 	lang "github.com/alligator/jqawk/src"
 )
@@ -16,7 +17,8 @@ func debugAst(prog string, rootSelectors []string, dst io.Writer) {
 			rsParser := lang.NewParser(&rsLex)
 			expr, err := rsParser.ParseExpression()
 			if err != nil {
-				panic(err)
+				lang.PrintError(err, dst)
+				return
 			}
 			ast.Fprint(dst, nil, expr, ast.NotNilFilter)
 		}
@@ -33,45 +35,58 @@ func debugAst(prog string, rootSelectors []string, dst io.Writer) {
 }
 
 func debugLex(prog string, rootSelectors []string, dst io.Writer) {
-	dbg := func(prog string) {
+	dbg := func(prog string) (string, bool) {
+		var sb strings.Builder
 		lex := lang.NewLexer(prog)
 		line := 1
-		fmt.Fprint(dst, "   1: ")
+		fmt.Fprint(&sb, "   1: ")
 		for {
 			tok, err := lex.Next()
 			if err != nil {
-				panic(err)
+				lang.PrintError(err, dst)
+				return "", false
 			}
 
 			if tok.Tag == lang.Divide {
 				tok, err = lex.Regex()
 				if err != nil {
-					panic(err)
+					lang.PrintError(err, dst)
+					return "", false
 				}
 			}
 
 			if tok.Len == 0 {
-				fmt.Fprintf(dst, "%s ", tok.Tag)
+				fmt.Fprintf(&sb, "%s ", tok.Tag)
 			} else {
-				fmt.Fprintf(dst, "%s(%#v) ", tok.Tag, lex.GetString(&tok))
+				fmt.Fprintf(&sb, "%s(%#v) ", tok.Tag, lex.GetString(&tok))
 			}
 
 			if tok.Tag == lang.Newline {
 				line++
-				fmt.Fprintf(dst, "\n%4d: ", line)
+				fmt.Fprintf(&sb, "\n%4d: ", line)
 			} else if tok.Tag == lang.EOF {
 				break
 			}
 		}
+		return sb.String(), true
 	}
 
 	if len(rootSelectors) > 0 {
 		for i, rootSelector := range rootSelectors {
-			fmt.Fprintf(dst, "root selector %d tokens\n", i)
-			dbg(rootSelector)
+			result, ok := dbg(rootSelector)
+			if !ok {
+				return
+			}
+			fmt.Fprintf(dst, "root selector %d tokens\n", i+1)
+			fmt.Fprintln(dst, result)
 			fmt.Fprint(dst, "\n")
 		}
 	}
+
+	result, ok := dbg(prog)
+	if !ok {
+		return
+	}
 	fmt.Fprintln(dst, "program tokens")
-	dbg(prog)
+	fmt.Fprintln(dst, result)
 }
