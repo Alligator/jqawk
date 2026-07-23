@@ -557,6 +557,21 @@ passed as parameters:</p>
 <span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>  myfunc<span class="op">()</span></span>
 <span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Anonymous functions can be declared with the <code>fm() =&gt;</code>
+shorthand:</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode awk"><code class="sourceCode awk"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="cf">BEGIN</span> <span class="op">{</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">print</span> [<span class="dv">1</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">3</span>].map<span class="op">(</span>fn<span class="op">(</span>x<span class="op">)</span> <span class="op">=&gt;</span> x <span class="op">*</span> <span class="dv">2</span><span class="op">)</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<pre class="shellsession"><code>$ jqawk -f prog.jqawk emp.json
+[2, 4, 6]</code></pre>
+<p>The body can be an expression, which is implied to be the return
+value. The body can also be a block, and <code>return</code> can be used
+to return a value:</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode awk"><code class="sourceCode awk"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="cf">BEGIN</span> <span class="op">{</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">print</span> [<span class="dv">1</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">3</span>].map<span class="op">(</span>fn<span class="op">(</span>x<span class="op">)</span> <span class="op">=&gt;</span> <span class="op">{</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> x <span class="op">*</span> <span class="dv">2</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>  <span class="op">})</span></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 <h2 id="-variables"><code>$</code> Variables</h2>
 <p>If the input is an array, jqawk sets two variables:</p>
 <ul>

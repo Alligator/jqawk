@@ -27,6 +27,7 @@ type Precedence uint8
 const (
 	PrecNone Precedence = iota
 	PrecAssign
+	PrecFn
 	PrecTernary
 	PrecLogical
 	PrecComparison
@@ -84,6 +85,7 @@ func NewParser(l *Lexer) Parser {
 		Is:            {PrecComparison, nil, is},
 		Function:      {PrecNone, function, nil},
 		Question:      {PrecTernary, nil, ternary},
+		Fn:            {PrecFn, anonymousFunction, nil},
 	}
 	return p
 }
@@ -999,6 +1001,50 @@ func function(p *Parser) (Expr, error) {
 	return &fn, nil
 }
 
+func anonymousFunction(p *Parser) (Expr, error) {
+	if err := p.consume(Fn); err != nil {
+		return nil, err
+	}
+	fnToken := *p.previous
+
+	wasInFunction := p.inFunction
+	p.inFunction = true
+	defer func() { p.inFunction = wasInFunction }()
+
+	args, err := p.parseFunctionArgs()
+	if err != nil {
+		return nil, err
+	}
+
+	if err := p.consume(Arrow); err != nil {
+		return nil, err
+	}
+
+	var block StatementBlock
+	if p.current.Tag == LCurly {
+		block, err = p.block()
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		expr, err := p.expressionWithPrec(PrecFn)
+		if err != nil {
+			return nil, err
+		}
+		block = StatementBlock{
+			token: expr.Token(),
+			Body:  []Statement{&StatementReturn{expr}},
+		}
+	}
+
+	return &ExprFunction{
+		token: fnToken,
+		Ident: "",
+		Args:  args,
+		Body:  &block,
+	}, nil
+}
+
 func ternary(p *Parser, left Expr) (Expr, error) {
 	if err := p.consume(Question); err != nil {
 		return nil, err
@@ -1085,23 +1131,8 @@ func (p *Parser) parseFunction() (ExprFunction, error) {
 
 	identToken := *p.previous
 
-	if err := p.consume(LParen); err != nil {
-		return ExprFunction{}, err
-	}
-
-	args := make([]string, 0)
-	for !p.atEnd() && p.current.Tag != RParen {
-		if err := p.consume(Ident); err != nil {
-			return ExprFunction{}, err
-		}
-		str := p.lexer.GetString(p.previous)
-		args = append(args, str)
-		if p.current.Tag == Comma {
-			p.consume(Comma)
-		}
-	}
-
-	if err := p.consume(RParen); err != nil {
+	args, err := p.parseFunctionArgs()
+	if err != nil {
 		return ExprFunction{}, err
 	}
 
@@ -1116,6 +1147,30 @@ func (p *Parser) parseFunction() (ExprFunction, error) {
 		Args:  args,
 		Body:  &block,
 	}, nil
+}
+
+func (p *Parser) parseFunctionArgs() ([]string, error) {
+	if err := p.consume(LParen); err != nil {
+		return []string{}, err
+	}
+
+	args := make([]string, 0)
+	for !p.atEnd() && p.current.Tag != RParen {
+		if err := p.consume(Ident); err != nil {
+			return []string{}, err
+		}
+		str := p.lexer.GetString(p.previous)
+		args = append(args, str)
+		if p.current.Tag == Comma {
+			p.consume(Comma)
+		}
+	}
+
+	if err := p.consume(RParen); err != nil {
+		return []string{}, err
+	}
+
+	return args, nil
 }
 
 func (p *Parser) ParseExpression() (Expr, error) {

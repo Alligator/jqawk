@@ -303,6 +303,29 @@ BEGIN {
 }
 ```
 
+Anonymous functions can be declared with the `fn() =>` shorthand:
+
+```awk
+BEGIN {
+  print [1, 2, 3].map(fn(x) => x * 2)
+}
+```
+
+```shellsession
+$ jqawk -f prog.jqawk emp.json
+[2, 4, 6]
+```
+
+The body can be an expression, which is implied to be the return value. The body can also be a block, and `return` can be used to return a value:
+
+```awk
+BEGIN {
+  print [1, 2, 3].map(fn(x) => {
+    return x * 2
+  })
+}
+```
+
 ## `$` Variables
 
 If the input is an array, jqawk sets two variables:

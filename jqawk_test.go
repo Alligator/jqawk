@@ -778,7 +778,7 @@ rhs not null
 	{
 		name: "is operator",
 		prog: `
-			function fn() {}
+			function func() {}
 
 			{
 				if ($ is string) print 'string';
@@ -790,7 +790,7 @@ rhs not null
 			}
 
 			END {
-				if (fn is function)  print 'function';
+				if (func is function)  print 'function';
 				if (/123/ is regex)  print 'regex';
 				if (x is unknown)    print 'unknown';
 				if (num is function) print 'nativefunction'
@@ -1093,7 +1093,7 @@ false true
 	{
 		name: "scoping",
 		prog: `
-			function fn() {
+			function func() {
 				let a = 3;
 				b = 4;
 			}
@@ -1104,7 +1104,7 @@ false true
 					b = 2;
 				}
 				print a, b;
-				fn();
+				func();
 				print a;
 				print b;
 			}
@@ -1264,6 +1264,18 @@ false true
 		prog:         "{ $.items.push(3) }",
 		json:         `{"items":[1,2]}`,
 		expectedJson: `{"items":[1,2,3]}`,
+	},
+	{
+		name: "fn shorthand",
+		prog: `
+			BEGIN {
+				print [1, 2, 3].map(fn(x) => x * 2)
+				print [1, 2, 3].map(fn(x) => { return x * 2 })
+				puts = fn(s) => { print s }
+				puts('hi')
+			}
+		`,
+		expected: "[2, 4, 6]\n[2, 4, 6]\nhi\n",
 	},
 	{
 		name: "bug: statement after block",

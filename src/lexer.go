@@ -36,6 +36,7 @@ const (
 	Null
 	Is
 	Let
+	Fn
 	True          // true
 	False         // false
 	LCurly        // {
@@ -206,6 +207,8 @@ func (l *Lexer) identifier() Token {
 		return l.simpleToken(Is)
 	case "let":
 		return l.simpleToken(Let)
+	case "fn":
+		return l.simpleToken(Fn)
 	default:
 		return l.stringToken(Ident, l.pos-l.tokenStart)
 	}
