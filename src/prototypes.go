@@ -383,10 +383,6 @@ func getObjPrototype() *Value {
 					} else {
 						newObj.Obj.Set(value.String(), val)
 					}
-
-					if err != nil {
-						return nil, err
-					}
 				}
 				return &newObj, nil
 			},
