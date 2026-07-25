@@ -16,14 +16,15 @@ import (
 )
 
 type testCase struct {
-	name          string
-	prog          string
-	json          string
-	json2         string
-	expected      string
-	expectedError string
-	expectedJson  string
-	args          []string
+	name                   string
+	prog                   string
+	json                   string
+	json2                  string
+	expected               string
+	expectedError          string
+	expectedFormattedError string
+	expectedJson           string
+	args                   []string
 }
 
 // basic tests with no JSON input
@@ -985,6 +986,7 @@ rhs not null
 				print a.pop(), a
 				print a.popfirst(), a
 				print a.contains(1), a.contains(2)
+				print a.reverse()
 			}
 		`,
 		json: "[]",
@@ -992,6 +994,7 @@ rhs not null
 4 [1, 2, 3]
 1 [2, 3]
 false true
+[3, 2]
 `,
 	},
 	{
@@ -1284,6 +1287,31 @@ false true
 		expected: "[2, 4, 6]\n[2, 4, 6]\nhi\n",
 	},
 	{
+		name:          "invalid json",
+		prog:          "",
+		json:          "[1, 2 3]",
+		expectedError: "invalid character '3' after array element",
+	},
+	{
+		name: "multiple errors",
+		prog: `BEGIN {
+			pront 'a';
+			pront 'b';
+		}`,
+		expectedError: "unexpected end of input\nunexpected end of input",
+	},
+	{
+		name: "call stack limit",
+		prog: `BEGIN {
+				function x() {
+					x()
+				}
+				x()
+			}
+		`,
+		expectedError: "call depth limit exceeded",
+	},
+	{
 		name: "bug: statement after block",
 		prog: `
 			{
@@ -1465,6 +1493,15 @@ false true
 		prog:          "BEGIN { print 1 is beep }",
 		expectedError: "expected a type name",
 	},
+	{
+		name: "bug: caret in wrong place with tab indentation",
+		prog: `BEGIN {
+				pront 'a';
+		}`,
+		expectedFormattedError: "  \t\t\t\tpront 'a';\n" +
+			"  \t\t\t\t       ^\n" +
+			"syntax error on line 2: unexpected end of input\n",
+	},
 }
 
 func FuzzJqawkWithJson(f *testing.F) {
@@ -1531,6 +1568,18 @@ func testInternal(t testing.TB, tc testCase) {
 
 			if err.Error() != tc.expectedError {
 				t.Fatalf("expected error %q\ngot %q\n", tc.expectedError, err.Error())
+			}
+		} else if len(tc.expectedFormattedError) > 0 {
+			expectedError := strings.TrimPrefix(tc.expectedFormattedError, "\n")
+			if err == nil {
+				t.Fatalf("expected error %q but got none", expectedError)
+			}
+
+			var sb strings.Builder
+			lang.PrintError(err, &sb)
+
+			if sb.String() != expectedError {
+				t.Fatalf("expected error\n%q\ngot\n%q\n", expectedError, sb.String())
 			}
 		} else if err != nil {
 			lang.PrintError(err, t.Output())
