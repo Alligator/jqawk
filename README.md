@@ -562,7 +562,9 @@ object.length()
   return the number of keys
 
 object.pluck(k1, k2, ...)
+object.pluck([k1, k2, ...])
   return a shallow copy of the object containing only the given keys
+  the keys can be passed as separate arguments, or as an array
 
 object.keys()
   return the keys of an object as a list

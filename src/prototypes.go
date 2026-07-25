@@ -371,17 +371,20 @@ func getObjPrototype() *Value {
 		proto.Obj.Set("pluck", Value{
 			Tag: ValueNativeFn,
 			NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
+				keys := v
+				if len(v) == 1 && v[0].Tag == ValueArray {
+					keys = v[0].Array.Items
+				}
+
 				newObj := NewObject()
-				for _, value := range v {
-					val, present, err := this.GetMember(*value)
+				for _, key := range keys {
+					val, present, err := this.GetMember(*key)
 					if err != nil {
 						return nil, err
 					}
 
-					if !present {
-						newObj.Obj.Set(value.String(), NewValue(nil))
-					} else {
-						newObj.Obj.Set(value.String(), val)
+					if present {
+						newObj.Obj.Set(key.String(), val)
 					}
 				}
 				return &newObj, nil

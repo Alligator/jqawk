@@ -557,7 +557,7 @@ passed as parameters:</p>
 <span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>  myfunc<span class="op">()</span></span>
 <span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
-<p>Anonymous functions can be declared with the <code>fm() =&gt;</code>
+<p>Anonymous functions can be declared with the <code>fn() =&gt;</code>
 shorthand:</p>
 <div class="sourceCode" id="cb19"><pre class="sourceCode awk"><code class="sourceCode awk"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="cf">BEGIN</span> <span class="op">{</span></span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">print</span> [<span class="dv">1</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">3</span>].map<span class="op">(</span>fn<span class="op">(</span>x<span class="op">)</span> <span class="op">=&gt;</span> x <span class="op">*</span> <span class="dv">2</span><span class="op">)</span></span>
@@ -776,7 +776,9 @@ object.length()
   return the number of keys
 
 object.pluck(k1, k2, ...)
+object.pluck([k1, k2, ...])
   return a shallow copy of the object containing only the given keys
+  the keys can be passed as separate arguments, or as an array
 
 object.keys()
   return the keys of an object as a list

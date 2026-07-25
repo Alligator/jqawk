@@ -688,10 +688,16 @@ aBc
 `,
 	},
 	{
-		name:     "pluck",
-		prog:     "{ print $.pluck('a') }",
-		json:     `[{ "a": 1, "b": 2}]`,
-		expected: "{\"a\": 1}\n",
+		name: "pluck",
+		prog: `{
+			print $.pluck('a')
+			print $.pluck('b', 'c')
+			print $.pluck(['a', 'b'])
+		}`,
+		json: `[{ "a": 1, "b": 2}]`,
+		expected: "{\"a\": 1}\n" +
+			"{\"b\": 2}\n" +
+			"{\"a\": 1, \"b\": 2}\n",
 	},
 	{
 		name:     "exit",

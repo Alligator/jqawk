@@ -227,6 +227,7 @@ The following statements are valid:
 
 `object.pluck(k1, k2, ...)`
 : return a shallow copy of the object containing only the given keys
+: the keys can be passed as separate arguments, or as an array
 <br><br>
 
 `object.keys()`
