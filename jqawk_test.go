@@ -1502,6 +1502,17 @@ false true
 			"  \t\t\t\t       ^\n" +
 			"syntax error on line 2: unexpected end of input\n",
 	},
+	{
+		name: "bug: next in begin/beginfile/end/endfile",
+		prog: `
+			BEGIN { next; print 'urk'}
+			BEGINFILE { next; print 'urk' }
+			{ next; print 'urk'}
+			ENDFILE { next; print 'urk' }
+			END { next; print 'urk' }
+		`,
+		expected: "",
+	},
 }
 
 func FuzzJqawkWithJson(f *testing.F) {
@@ -2206,6 +2217,16 @@ func TestJqawkOneTrueAwk(t *testing.T) {
 	})
 
 	test(t, testCase{
+		name: "p31",
+		prog: `
+			$[0].length() > max { max = $[0].length(); name = $[0] }
+			END { print name }
+		`,
+		json:     countries,
+		expected: "Australia\n",
+	})
+
+	test(t, testCase{
 		name: "p32",
 		prog: "{ $[0] = $[0][:3]; print $[0] }",
 		json: countries,
@@ -2292,6 +2313,32 @@ Algeria 920 18 Africa 19.565217391304348
 		expected: "China 866\n",
 	})
 
+	p39p40expected := "Russia\n8650\n262\nAsia\n" +
+		"Canada\n3852\n24\nNorth America\n" +
+		"China\n3692\n866\nAsia\n" +
+		"USA\n3615\n219\nNorth America\n" +
+		"Brazil\n3286\n116\nSouth America\n" +
+		"Australia\n2968\n14\nAustralia\n" +
+		"India\n1269\n637\nAsia\n" +
+		"Argentina\n1072\n26\nSouth America\n" +
+		"Sudan\n968\n19\nAfrica\n" +
+		"Algeria\n920\n18\nAfrica\n"
+
+	test(t, testCase{
+		name: "p39",
+		prog: `
+			{
+				i = 0
+				while (i < $.length()) {
+					print $[i]
+					i++
+				}
+			}
+		`,
+		json:     countries,
+		expected: p39p40expected,
+	})
+
 	test(t, testCase{
 		name: "p40",
 		prog: `
@@ -2301,48 +2348,8 @@ Algeria 920 18 Africa 19.565217391304348
 				}
 			}
 		`,
-		json: countries,
-		expected: `Russia
-8650
-262
-Asia
-Canada
-3852
-24
-North America
-China
-3692
-866
-Asia
-USA
-3615
-219
-North America
-Brazil
-3286
-116
-South America
-Australia
-2968
-14
-Australia
-India
-1269
-637
-Asia
-Argentina
-1072
-26
-South America
-Sudan
-968
-19
-Africa
-Algeria
-920
-18
-Africa
-`,
+		json:     countries,
+		expected: p39p40expected,
 	})
 
 	test(t, testCase{
@@ -2415,5 +2422,39 @@ Africa:1888
 		`,
 		json:     "[1, 2, 3, 4, 5]",
 		expected: "5 5 -5 5 -5\n",
+	})
+
+	test(t, testCase{
+		name: "t.next",
+		prog: `
+			$ > 3 { next }
+			{ print $ }
+		`,
+		json:     "[1, 2, 3, 4, 5]",
+		expected: "1\n2\n3\n",
+	})
+
+	test(t, testCase{
+		name: "t.for",
+		prog: `BEGIN {
+			for (i = 1; i < 4; i++) {
+				print i;
+			}
+		}`,
+		expected: "1\n2\n3\n",
+	})
+
+	test(t, testCase{
+		name: "t.for1",
+		prog: `BEGIN {
+			i = 1
+			for (;;) {
+				if (i >= 4)
+					next
+				print i
+				i++
+			}
+		}`,
+		expected: "1\n2\n3\n",
 	})
 }

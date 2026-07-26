@@ -1434,6 +1434,9 @@ func evalProgramInternal(ev *Evaluator, files []InputFile, rootSelectors []strin
 			if err == errExit {
 				return ev, nil
 			}
+			if err == errNext {
+				continue
+			}
 			return ev, err
 		}
 	}
@@ -1442,13 +1445,11 @@ func evalProgramInternal(ev *Evaluator, files []InputFile, rootSelectors []strin
 	err := ev.forEachRootValue(files, rootSelectors, func(rootValue *Value) error {
 		// run the begin file rules
 		ev.setRuleRoot(rootValue, nil)
-		for _, rule := range ev.beginFileRules {
-			if err := ev.evalStatement(rule.Body); err != nil {
-				if err == errExit {
-					return nil
-				}
-				return err
+		if err := ev.evalRules(ev.beginFileRules); err != nil {
+			if err == errExit {
+				return nil
 			}
+			return err
 		}
 		modifiedRoot := ev.ruleRoot
 
@@ -1463,13 +1464,11 @@ func evalProgramInternal(ev *Evaluator, files []InputFile, rootSelectors []strin
 
 		// run the end file rules
 		ev.setRuleRoot(modifiedRoot, nil)
-		for _, rule := range ev.endFileRules {
-			if err := ev.evalStatement(rule.Body); err != nil {
-				if err == errExit {
-					return nil
-				}
-				return err
+		if err := ev.evalRules(ev.endFileRules); err != nil {
+			if err == errExit {
+				return nil
 			}
+			return err
 		}
 
 		return nil
@@ -1485,6 +1484,9 @@ func evalProgramInternal(ev *Evaluator, files []InputFile, rootSelectors []strin
 		if err := ev.evalStatement(rule.Body); err != nil {
 			if err == errExit {
 				return ev, nil
+			}
+			if err == errNext {
+				continue
 			}
 			return ev, err
 		}
