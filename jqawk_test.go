@@ -2415,23 +2415,24 @@ Africa:1888
 	})
 
 	test(t, testCase{
-		name: "t.incr",
-		prog: `
-			{ ++i; --j; k++; l-- }
-			ENDFILE { print $.length(), i, j, k, l }
-		`,
-		json:     "[1, 2, 3, 4, 5]",
-		expected: "5 5 -5 5 -5\n",
-	})
-
-	test(t, testCase{
-		name: "t.next",
-		prog: `
-			$ > 3 { next }
-			{ print $ }
-		`,
-		json:     "[1, 2, 3, 4, 5]",
-		expected: "1\n2\n3\n",
+		name: "t.break3",
+		prog: `BEGIN {
+			for (i = 1; i < 3; i++) {
+				for (j = 1; j < 4; j++) {
+					if (j == 3)
+						break
+					print 'inner', i, j
+				}
+				print 'outer', i, j
+			}
+		}`,
+		expected: "" +
+			"inner 1 1\n" +
+			"inner 1 2\n" +
+			"outer 1 3\n" +
+			"inner 2 1\n" +
+			"inner 2 2\n" +
+			"outer 2 3\n",
 	})
 
 	test(t, testCase{
@@ -2455,6 +2456,49 @@ Africa:1888
 				i++
 			}
 		}`,
+		expected: "1\n2\n3\n",
+	})
+
+	test(t, testCase{
+		name: "t.for2",
+		prog: `BEGIN {
+			for (i = 1;;i++) {
+				if (i >= 4)
+					next
+				print i
+			}
+		}`,
+		expected: "1\n2\n3\n",
+	})
+
+	test(t, testCase{
+		name: "t.for3",
+		prog: `BEGIN {
+			for (i = 1;
+				i < 4;
+				i++)
+				print i
+		}`,
+		expected: "1\n2\n3\n",
+	})
+
+	test(t, testCase{
+		name: "t.incr",
+		prog: `
+			{ ++i; --j; k++; l-- }
+			ENDFILE { print $.length(), i, j, k, l }
+		`,
+		json:     "[1, 2, 3, 4, 5]",
+		expected: "5 5 -5 5 -5\n",
+	})
+
+	test(t, testCase{
+		name: "t.next",
+		prog: `
+			$ > 3 { next }
+			{ print $ }
+		`,
+		json:     "[1, 2, 3, 4, 5]",
 		expected: "1\n2\n3\n",
 	})
 }
