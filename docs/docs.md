@@ -215,6 +215,10 @@ The following statements are valid:
   operator, the result is never negative
 <br><br>
 
+`number.sqrt(n)`
+: return the square root of x
+<br><br>
+
 `number.format(thousandsSeparator, decimalSeparator)`
 : format a number with thousands and decimal separators. if no separators
   are given `,` is used for thousands and `.` is used for decimals

@@ -66,6 +66,7 @@ const (
 	MinusEqual    // -=
 	MultiplyEqual // *=
 	DivideEqual   // /=
+	PowerEqual    // **=
 	Tilde         // ~
 	BangTilde     // !~
 	AmpAmp        // &&
@@ -381,7 +382,13 @@ func (l *Lexer) Next() (Token, error) {
 		switch l.peek() {
 		case '*':
 			l.advance()
-			return l.simpleToken(Power), nil
+			switch l.peek() {
+			case '=':
+				l.advance()
+				return l.simpleToken(PowerEqual), nil
+			default:
+				return l.simpleToken(Power), nil
+			}
 		case '=':
 			l.advance()
 			return l.simpleToken(MultiplyEqual), nil

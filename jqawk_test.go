@@ -2415,6 +2415,33 @@ Africa:1888
 	})
 
 	test(t, testCase{
+		name: "t.addps",
+		prog: `{
+			n = $
+			n += $
+			if (n != $ + $) print 'urk +=', n
+
+			n = $
+			n -= $
+			if (n != 0) print 'urk -=', n
+
+			n = $
+			n *= 3.5
+			if (n != $ * 3.5) print 'urk *=', n
+
+			n = $
+			n **= 2
+			if (n != $ * $) print 'urk **=', n
+
+			n = $
+			n **= 1.5
+			if (n != $ * $.sqrt()) print 'urk **=', n
+		}`,
+		json:     "[4]",
+		expected: "",
+	})
+
+	test(t, testCase{
 		name: "t.break3",
 		prog: `BEGIN {
 			for (i = 1; i < 3; i++) {

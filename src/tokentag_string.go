@@ -65,21 +65,22 @@ func _() {
 	_ = x[MinusEqual-54]
 	_ = x[MultiplyEqual-55]
 	_ = x[DivideEqual-56]
-	_ = x[Tilde-57]
-	_ = x[BangTilde-58]
-	_ = x[AmpAmp-59]
-	_ = x[PipePipe-60]
-	_ = x[Arrow-61]
-	_ = x[Bang-62]
-	_ = x[PlusPlus-63]
-	_ = x[MinusMinus-64]
-	_ = x[Percent-65]
-	_ = x[Question-66]
+	_ = x[PowerEqual-57]
+	_ = x[Tilde-58]
+	_ = x[BangTilde-59]
+	_ = x[AmpAmp-60]
+	_ = x[PipePipe-61]
+	_ = x[Arrow-62]
+	_ = x[Bang-63]
+	_ = x[PlusPlus-64]
+	_ = x[MinusMinus-65]
+	_ = x[Percent-66]
+	_ = x[Question-67]
 }
 
-const _TokenTag_name = "EOFErrorIdentStrRegexNumBeginEndBeginFileEndFilePrintFunctionReturnIfElseForWhileInMatchBreakContinueNextNewlineExitNullIsLetFntruefalse{}[]()<>$,.===!=<=>=:;+-***/+=-=*=/=~!~&&||=>!++--%?"
+const _TokenTag_name = "EOFErrorIdentStrRegexNumBeginEndBeginFileEndFilePrintFunctionReturnIfElseForWhileInMatchBreakContinueNextNewlineExitNullIsLetFntruefalse{}[]()<>$,.===!=<=>=:;+-***/+=-=*=/=**=~!~&&||=>!++--%?"
 
-var _TokenTag_index = [...]uint8{0, 3, 8, 13, 16, 21, 24, 29, 32, 41, 48, 53, 61, 67, 69, 73, 76, 81, 83, 88, 93, 101, 105, 112, 116, 120, 122, 125, 127, 131, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 150, 152, 154, 156, 157, 158, 159, 160, 161, 163, 164, 166, 168, 170, 172, 173, 175, 177, 179, 181, 182, 184, 186, 187, 188}
+var _TokenTag_index = [...]uint8{0, 3, 8, 13, 16, 21, 24, 29, 32, 41, 48, 53, 61, 67, 69, 73, 76, 81, 83, 88, 93, 101, 105, 112, 116, 120, 122, 125, 127, 131, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 150, 152, 154, 156, 157, 158, 159, 160, 161, 163, 164, 166, 168, 170, 172, 175, 176, 178, 180, 182, 184, 185, 187, 189, 190, 191}
 
 func (i TokenTag) String() string {
 	if i >= TokenTag(len(_TokenTag_index)-1) {

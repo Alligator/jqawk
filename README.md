@@ -553,6 +553,9 @@ number.mod(n)
   return the number wrapped into the range [0, n]. unlike the modulo
   operator, the result is never negative
 
+number.sqrt(n)
+  return the square root of n
+
 number.format(thousandsSeparator, decimalSeparator)
   format a number with thousands and decimal separators. if no separators
   are given ',' is used for thousands and '.' is used for decimals

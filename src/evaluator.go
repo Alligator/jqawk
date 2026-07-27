@@ -541,7 +541,7 @@ func (e *Evaluator) assignToTarget(target AssignTarget, value Value, opToken Tok
 	}
 
 	switch opToken.Tag {
-	case PlusEqual, MinusEqual, MultiplyEqual, DivideEqual:
+	case PlusEqual, MinusEqual, MultiplyEqual, DivideEqual, PowerEqual:
 		oldVal := lv.Get()
 
 		if opToken.Tag == PlusEqual && (oldVal.Tag == ValueStr || value.Tag == ValueStr) {
@@ -563,7 +563,13 @@ func (e *Evaluator) assignToTarget(target AssignTarget, value Value, opToken Tok
 			value = NewValue(oldNum * rhs)
 		case DivideEqual:
 			value = NewValue(oldNum / rhs)
+		case PowerEqual:
+			value = NewValue(math.Pow(oldNum, rhs))
 		}
+	case PlusPlus, MinusMinus, Equal:
+		break
+	default:
+		panic(fmt.Errorf("unhandled assignment operator, %q", opToken.Tag))
 	}
 
 	lv.Set(value)

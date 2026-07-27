@@ -74,6 +74,7 @@ func NewParser(l *Lexer) Parser {
 		MinusEqual:    {PrecAssign, nil, assign},
 		MultiplyEqual: {PrecAssign, nil, assign},
 		DivideEqual:   {PrecAssign, nil, assign},
+		PowerEqual:    {PrecAssign, nil, assign},
 		AmpAmp:        {PrecLogical, nil, binaryLeftAssoc},
 		PipePipe:      {PrecLogical, nil, binaryLeftAssoc},
 		Match:         {PrecNone, match, nil},

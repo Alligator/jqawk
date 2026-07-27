@@ -603,6 +603,19 @@ func getNumPrototype() *Value {
 			},
 		})
 
+		proto.Obj.Set("sqrt", Value{
+			Tag: ValueNativeFn,
+			NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
+				if this == nil || this.Tag != ValueNum {
+					v := NewValue(nil)
+					return &v, nil
+				}
+
+				result := NewValue(math.Sqrt(*this.Num))
+				return &result, nil
+			},
+		})
+
 		proto.Obj.Set("format", Value{
 			Tag: ValueNativeFn,
 			NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
