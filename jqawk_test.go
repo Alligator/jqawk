@@ -1147,7 +1147,7 @@ false true
 				print 'failed:', name
 			}
 		}
-			
+
 		BEGIN {
 			# references
 			{
@@ -2527,5 +2527,36 @@ Africa:1888
 		`,
 		json:     "[1, 2, 3, 4, 5]",
 		expected: "1\n2\n3\n",
+	})
+
+	test(t, testCase{
+		name: "t.vf",
+		prog: `
+			# vf
+			BEGIN { i = 1 }
+			{ print $[i+1] }
+			{ print $[1] }
+
+			# vf1
+			{
+				j = 1
+				while (j < $.length()) {
+					print " " + $[j]
+					j = j + 1
+				}
+			}
+
+			# vf2
+			{ print $[-1]++, $[-1] }
+
+			# vf3
+			BEGIN { k = 0; l = 1 }
+			{ $[k] = $[l]; print }
+		`,
+		json:     "[[1, 2, 3]]",
+		expected: "3\n2\n" +
+			" 2\n 3\n" +
+			"3 4\n" +
+			"[2, 2, 4]\n",
 	})
 }
