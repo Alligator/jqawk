@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/alligator/jqawk/cli"
-	"github.com/alligator/jqawk/src"
+	lang "github.com/alligator/jqawk/src"
 )
 
 type testCase struct {
@@ -949,8 +949,8 @@ rhs not null
 	{
 		name:     "jsonl",
 		prog:     "{ print $ }",
-		json:     "[1, 2]\n[3, 4]",
-		expected: "1\n2\n3\n4\n",
+		json:     "[1, 2]\n[3, 4]\r\n[5, 6]  \n[7, 8]",
+		expected: "1\n2\n3\n4\n5\n6\n7\n8\n",
 	},
 	{
 		name:     "escape chars",
@@ -1513,6 +1513,12 @@ false true
 		`,
 		expected: "",
 	},
+	{
+		name:          "bug: garbage after json",
+		prog:          "{ print $ }",
+		json:          "0000",
+		expectedError: "expected end of JSON value but got '0'",
+	},
 }
 
 func FuzzJqawkWithJson(f *testing.F) {
@@ -1986,10 +1992,10 @@ func TestJqawkStreamingJson(t *testing.T) {
 		}
 	}
 
-	write("[1, 2, 3]")
+	write("[1, 2, 3]\n")
 	checkLine("6\n")
 
-	write("[4, 5, 6]")
+	write("[4, 5, 6]\n")
 	checkLine("15\n")
 
 	if err := stdinW.Close(); err != nil {
@@ -2553,7 +2559,7 @@ Africa:1888
 			BEGIN { k = 0; l = 1 }
 			{ $[k] = $[l]; print }
 		`,
-		json:     "[[1, 2, 3]]",
+		json: "[[1, 2, 3]]",
 		expected: "3\n2\n" +
 			" 2\n 3\n" +
 			"3 4\n" +

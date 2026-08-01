@@ -1342,13 +1342,18 @@ func (e *Evaluator) forEachRootValue(files []InputFile, rootSelectors []string, 
 
 	for _, file := range files {
 		// for each json value
-		jp := newJsonParser(file.NewReader())
+		rdr := file.NewReader()
+		jp := newJsonParser(rdr)
 		for {
 			rootValue, err := jp.next()
 			if err != nil {
 				if err == io.EOF {
 					break
 				}
+				return JsonError{err.Error(), file.Name()}
+			}
+
+			if err = jp.skipToNextValue(); err != nil {
 				return JsonError{err.Error(), file.Name()}
 			}
 
