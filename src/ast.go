@@ -213,6 +213,7 @@ type StatementNext struct {
 
 type StatementExit struct {
 	token Token
+	Expr  Expr
 }
 
 type StatementIf struct {

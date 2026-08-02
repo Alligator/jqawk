@@ -360,7 +360,7 @@ one-liners or in a pipeline.</p>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">{</span> <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;Dan&quot;</span><span class="fu">,</span> <span class="dt">&quot;rate&quot;</span><span class="fu">:</span> <span class="fl">3.75</span><span class="fu">,</span> <span class="dt">&quot;hours&quot;</span><span class="fu">:</span> <span class="dv">0</span> <span class="fu">}</span><span class="ot">,</span></span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">{</span> <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;Kathy&quot;</span><span class="fu">,</span> <span class="dt">&quot;rate&quot;</span><span class="fu">:</span> <span class="dv">4</span><span class="fu">,</span> <span class="dt">&quot;hours&quot;</span><span class="fu">:</span> <span class="dv">10</span> <span class="fu">}</span><span class="ot">,</span></span>
 <span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">{</span> <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;Mark&quot;</span><span class="fu">,</span> <span class="dt">&quot;rate&quot;</span><span class="fu">:</span> <span class="dv">5</span><span class="fu">,</span> <span class="dt">&quot;hours&quot;</span><span class="fu">:</span> <span class="dv">20</span> <span class="fu">}</span><span class="ot">,</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">{</span> <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;Mary&quot;</span><span class="fu">,</span> <span class="dt">&quot;rate&quot;</span><span class="fu">:</span> <span class="fl">5.50</span><span class="fu">,</span> <span class="dt">&quot;hours&quot;</span><span class="fu">:</span> <span class="dv">22</span> <span class="fu">}</span><span class="ot">,</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">{</span> <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;Mary&quot;</span><span class="fu">,</span> <span class="dt">&quot;rate&quot;</span><span class="fu">:</span> <span class="fl">5.5</span><span class="fu">,</span> <span class="dt">&quot;hours&quot;</span><span class="fu">:</span> <span class="dv">22</span> <span class="fu">}</span><span class="ot">,</span></span>
 <span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">{</span> <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;Susie&quot;</span><span class="fu">,</span> <span class="dt">&quot;rate&quot;</span><span class="fu">:</span> <span class="fl">4.25</span><span class="fu">,</span> <span class="dt">&quot;hours&quot;</span><span class="fu">:</span> <span class="dv">18</span> <span class="fu">}</span></span>
 <span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="ot">]</span></span></code></pre></div>
 <p>This will print</p>
@@ -414,11 +414,8 @@ use the <code>-r</code> flag to select it.</p>
 <p>With this JSON:</p>
 <div class="sourceCode" id="cb8"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;status&quot;</span><span class="fu">:</span> <span class="st">&quot;success&quot;</span><span class="fu">,</span></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;result&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">{</span> <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;alligator&quot;</span> <span class="fu">}</span><span class="ot">,</span></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">{</span> <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;someone else&quot;</span> <span class="fu">}</span></span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  <span class="ot">]</span></span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;result&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="fu">{</span> <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;alligator&quot;</span> <span class="fu">}</span><span class="ot">,</span> <span class="fu">{</span> <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;someone else&quot;</span> <span class="fu">}</span><span class="ot">]</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 <p>This command selects the <code>result</code> array as the root
 value:</p>
 <pre class="console"><code>$ jqawk -r &quot;$.result&quot; &quot;{ print $.name }&quot; file.json
@@ -471,7 +468,7 @@ and <code>while</code> control-flow statements:</p>
 <span id="cb11-28"><a href="#cb11-28" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> <span class="op">(</span>row <span class="kw">in</span> rows<span class="op">)</span> <span class="op">{</span></span>
 <span id="cb11-29"><a href="#cb11-29" aria-hidden="true" tabindex="-1"></a>    <span class="kw">printf</span><span class="op">(</span>&#39;<span class="op">%-</span><span class="dv">10</span>s <span class="op">%-</span><span class="dv">10</span>f <span class="op">%-</span><span class="dv">10</span>f\n&#39;<span class="op">,</span> row[<span class="dv">0</span>]<span class="op">,</span> row[<span class="dv">1</span>]<span class="op">,</span> row[<span class="dv">2</span>]<span class="op">)</span></span>
 <span id="cb11-30"><a href="#cb11-30" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
-<span id="cb11-31"><a href="#cb11-31" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb11-31"><a href="#cb11-31" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb11-32"><a href="#cb11-32" aria-hidden="true" tabindex="-1"></a>  <span class="co"># print footer</span></span>
 <span id="cb11-33"><a href="#cb11-33" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> <span class="op">(</span>i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> <span class="dv">32</span><span class="op">;</span> i<span class="op">++)</span> <span class="op">{</span></span>
 <span id="cb11-34"><a href="#cb11-34" aria-hidden="true" tabindex="-1"></a>    <span class="kw">printf</span><span class="op">(</span>&#39;<span class="op">-</span>&#39;<span class="op">)</span></span>
@@ -685,8 +682,9 @@ continue
 next
   immediately exit the rule and process no further rules for the current element
 
-exit
-  immediately exit the program
+exit &lt;expression&gt;
+  immediately exit the program. the exit code is set to &lt;expression&gt;, or 0 if
+  no expression is present
 
 if (&lt;expression&gt;) &lt;body&gt; else &lt;elsebody&gt;
   execute &lt;body&gt; if &lt;expression&gt; is truthy. If the value is falsy and the else
@@ -705,7 +703,7 @@ for (&lt;preexpression&gt;; &lt;checkexpression&gt;; &lt;postexpression&gt;) &lt
 for (&lt;identifier&gt; in &lt;expression&gt;) &lt;body&gt;
   execute &lt;body&gt; for each element in &lt;expression&gt; with &lt;identifier&gt; set to its
   value.
-  
+
   if &lt;expression&gt; is an array, &lt;identifier&gt; is each element.
   if it&#39;s an object, &lt;identifier&gt; is each key.
   if it&#39;s a string, &lt;identifier&gt; is each character.

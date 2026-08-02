@@ -394,9 +394,18 @@ func (p *Parser) statement() (Statement, error) {
 		stmt := StatementNext{*p.previous}
 		return &stmt, nil
 	case Exit:
-		p.consume(Exit)
-		stmt := StatementExit{*p.previous}
-		return &stmt, nil
+		if err := p.consume(Exit); err != nil {
+			return nil, err
+		}
+		if !p.atStatementEnd() {
+			expr, err := p.expression()
+			if err != nil {
+				return nil, err
+			}
+			return &StatementExit{*p.previous, expr}, nil
+		}
+		p.didEndStatement = true
+		return &StatementExit{token: *p.previous}, nil
 	case Let:
 		p.consume(Let)
 		left, err := identifier(p)

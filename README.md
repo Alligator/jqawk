@@ -463,8 +463,9 @@ continue
 next
   immediately exit the rule and process no further rules for the current element
 
-exit
-  immediately exit the program
+exit <expression>
+  immediately exit the program. the exit code is set to <expression>, or 0 if
+  no expression is present
 
 if (<expression>) <body> else <elsebody>
   execute <body> if <expression> is truthy. If the value is falsy and the else

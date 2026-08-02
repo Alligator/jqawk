@@ -74,11 +74,11 @@ If the input is anything else:
 The following statements are valid:
 
 `print <expression>, <expression>, ...`  
-: print <expression>s, separated by spaces
+: print `<expression>`s, separated by spaces
 <br><br>
 
 `return <expression>`  
-: return from the current function, optionally returning the value of <expression>
+: return from the current function, optionally returning the value of `<expression>`
 <br><br>
 
 `break`
@@ -93,8 +93,9 @@ The following statements are valid:
 : immediately exit the rule and process no further rules for the current element
 <br><br>
 
-`exit`
-: immediately exit the program
+`exit <expression>`
+: immediately exit the program. the exit code is set to `<expression>`, or 0 if
+  no expression is present
 <br><br>
 
 `if (<expression>) <body> else <elsebody>`

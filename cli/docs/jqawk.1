@@ -79,10 +79,11 @@ If the input is anything else:
 The following statements are valid:
 .TP
 \f[CR]print <expression>, <expression>, ...\f[R]
-print s, separated by spaces
+print \f[CR]<expression>\f[R]s, separated by spaces
 .TP
 \f[CR]return <expression>\f[R]
-return from the current function, optionally returning the value of 
+return from the current function, optionally returning the value of
+\f[CR]<expression>\f[R]
 .TP
 \f[CR]break\f[R]
 exit the enclosing for or while loop
@@ -94,8 +95,10 @@ immediately begin the next iteration of the enclosing loop
 immediately exit the rule and process no further rules for the current
 element
 .TP
-\f[CR]exit\f[R]
-immediately exit the program
+\f[CR]exit <expression>\f[R]
+immediately exit the program.
+the exit code is set to \f[CR]<expression>\f[R], or 0 if no expression
+is present
 .TP
 \f[CR]if (<expression>) <body> else <elsebody>\f[R]
 execute \f[CR]<body>\f[R] if \f[CR]<expression>\f[R] is truthy.

@@ -332,12 +332,12 @@ element</p>
 <dl>
 <dt><code>print &lt;expression&gt;, &lt;expression&gt;, ...</code></dt>
 <dd>
-print <expression>s, separated by spaces <br><br>
+print <code>&lt;expression&gt;</code>s, separated by spaces <br><br>
 </dd>
 <dt><code>return &lt;expression&gt;</code></dt>
 <dd>
 return from the current function, optionally returning the value of
-<expression> <br><br>
+<code>&lt;expression&gt;</code> <br><br>
 </dd>
 <dt><code>break</code></dt>
 <dd>
@@ -352,9 +352,11 @@ immediately begin the next iteration of the enclosing loop <br><br>
 immediately exit the rule and process no further rules for the current
 element <br><br>
 </dd>
-<dt><code>exit</code></dt>
+<dt><code>exit &lt;expression&gt;</code></dt>
 <dd>
-immediately exit the program <br><br>
+immediately exit the program. the exit code is set to
+<code>&lt;expression&gt;</code>, or 0 if no expression is present
+<br><br>
 </dd>
 <dt><code>if (&lt;expression&gt;) &lt;body&gt; else &lt;elsebody&gt;</code></dt>
 <dd>

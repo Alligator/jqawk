@@ -206,7 +206,7 @@ func Run(version string, args []string, stdin io.Reader, stdout, stderr io.Write
 			lang.PrintError(err, stderr)
 			return 1
 		}
-		return 0
+		return ev.ReturnCode()
 	}
 
 	ev, err := lang.EvalProgram(progSrc, inputFiles, rValues, stdout, false)
@@ -251,5 +251,5 @@ func Run(version string, args []string, stdin io.Reader, stdout, stderr io.Write
 		}
 	}
 
-	return 0
+	return ev.ReturnCode()
 }

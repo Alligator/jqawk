@@ -24,6 +24,7 @@ type testCase struct {
 	expectedError          string
 	expectedFormattedError string
 	expectedJson           string
+	expectedReturnCode     int
 	args                   []string
 }
 
@@ -656,6 +657,18 @@ Total    337.5
 		expected: "1\n2\n3\n4\n",
 	},
 	{
+		name: "next in function",
+		prog: `
+			function skip() {
+				next
+			}
+			{ print $; skip() }
+			{ print 'after skip' }
+		`,
+		json:     "[1, 2, 3, 4]",
+		expected: "1\n2\n3\n4\n",
+	},
+	{
 		name:     "printing circular references",
 		prog:     "BEGIN { a.a = 3; a.a = a; print a; b = []; b[0] = 1; b[1] = b; print b; }",
 		json:     "[]",
@@ -725,6 +738,25 @@ aBc
 		`,
 		json:     "[1, 2]",
 		expected: "1\n2\nef1\n",
+	},
+	{
+		name: "exit in function",
+		prog: `
+			function x() {
+				exit
+			}
+			BEGIN {
+				print 'before exit'
+				x()
+				print 'after exit'
+			}
+		`,
+		expected: "before exit\n",
+	},
+	{
+		name:               "exit with code",
+		prog:               "BEGIN { exit 17 }",
+		expectedReturnCode: 17,
 	},
 	{
 		name: "null comparison",
@@ -1624,6 +1656,14 @@ func testInternal(t testing.TB, tc testCase) {
 
 		if j != tc.expectedJson {
 			t.Fatalf("output json %s did not match %s\n", j, tc.expectedJson)
+		}
+		return
+	}
+
+	if tc.expectedReturnCode != 0 {
+		retCode := ev.ReturnCode()
+		if retCode != tc.expectedReturnCode {
+			t.Fatalf("expected return code %d but got %d", tc.expectedReturnCode, retCode)
 		}
 		return
 	}

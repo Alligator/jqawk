@@ -40,6 +40,7 @@ type Evaluator struct {
 	endFileRules   []*Rule
 	fuzzing        bool
 	ctx            context.Context
+	returnCode     int
 }
 
 var (
@@ -334,6 +335,11 @@ func (e *Evaluator) evalExpr(expr Expr) (Value, error) {
 		if err != nil {
 			switch err.(type) {
 			case SyntaxError, RuntimeError:
+				return Value{}, err
+			}
+
+			switch err {
+			case errNext, errExit:
 				return Value{}, err
 			default:
 				return Value{}, e.error(exp.Token(), err.Error())
@@ -1218,6 +1224,15 @@ func (e *Evaluator) evalStatement(stmt Statement) error {
 	case *StatementNext:
 		return errNext
 	case *StatementExit:
+		if st.Expr != nil {
+			value, err := e.evalExpr(st.Expr)
+			if err != nil {
+				return err
+			}
+			e.returnVal = &value
+		} else {
+			e.returnVal = nil
+		}
 		return errExit
 	case *StatementLet:
 		ident := st.Ident.Ident
@@ -1325,6 +1340,17 @@ func (e *Evaluator) setRuleRoot(value *Value, slot LValue) {
 func (e *Evaluator) clearRuleRoot() {
 	e.ruleRoot = nil
 	e.ruleRootSlot = nil
+}
+
+func (e *Evaluator) setReturnCode() {
+	e.returnCode = 0
+	if e.returnVal != nil {
+		e.returnCode = int(e.returnVal.asFloat64())
+	}
+}
+
+func (e *Evaluator) ReturnCode() int {
+	return e.returnCode
 }
 
 func (e *Evaluator) forEachRootValue(files []InputFile, rootSelectors []string, fn func(*Value) error) error {
@@ -1443,6 +1469,7 @@ func evalProgramInternal(ev *Evaluator, files []InputFile, rootSelectors []strin
 		ev.clearRuleRoot()
 		if err := ev.evalStatement(rule.Body); err != nil {
 			if err == errExit {
+				ev.setReturnCode()
 				return ev, nil
 			}
 			if err == errNext {
@@ -1458,6 +1485,7 @@ func evalProgramInternal(ev *Evaluator, files []InputFile, rootSelectors []strin
 		ev.setRuleRoot(rootValue, nil)
 		if err := ev.evalRules(ev.beginFileRules); err != nil {
 			if err == errExit {
+				ev.setReturnCode()
 				return nil
 			}
 			return err
@@ -1468,6 +1496,7 @@ func evalProgramInternal(ev *Evaluator, files []InputFile, rootSelectors []strin
 		ev.root = modifiedRoot
 		if err := ev.evalPatternRules(ev.patternRules); err != nil {
 			if err == errExit {
+				ev.setReturnCode()
 				return nil
 			}
 			return err
@@ -1477,6 +1506,7 @@ func evalProgramInternal(ev *Evaluator, files []InputFile, rootSelectors []strin
 		ev.setRuleRoot(modifiedRoot, nil)
 		if err := ev.evalRules(ev.endFileRules); err != nil {
 			if err == errExit {
+				ev.setReturnCode()
 				return nil
 			}
 			return err
@@ -1494,6 +1524,7 @@ func evalProgramInternal(ev *Evaluator, files []InputFile, rootSelectors []strin
 		ev.clearRuleRoot()
 		if err := ev.evalStatement(rule.Body); err != nil {
 			if err == errExit {
+				ev.setReturnCode()
 				return ev, nil
 			}
 			if err == errNext {
