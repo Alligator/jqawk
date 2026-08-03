@@ -253,7 +253,7 @@ default case 10
 
 ## Regex
 
-Regex literals can be matched against with the `~` operator:
+Regex literals can be matched with the `~` operator:
 
 ```shellsession
 $ jqawk "$.name ~ /^M/ { print $.name }" emp.json
@@ -262,6 +262,22 @@ Mary
 ```
 
 Use `!~` to invert the match.
+
+A regex may appear on either side:
+
+```
+$.name ~ /greg/
+/greg/ ~ $.greg
+```
+
+The other side is converted to a string.
+
+If the left side is not a regex and the right side is a string, it's treated as a regex pattern:
+
+```
+pat = 'greg'
+$.name ~ pat
+```
 
 ## Functions
 

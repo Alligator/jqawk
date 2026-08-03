@@ -1,0 +1,38 @@
+program       = { function | rule } .
+function      = "function" [ identifier ] function-args block .
+identifier    = letter | "$" { letter | unicode-digit } .
+function-args = "(" [ param-list ] ")" .
+param-list    = identifier { "," identifier } .
+block         = "{" statement "}" .
+
+statement     = print | return | if | while | for | block | break | continue
+              | next | exit | let | expression .
+
+print         = "print" [ expr-list ] .
+return        = "return" [ expression ] .
+if            = "if" "(" expression ")" statement [ "else" statement ] .
+while         = "while" "(" expression ")" statement .
+
+for           = "for" "(" for-clause | for-in-clause ")" statement .
+for-clause    = [ expression ] ";" [ expression ] ";" [ expression ] .
+for-in        = identifier [ "," identifier ] "in" expression .
+
+break         = "break" .
+continue      = "continue" .
+next          = "next" .
+exit          = "exit" .
+let           = "let" identifier [ "=" expression ] .
+
+expression    = unary-expr { binary-op unary-expr } .
+expr-list     = expression { "," expression } .
+
+unary-expr    = unary-op unary-expr | primary-expr .
+primary-expr  = literal | identifier | array | group | match | object | function
+              | anon-function .
+
+unary-op      = "+" | "-" | "!" | "++" | "--" .
+binary-op     = "[" | "." | "<" | ">" | "==" | "!=" | "<=" | ">=" | "~" | "!~"
+              | "+" | "-" | "*" | "**" | "/" | "&&" | "||" | "%" | "is" | "?"
+literal       = string | number | bool | null .
+
+letter     = unicode-letter | "_" .

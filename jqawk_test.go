@@ -1551,6 +1551,14 @@ false true
 		json:          "0000",
 		expectedError: "expected end of JSON value but got '0'",
 	},
+	{
+		name: "bug: ~ operator not matching with reversed args",
+		prog: `BEGIN {
+			print /a/ ~ 'a'
+			print 'a' ~ /a/
+		}`,
+		expected: "true\ntrue\n",
+	},
 }
 
 func FuzzJqawkWithJson(f *testing.F) {

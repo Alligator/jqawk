@@ -975,27 +975,44 @@ func (e *Evaluator) evalBinaryExpr(expr *ExprBinary) (Value, error) {
 			panic("unhandled operator")
 		}
 	case Tilde, BangTilde:
-		str := left.String()
+		// the valid cases are:
+		//   1. regex ~ not regex
+		//   2. not regex ~ regex
+		//   3. not regex ~ string
+		//
+		// 3. will attempt to compile string on the rhs to a regex
+		leftRe := left.Tag == ValueRegex
+		rightRe := right.Tag == ValueRegex
+		rightStr := right.Tag == ValueStr
+
+		if leftRe && rightRe {
+			return Value{}, e.error(expr.Token(), "exactly one regex must be on either side of ~")
+		}
+
 		var re *regexp.Regexp
-		switch right.Tag {
-		case ValueStr:
+		var str string
+		var err error
+		if leftRe {
+			re = left.Regexp
+			str = right.String()
+		} else if rightRe {
+			re = right.Regexp
+			str = left.String()
+		} else if rightStr {
 			re, err = regexp.Compile(*right.Str)
 			if err != nil {
 				return Value{}, e.error(expr.Right.Token(), err.Error())
 			}
-		case ValueRegex:
-			re = right.Regexp
-		default:
-			return Value{}, e.error(expr.Right.Token(), "a regex or a string must appear on the right hand side of ~")
-		}
-
-		var v Value
-		if re.MatchString(str) {
-			v = NewValue(true)
+			str = left.String()
 		} else {
-			v = NewValue(false)
+			return Value{}, e.error(expr.Token(), "~ requires a regex operand or a string operand on the right")
 		}
 
+		if err != nil {
+			return Value{}, e.error(expr.Right.Token(), err.Error())
+		}
+
+		v := NewValue(re.MatchString(str))
 		if expr.OpToken.Tag == BangTilde {
 			return *v.Not(), nil
 		}
