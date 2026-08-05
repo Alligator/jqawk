@@ -440,6 +440,71 @@ $ jqawk -o - "{ $.name_length = $.name.length() }" example.json
 
 The `-i` flag will start the interactive REPL. The REPL can only be run with files, not JSON read from stdin.
 
+## differences from Awk
+
+jqawk is awk-inspired but differs from awk in many ways. These are some of the subtler differences.
+
+jqawk uses `+` for string concatenation, awk concatenates adjacent strings:
+```
+  awk: "a" "b"
+jqawk: "a" + "b"
+```
+
+Patterns do not implicitly test against `$`:
+```
+  awk: /a/ { print }
+jqawk: $ ~ /a/ { print }
+```
+
+Range patterns are not supported. In jqawk you have to store some state:
+```
+  awk: /a/, /b/ { print }
+jqawk: $ ~ /a/ { in_range = true }
+       in_range { print }
+       $ ~ /b/ { in_range = false }
+```
+
+True local variables with `let`:
+```
+  awk: function x(arg,      a) {
+         a = 2
+         ...
+       }
+jqawk: function x(arg) {
+         let a = 2
+         ...
+       }
+```
+
+There is no dynamic field syntax, `$` is a JSON value and can be indexed with `[]`:
+
+```
+  awk: $(i + 1)
+jqawk: $[i + 1]
+```
+
+`exit` exits the program immediately, without running `END` rules.
+
+Awk uses `OFMT` for print statements, which defaults to `%.6g`. jqawk prints the full precision by default:
+
+```
+  awk: print 123456.789  # prints 123457
+jqawk: print 123456.789  # prints 123456.789
+```
+
+To change precision, use `printf`.
+
+Awk hash table iteration order is implementation defined, jqawk preserves the order keys were inserted. This program prints `a` then `b` in GNU Awk and One True Awk. It prints `b` then `a` in jqawk:
+
+```awk
+BEGIN {
+  tbl['b'] = 1
+  tbl['a'] = 2
+  for (k in tbl)
+    print k
+}
+```
+
 ## Language reference
 
 A rough jqawk language reference.
