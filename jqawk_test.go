@@ -1132,7 +1132,7 @@ false true
 		expectedError: "index out of range",
 	},
 	{
-		name: "scoping",
+		name: "function scoping",
 		prog: `
 			function func() {
 				let a = 3;
@@ -1152,6 +1152,52 @@ false true
 		`,
 		json:     "",
 		expected: "1 2\n1\n4\n",
+	},
+	{
+		name: "rule scoping",
+		prog: `
+			BEGIN {
+				# globals
+				a = 4
+				b = 8
+			}
+
+			BEGIN {
+				let a = 1
+				let c = 2
+				print a, b, c
+			}
+
+			BEGINFILE {
+				let a = 2
+				let c = 4
+				print a, b, c
+			}
+
+			{
+				let a = 4
+				let c = 8
+				print a, b, c
+			}
+
+			ENDFILE {
+				let a = 8
+				let c = 16
+				print a, b, c
+			}
+
+			END {
+				let a = 16
+				let c = 32
+				print a, b, c
+			}
+
+			END {
+				print a, b, c
+			}
+		`,
+		json:     "[1]",
+		expected: "1 8 2\n2 8 4\n4 8 8\n8 8 16\n16 8 32\n4 8 <unknown>\n",
 	},
 	{
 		name: "parseJson",

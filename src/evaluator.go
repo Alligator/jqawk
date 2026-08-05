@@ -32,6 +32,7 @@ type Evaluator struct {
 	ruleRoot       *Value
 	ruleRootSlot   *rootLValue
 	stackTop       *stackFrame
+	globalScope    *scope
 	returnVal      *Value
 	beginRules     []*Rule
 	beginFileRules []*Rule
@@ -61,6 +62,7 @@ func NewEvaluator(prog Program, stdout io.Writer) Evaluator {
 	}
 	e.readRules()
 	e.pushFrame("<root>")
+	e.globalScope = e.stackTop.scope
 	addRuntimeFunctions(&e)
 	e.addProgramFunctions()
 	return e
@@ -71,6 +73,7 @@ func NewEmptyEvaluator(stdout io.Writer) Evaluator {
 		stdout: stdout,
 	}
 	e.pushFrame("<root>")
+	e.globalScope = e.stackTop.scope
 	addRuntimeFunctions(&e)
 	return e
 }
@@ -161,12 +164,11 @@ func (e *Evaluator) pushScope() {
 	e.stackTop.scope = &scope
 }
 
-func (e *Evaluator) popScope() error {
+func (e *Evaluator) popScope() {
 	if e.stackTop.scope.parent == nil {
 		panic(fmt.Errorf("attempt to pop root scope"))
 	}
 	e.stackTop.scope = e.stackTop.scope.parent
-	return nil
 }
 
 func (e *Evaluator) popFrame() error {
@@ -193,10 +195,11 @@ func (e *Evaluator) getVariable(name string) (*scope, error) {
 	if strings.HasPrefix(name, "$") {
 		return nil, fmt.Errorf("unknown variable %s", name)
 	}
-	// other variables get created in the current scope
+
+	// other variables get created in the global scope
 	value := Value{Tag: ValueUnknown}
-	e.stackTop.scope.bindings[name] = value
-	return e.stackTop.scope, nil
+	e.globalScope.bindings[name] = value
+	return e.globalScope, nil
 }
 
 func (e *Evaluator) setVariable(name string, value Value) {
@@ -204,11 +207,7 @@ func (e *Evaluator) setVariable(name string, value Value) {
 }
 
 func (e *Evaluator) setGlobal(name string, value Value) {
-	top := e.stackTop
-	for top.parent != nil {
-		top = top.parent
-	}
-	top.scope.bindings[name] = value
+	e.globalScope.bindings[name] = value
 }
 
 func (e *Evaluator) getIdentifier(expr *ExprIdentifier) (Value, error) {
@@ -238,6 +237,21 @@ func (e *Evaluator) identifierLValue(expr *ExprIdentifier) (LValue, error) {
 	scope, err := e.getVariable(expr.Ident)
 	if err != nil {
 		return nil, e.error(expr.Token(), err.Error())
+	}
+	return varLValue{scope, expr.Ident}, nil
+}
+
+func (e *Evaluator) globalIdentifierLValue(expr *ExprIdentifier) (LValue, error) {
+	if expr.token.Tag == Dollar {
+		if e.ruleRootSlot == nil {
+			return nil, e.error(expr.Token(), "unknown variable $")
+		}
+		return e.ruleRootSlot, nil
+	}
+
+	scope := e.stackTop.scope
+	for scope.parent != nil {
+		scope = scope.parent
 	}
 	return varLValue{scope, expr.Ident}, nil
 }
@@ -378,9 +392,7 @@ func (e *Evaluator) evalExpr(expr Expr) (Value, error) {
 					if err != nil {
 						return Value{}, err
 					}
-					if err := e.popScope(); err != nil {
-						return Value{}, err
-					}
+					e.popScope()
 					return val, nil
 				default:
 					err := e.evalStatement(body)
@@ -389,10 +401,7 @@ func (e *Evaluator) evalExpr(expr Expr) (Value, error) {
 					}
 				}
 
-				if err := e.popScope(); err != nil {
-					return Value{}, err
-				}
-
+				e.popScope()
 				return NewValue(nil), nil
 			}
 		}
@@ -1055,12 +1064,14 @@ func (e *Evaluator) evalStatement(stmt Statement) error {
 
 	switch st := stmt.(type) {
 	case *StatementBlock:
+		e.pushScope()
 		for _, s := range st.Body {
 			err := e.evalStatement(s)
 			if err != nil {
 				return err
 			}
 		}
+		e.popScope()
 		return nil
 	case *StatementPrint:
 		args, err := e.evalExprList(st.Args)

@@ -154,6 +154,56 @@ The argument to `-r` can be any valid expression. The flag can also be provided 
 > someone else
 > ```
 
+## Variables
+
+Variables do not need to be declared first. This sets `x` to 3:
+
+```
+x = 3
+```
+
+You can also create arrays and objects implicitly. In each example, `x` is initially unset:
+
+```
+x[0] = 3                # x becomes [3]
+x[2] = 3                # x becomes [null, null, 3]
+x[0][1] = 3             # x becomes [[null, 3]]
+
+x.name = 'gate'         # x becomes { "name": "gate" }
+x.person.name = 'gate'  # x becomes { "person": { "name": "gate" } }
+```
+
+Assignment searches for the variable in the current scope. If not found, a new variable is created globally. Global variables are shared between rules and exist for the duration of the program.
+
+You can use `let` to create variables local to the current scope:
+
+```awk
+BEGIN {
+  let x = 2
+}
+END {
+  print x
+}
+```
+
+This will print `<unknown>`, because `x` is unset in the `END` rule.
+
+The left-hand side of a `let` must be a plain identifier. To create local arrays and objects, give them an empty value:
+
+```awk
+BEGIN {
+  let arr = []
+  let obj = {}
+  arr[2] = 3
+  obj.name = 'gate'
+}
+```
+
+New scopes are created in:
+
+- Every `{ ... }` block, including rule bodies
+- Function calls
+
 ## Control flow
 
 jqawk provides `if`, `else`, `for`, and `while` control-flow statements:
