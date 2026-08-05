@@ -714,8 +714,11 @@ aBc
 			"{\"a\": 1, \"b\": 2}\n",
 	},
 	{
-		name:     "exit",
-		prog:     `{ print $; exit }`,
+		name: "exit",
+		prog: `
+			{ print $; exit }
+			END { print 'end' }
+		`,
 		json:     "[1, 2]",
 		expected: "1\n",
 	},
@@ -2399,7 +2402,7 @@ Algeria 920 18 Africa 19.565217391304348
 	})
 
 	test(t, testCase{
-		name: "p36",
+		name: "p38",
 		prog: `
 			{
 				if (maxpop < $[2]) {
@@ -2460,7 +2463,7 @@ Algeria 920 18 Africa 19.565217391304348
 			END { print n }
 		`,
 		json:     countries,
-		expected: "10\n",
+		expected: "",
 	})
 
 	test(t, testCase{
@@ -2515,7 +2518,7 @@ Africa:1888
 	})
 
 	test(t, testCase{
-		name: "t.addps",
+		name: "t.addops",
 		prog: `{
 			n = $
 			n += $

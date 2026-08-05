@@ -1514,7 +1514,7 @@ func evalProgramInternal(ev *Evaluator, files []InputFile, rootSelectors []strin
 		if err := ev.evalRules(ev.beginFileRules); err != nil {
 			if err == errExit {
 				ev.setReturnCode()
-				return nil
+				return err
 			}
 			return err
 		}
@@ -1525,7 +1525,7 @@ func evalProgramInternal(ev *Evaluator, files []InputFile, rootSelectors []strin
 		if err := ev.evalPatternRules(ev.patternRules); err != nil {
 			if err == errExit {
 				ev.setReturnCode()
-				return nil
+				return err
 			}
 			return err
 		}
@@ -1535,7 +1535,7 @@ func evalProgramInternal(ev *Evaluator, files []InputFile, rootSelectors []strin
 		if err := ev.evalRules(ev.endFileRules); err != nil {
 			if err == errExit {
 				ev.setReturnCode()
-				return nil
+				return err
 			}
 			return err
 		}
@@ -1543,6 +1543,9 @@ func evalProgramInternal(ev *Evaluator, files []InputFile, rootSelectors []strin
 		return nil
 	})
 
+	if err == errExit {
+		return ev, nil
+	}
 	if err != nil {
 		return ev, err
 	}
