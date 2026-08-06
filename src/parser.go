@@ -481,11 +481,8 @@ func (p *Parser) findNextStatement() error {
 		if _, err := p.advance(); err != nil {
 			return err
 		}
-		if p.current.Tag == EOF {
+		if p.current.Tag == EOF || p.atStatementEnd() {
 			p.didEndStatement = true
-			break
-		}
-		if p.atStatementEnd() {
 			break
 		}
 	}

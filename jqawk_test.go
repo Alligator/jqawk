@@ -101,6 +101,21 @@ var basicTests = []struct {
 	// number conversions
 	{"BEGIN { a = false; b = true; print a + 0, b + 0 }", "0 1\n"},
 	{"BEGIN { a = false; b = true; print a + 0, b + 0 }", "0 1\n"},
+
+	// escape characters
+	{"BEGIN { print 'a\\nb' }", "a\nb\n"},
+	{"BEGIN { print 'a\\tb' }", "a\tb\n"},
+	{"BEGIN { print 'a\\rb' }", "a\rb\n"},
+	{"BEGIN { print 'a\\bb' }", "a\bb\n"},
+	{"BEGIN { print 'a\\fb' }", "a\fb\n"},
+	{"BEGIN { print 'a\\vb' }", "a\vb\n"},
+	{"BEGIN { print 'a\\x41' }", "aA\n"},
+	{"BEGIN { print 'a\\x00b' }", "a\x00b\n"},
+	{"BEGIN { print 'a\\u0041' }", "aA\n"},
+	{"BEGIN { print 'a\\u2603' }", "a☃\n"},
+	{"BEGIN { print 'a\\0' }", "a\x00\n"},
+	{"BEGIN { print 'a\\'' }", "a'\n"},
+	{"BEGIN { print \"a\\\"\" }", "a\"\n"},
 }
 
 var tests = []testCase{
@@ -995,7 +1010,7 @@ rhs not null
 	},
 	{
 		name:          "invalid escape chars",
-		prog:          `BEGIN { print '\z' }`,
+		prog:          `BEGIN { print '\za' }`,
 		json:          "[]",
 		expectedError: "unknown escape char 'z'",
 	},

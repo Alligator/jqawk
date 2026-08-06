@@ -229,6 +229,19 @@ func (l *Lexer) number() Token {
 	return l.stringToken(Num, l.pos-l.tokenStart)
 }
 
+func hexDigit(b byte) (int, bool) {
+	switch {
+	case b >= '0' && b <= '9':
+		return int(b - '0'), true
+	case b >= 'a' && b <= 'f':
+		return int(b-'a') + 10, true
+	case b >= 'A' && b <= 'F':
+		return int(b-'A') + 10, true
+	default:
+		return 0, false
+	}
+}
+
 func (l *Lexer) string(quoteChar byte) (Token, error) {
 	buf := make([]byte, 0, 32)
 	foundClosingQuote := false
@@ -262,8 +275,51 @@ func (l *Lexer) string(quoteChar byte) (Token, error) {
 		switch b {
 		case 'n':
 			buf = append(buf, '\n')
+		case 'r':
+			buf = append(buf, '\r')
 		case 't':
 			buf = append(buf, '\t')
+		case 'b':
+			buf = append(buf, '\b')
+		case 'f':
+			buf = append(buf, '\f')
+		case 'v':
+			buf = append(buf, '\v')
+		case 'x':
+			x := byte(0)
+			for range 2 {
+				n := l.advance()
+				h, hok := hexDigit(n)
+				if !hok || l.atEnd() {
+					err = l.error(l.pos-1, "could not parse \\xNN")
+					continue
+				}
+				x = x*16 + byte(h)
+			}
+			buf = append(buf, x)
+		case 'u':
+			u := 0
+			for range 4 {
+				n := l.advance()
+				h, hok := hexDigit(n)
+				if !hok || l.atEnd() {
+					err = l.error(l.pos-1, "could not parse \\uNNNN")
+					continue
+				}
+				u = u*16 + h
+			}
+
+			r := rune(u)
+			if !utf8.ValidRune(r) {
+				err = l.error(l.pos-1, "invalid unicode character")
+				continue
+			}
+
+			ubuf := make([]byte, utf8.UTFMax)
+			n := utf8.EncodeRune(ubuf, r)
+			buf = append(buf, ubuf[:n]...)
+		case '0':
+			buf = append(buf, 0)
 		case '\'':
 			buf = append(buf, '\'')
 		case '"':
