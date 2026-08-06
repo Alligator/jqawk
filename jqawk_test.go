@@ -1975,9 +1975,6 @@ func TestJqawkCli(t *testing.T) {
 		expectedError: `  BEGIN { print [1, 2, 3 }
                          ^
 syntax error on line 1: expected ]
-  BEGIN { print [1, 2, 3 }
-                         ^
-syntax error on line 1: unexpected end of input
 `,
 	})
 
@@ -2111,6 +2108,7 @@ func TestJqawkStreamingJson(t *testing.T) {
 
 func TestJqawkInteractive(t *testing.T) {
 	input := []string{
+		"print 'hello'",
 		"print $",
 		"n = $[1]",
 		"print n * 10",
@@ -2119,6 +2117,7 @@ func TestJqawkInteractive(t *testing.T) {
 	}
 
 	expectedOutputLines := []string{
+		"hello",
 		"[1, 2, 4]",
 		"2",
 		"20",

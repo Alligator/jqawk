@@ -210,22 +210,6 @@ func (e *Evaluator) setGlobal(name string, value Value) {
 	e.globalScope.bindings[name] = value
 }
 
-func (e *Evaluator) getIdentifier(expr *ExprIdentifier) (Value, error) {
-	if expr.token.Tag == Dollar {
-		if e.ruleRoot == nil {
-			return Value{}, e.error(expr.Token(), "unknown variable $")
-		}
-		return *e.ruleRoot, nil
-	}
-
-	lv, err := e.identifierLValue(expr)
-	if err != nil {
-		return Value{}, err
-	}
-
-	return lv.Get(), nil
-}
-
 func (e *Evaluator) identifierLValue(expr *ExprIdentifier) (LValue, error) {
 	if expr.token.Tag == Dollar {
 		if e.ruleRootSlot == nil {
@@ -241,33 +225,6 @@ func (e *Evaluator) identifierLValue(expr *ExprIdentifier) (LValue, error) {
 	return varLValue{scope, expr.Ident}, nil
 }
 
-func (e *Evaluator) evalString(str string) (Value, error) {
-	buf := make([]byte, 0, len(str))
-	for i := 0; i < len(str); i++ {
-		b := str[i]
-		if b != '\\' {
-			buf = append(buf, b)
-			continue
-		}
-		if i == len(str)-1 {
-			return Value{}, fmt.Errorf("unexpected '\\' at end of string")
-		}
-		i++
-		switch str[i] {
-		case 'n':
-			buf = append(buf, '\n')
-		case '\\':
-			buf = append(buf, '\\')
-		case 't':
-			buf = append(buf, '\t')
-		default:
-			return Value{}, fmt.Errorf("unknown escape char %q", str[i])
-		}
-	}
-	s := string(buf)
-	return NewString(s), nil
-}
-
 func (e *Evaluator) evalExpr(expr Expr) (Value, error) {
 	if err := e.checkContext(); err != nil {
 		return Value{}, err
@@ -277,11 +234,7 @@ func (e *Evaluator) evalExpr(expr Expr) (Value, error) {
 	case *ExprLiteral:
 		switch exp.token.Tag {
 		case Str, Ident:
-			cell, err := e.evalString(exp.Literal)
-			if err != nil {
-				return Value{}, e.error(expr.Token(), err.Error())
-			}
-			return cell, nil
+			return NewString(exp.Literal), nil
 		case Regex:
 			re, err := regexp.Compile(exp.Literal)
 			if err != nil {
@@ -314,7 +267,11 @@ func (e *Evaluator) evalExpr(expr Expr) (Value, error) {
 	case *ExprTernary:
 		return e.evalTernaryExpr(exp)
 	case *ExprIdentifier:
-		return e.getIdentifier(exp)
+		lv, err := e.identifierLValue(exp)
+		if err != nil {
+			return Value{}, err
+		}
+		return lv.Get(), nil
 	case *ExprCall:
 		fn, err := e.evalExpr(exp.Func)
 		if err != nil {

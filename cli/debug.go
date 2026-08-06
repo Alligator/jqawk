@@ -57,6 +57,8 @@ func debugLex(prog string, rootSelectors []string, dst io.Writer) {
 
 			if tok.Len == 0 {
 				fmt.Fprintf(&sb, "%s ", tok.Tag)
+			} else if tok.Tag == lang.Str {
+				fmt.Fprintf(&sb, "%s(%#v) ", tok.Tag, tok.Value)
 			} else {
 				fmt.Fprintf(&sb, "%s(%#v) ", tok.Tag, lex.GetString(&tok))
 			}

@@ -46,7 +46,7 @@ func NewParser(l *Lexer) Parser {
 		didEndStatement: false,
 	}
 	p.rules = map[TokenTag]parseRule{
-		Str:           {PrecNone, literal, nil},
+		Str:           {PrecNone, str, nil},
 		Num:           {PrecNone, literal, nil},
 		True:          {PrecNone, literal, nil},
 		False:         {PrecNone, literal, nil},
@@ -173,7 +173,7 @@ func (p *Parser) block() (StatementBlock, error) {
 			block = append(block, statement)
 		}
 
-		if !p.atStatementEnd() {
+		if p.current.Tag != EOF && !p.atStatementEnd() {
 			errors = append(errors, p.error(p.current.Pos, "unexpected end of input"))
 		}
 	}
@@ -481,6 +481,10 @@ func (p *Parser) findNextStatement() error {
 		if _, err := p.advance(); err != nil {
 			return err
 		}
+		if p.current.Tag == EOF {
+			p.didEndStatement = true
+			break
+		}
 		if p.atStatementEnd() {
 			break
 		}
@@ -516,6 +520,14 @@ func (p *Parser) expressionWithPrec(prec Precedence) (Expr, error) {
 	}
 
 	return lhs, nil
+}
+
+func str(p *Parser) (Expr, error) {
+	if err := p.consume(Str); err != nil {
+		return nil, err
+	}
+	s := (*p.previous).Value
+	return &ExprLiteral{*p.previous, s}, nil
 }
 
 func literal(p *Parser) (Expr, error) {

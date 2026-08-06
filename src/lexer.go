@@ -3,6 +3,7 @@ package lang
 import (
 	"fmt"
 	"unicode"
+	"unicode/utf8"
 )
 
 type TokenTag uint8
@@ -80,10 +81,11 @@ const (
 )
 
 type Token struct {
-	lex *Lexer
-	Tag TokenTag
-	Pos int
-	Len int
+	lex   *Lexer
+	Tag   TokenTag
+	Pos   int
+	Len   int
+	Value string // used for parsed strings
 }
 
 func (t *Token) GetLineAndCol() (string, int, int) {
@@ -111,15 +113,15 @@ func (l *Lexer) atEnd() bool {
 }
 
 func (l *Lexer) simpleToken(tag TokenTag) Token {
-	return Token{l, tag, l.tokenStart, 0}
+	return Token{l, tag, l.tokenStart, 0, ""}
 }
 
 func (l *Lexer) errorToken() Token {
-	return Token{l, Error, l.tokenStart, 0}
+	return Token{l, Error, l.tokenStart, 0, ""}
 }
 
 func (l *Lexer) stringToken(tag TokenTag, length int) Token {
-	return Token{l, tag, l.tokenStart, length}
+	return Token{l, tag, l.tokenStart, length, ""}
 }
 
 func (l *Lexer) advance() byte {
@@ -228,15 +230,62 @@ func (l *Lexer) number() Token {
 }
 
 func (l *Lexer) string(quoteChar byte) (Token, error) {
-	for !l.atEnd() && l.peek() != quoteChar {
-		l.advance()
+	buf := make([]byte, 0, 32)
+	foundClosingQuote := false
+
+	var err error
+	for !l.atEnd() {
+		b := l.advance()
+		if b == quoteChar {
+			foundClosingQuote = true
+			break
+		}
+
+		if err != nil {
+			// on error, keep going until the closing quote or EOF
+			continue
+		}
+
+		if b != '\\' {
+			buf = append(buf, b)
+			continue
+		}
+
+		// eat the \
+		b = l.advance()
+
+		switch b {
+		case 'n':
+			buf = append(buf, '\n')
+		case 't':
+			buf = append(buf, '\t')
+		case '\'':
+			buf = append(buf, '\'')
+		case '"':
+			buf = append(buf, '"')
+		case '\\':
+			buf = append(buf, '\\')
+		default:
+			err = l.error(l.pos-1, fmt.Sprintf("unknown escape char %q", b))
+			continue
+		}
 	}
-	if l.atEnd() {
-		return l.errorToken(), l.error(l.tokenStart+1, "unexpected EOF while reading string")
+
+	if err != nil {
+		return l.errorToken(), err
 	}
-	l.advance()
-	l.tokenStart++ // skip over the opening quote
-	return l.stringToken(Str, l.pos-l.tokenStart-1), nil
+
+	if l.atEnd() && !foundClosingQuote {
+		return l.errorToken(), l.error(l.tokenStart, "unexpected EOF while reading string")
+	}
+
+	return Token{
+		lex:   l,
+		Tag:   Str,
+		Pos:   l.tokenStart + 1,
+		Len:   len(buf),
+		Value: string(buf),
+	}, nil
 }
 
 // the parser calls this when it finds a '/' in prefix position
