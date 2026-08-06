@@ -88,7 +88,7 @@ var basicTests = []struct {
 	{"BEGIN { print 2 ** 2 ** 3 }", "256\n"},
 
 	// printf %v
-	{"BEGIN { printf('v %v %v %v %v\n', 1, 'one', [1, 2, 3], function() { }) }", "v 1 one [1, 2, 3] <function>\n"},
+	{"BEGIN { printf('v %v %v %v %v\\n', 1, 'one', [1, 2, 3], function() { }) }", "v 1 one [1, 2, 3] <function>\n"},
 
 	// object/array/string indexing
 	{"BEGIN { a = [1]; print a[0], a[1], a.nope }", "1 null null\n"},
@@ -1555,7 +1555,7 @@ false true
 	},
 	{
 		name:     "bug: printf negative %s precision",
-		prog:     "BEGIN { printf('%.-2s\n', 'abcde') }",
+		prog:     "BEGIN { printf('%.-2s\\n', 'abcde') }",
 		expected: "abcde\n",
 	},
 	{
@@ -1607,6 +1607,11 @@ false true
 			print 'a' ~ /a/
 		}`,
 		expected: "true\ntrue\n",
+	},
+	{
+		name:          "bug: newline permitted in string",
+		prog:          "BEGIN { print'a\nb' }",
+		expectedError: "unexpected newline in string",
 	},
 }
 

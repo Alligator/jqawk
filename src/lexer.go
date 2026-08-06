@@ -246,6 +246,11 @@ func (l *Lexer) string(quoteChar byte) (Token, error) {
 			continue
 		}
 
+		if b == '\n' || b == '\r' {
+			err = l.error(l.pos-1, "unexpected newline in string")
+			continue
+		}
+
 		if b != '\\' {
 			buf = append(buf, b)
 			continue
