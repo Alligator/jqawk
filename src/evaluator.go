@@ -241,21 +241,6 @@ func (e *Evaluator) identifierLValue(expr *ExprIdentifier) (LValue, error) {
 	return varLValue{scope, expr.Ident}, nil
 }
 
-func (e *Evaluator) globalIdentifierLValue(expr *ExprIdentifier) (LValue, error) {
-	if expr.token.Tag == Dollar {
-		if e.ruleRootSlot == nil {
-			return nil, e.error(expr.Token(), "unknown variable $")
-		}
-		return e.ruleRootSlot, nil
-	}
-
-	scope := e.stackTop.scope
-	for scope.parent != nil {
-		scope = scope.parent
-	}
-	return varLValue{scope, expr.Ident}, nil
-}
-
 func (e *Evaluator) evalString(str string) (Value, error) {
 	buf := make([]byte, 0, len(str))
 	for i := 0; i < len(str); i++ {
