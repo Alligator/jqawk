@@ -1412,14 +1412,6 @@ false true
 		expectedError: "invalid character '3' after array element",
 	},
 	{
-		name: "multiple errors",
-		prog: `BEGIN {
-			pront 'a';
-			pront 'b';
-		}`,
-		expectedError: "unexpected end of input\nunexpected end of input",
-	},
-	{
 		name: "call stack limit",
 		prog: `BEGIN {
 				function x() {

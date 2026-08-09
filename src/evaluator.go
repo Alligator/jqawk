@@ -325,6 +325,7 @@ func (e *Evaluator) evalExpr(expr Expr) (Value, error) {
 
 			if isMatch {
 				e.pushScope()
+				defer e.popScope()
 				maps.Copy(e.stackTop.scope.bindings, bindings)
 
 				switch body := matchCase.Body.(type) {
@@ -333,7 +334,6 @@ func (e *Evaluator) evalExpr(expr Expr) (Value, error) {
 					if err != nil {
 						return Value{}, err
 					}
-					e.popScope()
 					return val, nil
 				default:
 					err := e.evalStatement(body)
@@ -342,7 +342,6 @@ func (e *Evaluator) evalExpr(expr Expr) (Value, error) {
 					}
 				}
 
-				e.popScope()
 				return NewValue(nil), nil
 			}
 		}

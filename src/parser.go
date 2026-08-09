@@ -159,27 +159,18 @@ func (p *Parser) block() (StatementBlock, error) {
 		return StatementBlock{}, err
 	}
 	startToken := *p.previous
-	errors := make([]error, 0)
 
 	block := make([]Statement, 0)
 	for !p.atEnd() && p.current.Tag != RCurly {
 		statement, err := p.statement()
 		if err != nil {
-			errors = append(errors, err)
-			if err2 := p.findNextStatement(); err2 != nil {
-				return StatementBlock{}, err2
-			}
-		} else {
-			block = append(block, statement)
+			return StatementBlock{}, err
 		}
+		block = append(block, statement)
 
 		if p.current.Tag != EOF && !p.atStatementEnd() {
-			errors = append(errors, p.error(p.current.Pos, "unexpected end of input"))
+			return StatementBlock{}, p.error(p.current.Pos, "unexpected end of input")
 		}
-	}
-
-	if len(errors) > 0 {
-		return StatementBlock{}, ErrorGroup{errors}
 	}
 
 	if err := p.consume(RCurly); err != nil {
@@ -534,20 +525,6 @@ func (p *Parser) atStatementEnd() bool {
 	default:
 		return false
 	}
-}
-
-func (p *Parser) findNextStatement() error {
-	for !p.atEnd() {
-		if _, err := p.advance(); err != nil {
-			return err
-		}
-		if p.current.Tag == EOF || p.atStatementEnd() {
-			p.didEndStatement = true
-			break
-		}
-	}
-
-	return nil
 }
 
 func (p *Parser) expression() (Expr, error) {
@@ -1284,34 +1261,24 @@ func (p *Parser) Parse() (Program, error) {
 	prog := Program{}
 	rules := make([]Rule, 0)
 	functions := make([]ExprFunction, 0)
-	errs := make([]error, 0)
 	if _, err := p.advance(); err != nil {
 		return prog, err
 	}
+
 	for !p.atEnd() {
 		if p.current.Tag == Function {
 			fn, err := p.parseFunction()
 			if err != nil {
-				errs = append(errs, err)
-				if err2 := p.findNextStatement(); err2 != nil {
-					return prog, err
-				}
+				return prog, err
 			}
 			functions = append(functions, fn)
 			continue
 		}
 		rule, err := p.parseRule()
 		if err != nil {
-			errs = append(errs, err)
-			if err2 := p.findNextStatement(); err2 != nil {
-				return prog, err
-			}
+			return prog, err
 		}
 		rules = append(rules, rule)
-	}
-
-	if len(errs) > 0 {
-		return prog, ErrorGroup{errs}
 	}
 
 	prog.Rules = rules
