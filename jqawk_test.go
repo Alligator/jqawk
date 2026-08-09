@@ -483,6 +483,29 @@ Total    337.5
 		expected: "2\nb\nj\n",
 	},
 	{
+		name: "for with let",
+		prog: `BEGIN {
+			for (let i = 0; i < 4; i++) {
+				print i
+			}
+			print i
+
+			for (let k, v in { "a": 1, "b": 2 })
+				print k, v
+			print k, v
+		}`,
+		expected: "0\n1\n2\n3\n<unknown>\na 1\nb 2\n<unknown> <unknown>\n",
+	},
+	{
+		name: "for in with duplicate bindings",
+		prog: `BEGIN {
+			for (let k, k in [1, 2, 3]) {
+				print k
+			}
+		}`,
+		expectedError: "duplicate variable 'k'",
+	},
+	{
 		name: "match",
 		prog: `
 			{

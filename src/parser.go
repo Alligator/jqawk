@@ -290,85 +290,64 @@ func (p *Parser) statement() (Statement, error) {
 		}
 
 		token := *p.previous
-
-		var preExpr Expr = nil
 		var err error
 
-		if p.current.Tag != SemiColon {
-			preExpr, err = p.expression()
+		// for (; expr; postExpr)
+		if p.current.Tag == SemiColon {
+			return p.parseForLoop(nil, token)
+		}
+
+		// parse all for (let dent ...) cases
+		if p.current.Tag == Let {
+			if err = p.consume(Let); err != nil {
+				return nil, err
+			}
+
+			left, err := identifier(p)
 			if err != nil {
 				return nil, err
 			}
-		}
 
-		// try to parse for (ident[, ident] in expr)
-		if ident, ok := preExpr.(*ExprIdentifier); ok {
-			if p.current.Tag == In || p.current.Tag == Comma {
-				var indexIdent *ExprIdentifier
-				if p.current.Tag == Comma {
-					p.consume(Comma)
-					if err := p.consume(Ident); err != nil {
-						return nil, err
-					}
-					ident := p.lexer.GetString(p.previous)
-					indexIdent = &ExprIdentifier{*p.previous, ident}
+			ident, _ := left.(*ExprIdentifier)
+
+			switch p.current.Tag {
+			case Equal:
+				// for (let ident = expr; expr; postExpr)
+				if err = p.consume(Equal); err != nil {
+					return nil, err
 				}
-
-				p.consume(In)
-				expr, err := p.expression()
+				preExpr, err := p.expression()
 				if err != nil {
 					return nil, err
 				}
 
-				if err := p.consume(RParen); err != nil {
-					return nil, err
-				}
-
-				body, err := p.statement()
-				if err != nil {
-					return nil, err
-				}
-
-				return &StatementForIn{ident, indexIdent, expr, body}, nil
+				forPre := ForPre{LetDecl: &LetDecl{ident, preExpr}}
+				return p.parseForLoop(&forPre, token)
+			case Comma, In:
+				// for (let ident[, indent] in expr)
+				return p.parseForInLoop(ident, true, token)
+			default:
+				return nil, p.error(p.current.Pos, "expected '=', ',' or 'in'")
 			}
 		}
 
-		// try to parse for (expr; expr; expr)
-		if err := p.consume(SemiColon); err != nil {
-			return nil, err
-		}
-
-		var expr Expr
-		if p.current.Tag != SemiColon {
-			expr, err = p.expression()
-			if err != nil {
-				return nil, err
-			}
-			token = expr.Token()
-		}
-
-		if err := p.consume(SemiColon); err != nil {
-			return nil, err
-		}
-
-		var postExpr Expr
-		if p.current.Tag != RParen {
-			postExpr, err = p.expression()
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		if err := p.consume(RParen); err != nil {
-			return nil, err
-		}
-
-		body, err := p.statement()
+		// for (expr ...)
+		preExpr, err := p.expression()
 		if err != nil {
 			return nil, err
 		}
 
-		return &StatementFor{preExpr, expr, postExpr, body, token}, nil
+		// for (ident[, ident] in expr)
+		if p.current.Tag == Comma || p.current.Tag == In {
+			ident, ok := preExpr.(*ExprIdentifier)
+			if !ok {
+				return nil, p.error(p.current.Pos, "expected an identifier")
+			}
+			return p.parseForInLoop(ident, false, token)
+		}
+
+		// for (for-pre; expr; expr)
+		return p.parseForLoop(&ForPre{Expr: preExpr}, token)
 	case LCurly:
 		block, err := p.block()
 		if err != nil {
@@ -423,7 +402,7 @@ func (p *Parser) statement() (Statement, error) {
 		}
 
 		ident, _ := left.(*ExprIdentifier)
-		return &StatementLet{ident, expr}, nil
+		return &StatementLet{&LetDecl{ident, expr}}, nil
 	default:
 		expr, err := p.expression()
 		if err != nil {
@@ -431,6 +410,87 @@ func (p *Parser) statement() (Statement, error) {
 		}
 		return &StatementExpr{expr}, nil
 	}
+}
+
+func (p *Parser) parseForLoop(pre *ForPre, token Token) (Statement, error) {
+	if err := p.consume(SemiColon); err != nil {
+		return nil, err
+	}
+
+	var err error
+	var expr Expr
+	if p.current.Tag != SemiColon {
+		expr, err = p.expression()
+		if err != nil {
+			return nil, err
+		}
+		token = expr.Token()
+	}
+
+	if err := p.consume(SemiColon); err != nil {
+		return nil, err
+	}
+
+	var postExpr Expr
+	if p.current.Tag != RParen {
+		postExpr, err = p.expression()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if err = p.consume(RParen); err != nil {
+		return nil, err
+	}
+
+	body, err := p.statement()
+	if err != nil {
+		return nil, err
+	}
+
+	return &StatementFor{pre, expr, postExpr, body, token}, nil
+}
+
+func (p *Parser) parseForInLoop(ident *ExprIdentifier, local bool, token Token) (Statement, error) {
+	forIn := StatementForIn{
+		Ident:         ident,
+		LocalBindings: local,
+		token:         token,
+	}
+
+	if p.current.Tag == Comma {
+		p.consume(Comma)
+		if err := p.consume(Ident); err != nil {
+			return nil, err
+		}
+		indexIdent := p.lexer.GetString(p.previous)
+		if indexIdent == ident.Ident {
+			return nil, p.error(p.previous.Pos, fmt.Sprintf("duplicate variable '%s'", indexIdent))
+		}
+
+		forIn.IndexIdent = &ExprIdentifier{*p.previous, indexIdent}
+	}
+
+	if err := p.consume(In); err != nil {
+		return nil, err
+	}
+
+	expr, err := p.expression()
+	if err != nil {
+		return nil, err
+	}
+	forIn.Iterable = expr
+
+	if err := p.consume(RParen); err != nil {
+		return nil, err
+	}
+
+	body, err := p.statement()
+	if err != nil {
+		return nil, err
+	}
+	forIn.Body = body
+	return &forIn, nil
 }
 
 func (p *Parser) printStatement() (StatementPrint, error) {

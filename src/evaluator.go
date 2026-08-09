@@ -171,12 +171,11 @@ func (e *Evaluator) popScope() {
 	e.stackTop.scope = e.stackTop.scope.parent
 }
 
-func (e *Evaluator) popFrame() error {
+func (e *Evaluator) popFrame() {
 	if e.stackTop.parent == nil {
 		panic(fmt.Errorf("attempt to pop root frame"))
 	}
 	e.stackTop = e.stackTop.parent
-	return nil
 }
 
 func (e *Evaluator) getVariable(name string) (*scope, error) {
@@ -600,6 +599,7 @@ func (e *Evaluator) callFunction(fn Value, args []*Value) (Value, error) {
 		if err := e.pushFrame(f.Expr.Ident); err != nil {
 			return Value{}, err
 		}
+		defer e.popFrame()
 		e.stackTop.scope.parent = f.Scope
 
 		e.stackTop.scope.bindings[f.Expr.Ident] = fn
@@ -621,10 +621,6 @@ func (e *Evaluator) callFunction(fn Value, args []*Value) (Value, error) {
 			return Value{}, err
 		} else {
 			retVal = nil
-		}
-
-		if err := e.popFrame(); err != nil {
-			return Value{}, err
 		}
 
 		if retVal != nil {
@@ -1007,13 +1003,13 @@ func (e *Evaluator) evalStatement(stmt Statement) error {
 	switch st := stmt.(type) {
 	case *StatementBlock:
 		e.pushScope()
+		defer e.popScope()
 		for _, s := range st.Body {
 			err := e.evalStatement(s)
 			if err != nil {
 				return err
 			}
 		}
-		e.popScope()
 		return nil
 	case *StatementPrint:
 		args, err := e.evalExprList(st.Args)
@@ -1090,8 +1086,20 @@ func (e *Evaluator) evalStatement(stmt Statement) error {
 			loopCount++
 		}
 	case *StatementFor:
-		if st.PreExpr != nil {
-			e.evalExpr(st.PreExpr)
+		if st.Pre != nil {
+			if st.Pre.Expr != nil {
+				_, err := e.evalExpr(st.Pre.Expr)
+				if err != nil {
+					return err
+				}
+			} else {
+				e.pushScope()
+				defer e.popScope()
+				err := e.evalLetDecl(st.Pre.LetDecl, st.Token())
+				if err != nil {
+					return err
+				}
+			}
 		}
 
 		var err error
@@ -1114,8 +1122,8 @@ func (e *Evaluator) evalStatement(stmt Statement) error {
 					return err
 				}
 
-				if st.PostExpr != nil {
-					_, err = e.evalExpr(st.PostExpr)
+				if st.Post != nil {
+					_, err = e.evalExpr(st.Post)
 					if err != nil {
 						return err
 					}
@@ -1137,14 +1145,36 @@ func (e *Evaluator) evalStatement(stmt Statement) error {
 			return err
 		}
 
+		if st.LocalBindings {
+			e.pushScope()
+			defer e.popScope()
+		}
+
+		setVar := func(ident string, value Value) error {
+			if st.LocalBindings {
+				e.setVariable(ident, value)
+				return nil
+			}
+			scope, err := e.getVariable(ident)
+			if err != nil {
+				return err
+			}
+			scope.bindings[ident] = value
+			return nil
+		}
+
 		switch iterable.Tag {
 		case ValueArray:
 			for index, item := range iterable.Array.Items {
 				if st.IndexIdent != nil {
-					e.setVariable(st.IndexIdent.Ident, NewValue(index))
+					if err = setVar(st.IndexIdent.Ident, NewValue(index)); err != nil {
+						return err
+					}
 				}
 
-				e.setVariable(st.Ident.Ident, *item)
+				if err = setVar(st.Ident.Ident, *item); err != nil {
+					return err
+				}
 
 				err := e.evalStatement(st.Body)
 				if err == errBreak {
@@ -1157,10 +1187,14 @@ func (e *Evaluator) evalStatement(stmt Statement) error {
 			for _, k := range iterable.Obj.Keys {
 				v, _ := iterable.Obj.Get(k)
 				if st.IndexIdent != nil {
-					e.setVariable(st.IndexIdent.Ident, *v)
+					if err = setVar(st.IndexIdent.Ident, *v); err != nil {
+						return err
+					}
 				}
 
-				e.setVariable(st.Ident.Ident, NewValue(k))
+				if err = setVar(st.Ident.Ident, NewValue(k)); err != nil {
+					return err
+				}
 
 				err := e.evalStatement(st.Body)
 				if err == errBreak {
@@ -1172,10 +1206,14 @@ func (e *Evaluator) evalStatement(stmt Statement) error {
 		case ValueStr:
 			for index, c := range *iterable.Str {
 				if st.IndexIdent != nil {
-					e.setVariable(st.IndexIdent.Ident, NewValue(index))
+					if err = setVar(st.IndexIdent.Ident, NewValue(index)); err != nil {
+						return err
+					}
 				}
 
-				e.setVariable(st.Ident.Ident, NewValue(string(c)))
+				if err = setVar(st.Ident.Ident, NewValue(string(c))); err != nil {
+					return err
+				}
 
 				err := e.evalStatement(st.Body)
 				if err == errBreak {
@@ -1205,22 +1243,26 @@ func (e *Evaluator) evalStatement(stmt Statement) error {
 		}
 		return errExit
 	case *StatementLet:
-		ident := st.Ident.Ident
-		_, present := e.stackTop.scope.bindings[ident]
-		if present {
-			return e.error(st.Token(), fmt.Sprintf("variable '%s' already declared", ident))
-		}
-
-		value, err := e.evalExpr(st.Value)
-		if err != nil {
-			return err
-		}
-
-		e.stackTop.scope.bindings[ident] = value
-		return nil
+		return e.evalLetDecl(st.LetDecl, st.Token())
 	default:
 		return e.error(st.Token(), fmt.Sprintf("expected a statement but found %T", st))
 	}
+	return nil
+}
+
+func (e *Evaluator) evalLetDecl(letDecl *LetDecl, token Token) error {
+	ident := letDecl.Ident.Ident
+	_, present := e.stackTop.scope.bindings[ident]
+	if present {
+		return e.error(token, fmt.Sprintf("variable '%s' already declared", ident))
+	}
+
+	value, err := e.evalExpr(letDecl.Value)
+	if err != nil {
+		return err
+	}
+
+	e.stackTop.scope.bindings[ident] = value
 	return nil
 }
 

@@ -228,21 +228,32 @@ type StatementWhile struct {
 }
 
 type StatementFor struct {
-	PreExpr  Expr
-	Expr     Expr
-	PostExpr Expr
-	Body     Statement
-	token    Token
+	Pre   *ForPre
+	Expr  Expr
+	Post  Expr
+	Body  Statement
+	token Token
+}
+
+type ForPre struct {
+	Expr    Expr
+	LetDecl *LetDecl
 }
 
 type StatementForIn struct {
-	Ident      *ExprIdentifier
-	IndexIdent *ExprIdentifier
-	Iterable   Expr
-	Body       Statement
+	Ident         *ExprIdentifier
+	IndexIdent    *ExprIdentifier
+	Iterable      Expr
+	LocalBindings bool
+	Body          Statement
+	token         Token
 }
 
 type StatementLet struct {
+	*LetDecl
+}
+
+type LetDecl struct {
 	Ident *ExprIdentifier
 	Value Expr
 }
@@ -272,5 +283,5 @@ func (stmt *StatementExit) Token() Token     { return stmt.token }
 func (stmt *StatementIf) Token() Token       { return stmt.Expr.Token() }
 func (stmt *StatementWhile) Token() Token    { return stmt.Expr.Token() }
 func (stmt *StatementFor) Token() Token      { return stmt.token }
-func (stmt *StatementForIn) Token() Token    { return stmt.Ident.Token() }
+func (stmt *StatementForIn) Token() Token    { return stmt.token }
 func (stmt *StatementLet) Token() Token      { return stmt.Ident.Token() }
