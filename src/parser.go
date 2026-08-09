@@ -449,6 +449,10 @@ func (p *Parser) parseForInLoop(ident *ExprIdentifier, local bool, token Token) 
 		token:         token,
 	}
 
+	if strings.HasPrefix(ident.Ident, "$") {
+		return nil, p.error(ident.Token().Pos, fmt.Sprintf("cannot use '%s' as a loop variable", ident.Ident))
+	}
+
 	if p.current.Tag == Comma {
 		p.consume(Comma)
 		if err := p.consume(Ident); err != nil {

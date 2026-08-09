@@ -1149,16 +1149,16 @@ func (e *Evaluator) evalStatement(stmt Statement) error {
 			defer e.popScope()
 		}
 
-		setVar := func(ident string, value Value) error {
+		setVar := func(ident *ExprIdentifier, value Value) error {
 			if st.LocalBindings {
-				e.setVariable(ident, value)
+				e.setVariable(ident.Ident, value)
 				return nil
 			}
-			scope, err := e.getVariable(ident)
+			scope, err := e.getVariable(ident.Ident)
 			if err != nil {
-				return err
+				return e.error(ident.Token(), err.Error())
 			}
-			scope.bindings[ident] = value
+			scope.bindings[ident.Ident] = value
 			return nil
 		}
 
@@ -1166,12 +1166,12 @@ func (e *Evaluator) evalStatement(stmt Statement) error {
 		case ValueArray:
 			for index, item := range iterable.Array.Items {
 				if st.IndexIdent != nil {
-					if err = setVar(st.IndexIdent.Ident, NewValue(index)); err != nil {
+					if err = setVar(st.IndexIdent, NewValue(index)); err != nil {
 						return err
 					}
 				}
 
-				if err = setVar(st.Ident.Ident, *item); err != nil {
+				if err = setVar(st.Ident, *item); err != nil {
 					return err
 				}
 
@@ -1186,12 +1186,12 @@ func (e *Evaluator) evalStatement(stmt Statement) error {
 			for _, k := range iterable.Obj.Keys {
 				v, _ := iterable.Obj.Get(k)
 				if st.IndexIdent != nil {
-					if err = setVar(st.IndexIdent.Ident, *v); err != nil {
+					if err = setVar(st.IndexIdent, *v); err != nil {
 						return err
 					}
 				}
 
-				if err = setVar(st.Ident.Ident, NewValue(k)); err != nil {
+				if err = setVar(st.Ident, NewValue(k)); err != nil {
 					return err
 				}
 
@@ -1205,12 +1205,12 @@ func (e *Evaluator) evalStatement(stmt Statement) error {
 		case ValueStr:
 			for index, c := range *iterable.Str {
 				if st.IndexIdent != nil {
-					if err = setVar(st.IndexIdent.Ident, NewValue(index)); err != nil {
+					if err = setVar(st.IndexIdent, NewValue(index)); err != nil {
 						return err
 					}
 				}
 
-				if err = setVar(st.Ident.Ident, NewValue(string(c))); err != nil {
+				if err = setVar(st.Ident, NewValue(string(c))); err != nil {
 					return err
 				}
 
