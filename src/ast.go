@@ -97,8 +97,9 @@ type ExprTernary struct {
 }
 
 type ExprCall struct {
-	Func Expr
-	Args []Expr
+	Func  Expr
+	Args  []Expr
+	token Token
 }
 
 type ExprFunction struct {
@@ -149,9 +150,9 @@ func (expr *ExprIdentifier) Token() Token { return expr.token }
 func (expr *ExprArray) Token() Token      { return expr.token }
 func (expr *ExprObject) Token() Token     { return expr.token }
 func (expr *ExprUnary) Token() Token      { return expr.OpToken }
-func (expr *ExprBinary) Token() Token     { return expr.Left.Token() }
+func (expr *ExprBinary) Token() Token     { return expr.OpToken }
 func (expr *ExprTernary) Token() Token    { return expr.Cond.Token() }
-func (expr *ExprCall) Token() Token       { return expr.Func.Token() }
+func (expr *ExprCall) Token() Token       { return expr.token }
 func (expr *ExprFunction) Token() Token   { return expr.token }
 func (expr *ExprMatch) Token() Token      { return expr.token }
 func (expr *ExprAssign) Token() Token     { return expr.OpToken }

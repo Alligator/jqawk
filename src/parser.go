@@ -752,10 +752,12 @@ func call(p *Parser, left Expr) (Expr, error) {
 		return nil, err
 	}
 
-	return &ExprCall{
-		Func: left,
-		Args: args,
-	}, nil
+	token := left.Token()
+	if binary, ok := left.(*ExprBinary); ok {
+		token = binary.Right.Token()
+	}
+
+	return &ExprCall{left, args, token}, nil
 }
 
 func match(p *Parser) (Expr, error) {
