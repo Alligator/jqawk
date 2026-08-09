@@ -110,6 +110,7 @@ var basicTests = []struct {
 	{"BEGIN { print 'a\\fb' }", "a\fb\n"},
 	{"BEGIN { print 'a\\vb' }", "a\vb\n"},
 	{"BEGIN { print 'a\\x41' }", "aA\n"},
+	{"BEGIN { print 'a\\x6a\\x6A' }", "ajj\n"},
 	{"BEGIN { print 'a\\x00b' }", "a\x00b\n"},
 	{"BEGIN { print 'a\\u0041' }", "aA\n"},
 	{"BEGIN { print 'a\\u2603' }", "a☃\n"},
@@ -1033,7 +1034,7 @@ rhs not null
 	},
 	{
 		name:          "invalid escape chars",
-		prog:          `BEGIN { print '\za' }`,
+		prog:          `BEGIN { print '\za'; print 'b' }`,
 		json:          "[]",
 		expectedError: "unknown escape char 'z'",
 	},
