@@ -260,6 +260,15 @@ func nativeNum(e *Evaluator, args []*Value, this *Value) (*Value, error) {
 	}
 }
 
+func nativeType(e *Evaluator, args []*Value, this *Value) (*Value, error) {
+	if err := checkArgCount(args, 1); err != nil {
+		return nil, err
+	}
+
+	tag := NewValue(args[0].Tag.String())
+	return &tag, nil
+}
+
 func addRuntimeFunctions(e *Evaluator) {
 	e.setGlobal("printf", Value{
 		Tag:      ValueNativeFn,
@@ -276,5 +285,9 @@ func addRuntimeFunctions(e *Evaluator) {
 	e.setGlobal("parseJson", Value{
 		Tag:      ValueNativeFn,
 		NativeFn: nativeParseJson,
+	})
+	e.setGlobal("type", Value{
+		Tag:      ValueNativeFn,
+		NativeFn: nativeType,
 	})
 }
