@@ -752,4 +752,7 @@ array.map(fn)
 
 array.filter(fn)
   return a new array that only includes elements where fn(value) is truthy
+
+array.join(sep)
+  return the elements of the array as a single string, separated by sep
 ```

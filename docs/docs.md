@@ -313,6 +313,10 @@ The following statements are valid:
 
 `array.filter(fn)`
 : return a new array that only includes elements where `fn(element)` is truthy
+<br><br>
+
+`array.join(sep)`
+: return the elements of the array as a single string, separated by `sep`
 
 # SEE ALSO
 

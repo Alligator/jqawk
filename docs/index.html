@@ -360,7 +360,7 @@ one-liners or in a pipeline.</p>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">{</span> <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;Dan&quot;</span><span class="fu">,</span> <span class="dt">&quot;rate&quot;</span><span class="fu">:</span> <span class="fl">3.75</span><span class="fu">,</span> <span class="dt">&quot;hours&quot;</span><span class="fu">:</span> <span class="dv">0</span> <span class="fu">}</span><span class="ot">,</span></span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">{</span> <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;Kathy&quot;</span><span class="fu">,</span> <span class="dt">&quot;rate&quot;</span><span class="fu">:</span> <span class="dv">4</span><span class="fu">,</span> <span class="dt">&quot;hours&quot;</span><span class="fu">:</span> <span class="dv">10</span> <span class="fu">}</span><span class="ot">,</span></span>
 <span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">{</span> <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;Mark&quot;</span><span class="fu">,</span> <span class="dt">&quot;rate&quot;</span><span class="fu">:</span> <span class="dv">5</span><span class="fu">,</span> <span class="dt">&quot;hours&quot;</span><span class="fu">:</span> <span class="dv">20</span> <span class="fu">}</span><span class="ot">,</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">{</span> <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;Mary&quot;</span><span class="fu">,</span> <span class="dt">&quot;rate&quot;</span><span class="fu">:</span> <span class="fl">5.5</span><span class="fu">,</span> <span class="dt">&quot;hours&quot;</span><span class="fu">:</span> <span class="dv">22</span> <span class="fu">}</span><span class="ot">,</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">{</span> <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;Mary&quot;</span><span class="fu">,</span> <span class="dt">&quot;rate&quot;</span><span class="fu">:</span> <span class="fl">5.50</span><span class="fu">,</span> <span class="dt">&quot;hours&quot;</span><span class="fu">:</span> <span class="dv">22</span> <span class="fu">}</span><span class="ot">,</span></span>
 <span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">{</span> <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;Susie&quot;</span><span class="fu">,</span> <span class="dt">&quot;rate&quot;</span><span class="fu">:</span> <span class="fl">4.25</span><span class="fu">,</span> <span class="dt">&quot;hours&quot;</span><span class="fu">:</span> <span class="dv">18</span> <span class="fu">}</span></span>
 <span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="ot">]</span></span></code></pre></div>
 <p>This will print</p>
@@ -414,8 +414,11 @@ use the <code>-r</code> flag to select it.</p>
 <p>With this JSON:</p>
 <div class="sourceCode" id="cb8"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;status&quot;</span><span class="fu">:</span> <span class="st">&quot;success&quot;</span><span class="fu">,</span></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;result&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="fu">{</span> <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;alligator&quot;</span> <span class="fu">}</span><span class="ot">,</span> <span class="fu">{</span> <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;someone else&quot;</span> <span class="fu">}</span><span class="ot">]</span></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;result&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">{</span> <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;alligator&quot;</span> <span class="fu">}</span><span class="ot">,</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">{</span> <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;someone else&quot;</span> <span class="fu">}</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  <span class="ot">]</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 <p>This command selects the <code>result</code> array as the root
 value:</p>
 <pre class="console"><code>$ jqawk -r &quot;$.result&quot; &quot;{ print $.name }&quot; file.json
@@ -435,46 +438,84 @@ equivalent to the one above:</p>
 alligator
 someone else</code></pre>
 </div>
+<h2 id="variables">Variables</h2>
+<p>Variables do not need to be declared first. This sets <code>x</code>
+to 3:</p>
+<pre><code>x = 3</code></pre>
+<p>You can also create arrays and objects implicitly. In each example,
+<code>x</code> is initially unset:</p>
+<pre><code>x[0] = 3                # x becomes [3]
+x[2] = 3                # x becomes [null, null, 3]
+x[0][1] = 3             # x becomes [[null, 3]]
+
+x.name = &#39;gate&#39;         # x becomes { &quot;name&quot;: &quot;gate&quot; }
+x.person.name = &#39;gate&#39;  # x becomes { &quot;person&quot;: { &quot;name&quot;: &quot;gate&quot; } }</code></pre>
+<p>Assignment searches for the variable in the current scope. If not
+found, a new variable is created globally. Global variables are shared
+between rules and exist for the duration of the program.</p>
+<p>You can use <code>let</code> to create variables local to the current
+scope:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode awk"><code class="sourceCode awk"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="cf">BEGIN</span> <span class="op">{</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  let x <span class="op">=</span> <span class="dv">2</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="cf">END</span> <span class="op">{</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">print</span> x</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>This will print <code>&lt;unknown&gt;</code>, because <code>x</code>
+is unset in the <code>END</code> rule.</p>
+<p>The left-hand side of a <code>let</code> must be a plain identifier.
+To create local arrays and objects, give them an empty value:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode awk"><code class="sourceCode awk"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="cf">BEGIN</span> <span class="op">{</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  let arr <span class="op">=</span> []</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  let obj <span class="op">=</span> <span class="op">{}</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  arr[<span class="dv">2</span>] <span class="op">=</span> <span class="dv">3</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  obj.name <span class="op">=</span> &#39;gate&#39;</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>New scopes are created in:</p>
+<ul>
+<li>Every <code>{ ... }</code> block, including rule bodies</li>
+<li>Function calls</li>
+</ul>
 <h2 id="control-flow">Control flow</h2>
 <p>jqawk provides <code>if</code>, <code>else</code>, <code>for</code>,
 and <code>while</code> control-flow statements:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode awk"><code class="sourceCode awk"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="cf">BEGIN</span> <span class="op">{</span></span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  columns <span class="op">=</span> [&#39;name&#39;<span class="op">,</span> &#39;rate&#39;<span class="op">,</span> &#39;hours&#39;]</span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  rows <span class="op">=</span> []</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> <span class="op">(</span>$.name <span class="op">!=</span> &#39;Dan&#39;<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>    rows.push<span class="op">(</span>[$.name<span class="op">,</span> $.rate<span class="op">,</span> $.hours]<span class="op">)</span></span>
-<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
-<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
-<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a><span class="cf">END</span> <span class="op">{</span></span>
-<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>  <span class="co"># print column headers</span></span>
-<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> <span class="op">(</span>col <span class="kw">in</span> columns<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">printf</span><span class="op">(</span>&#39;<span class="op">%-</span><span class="dv">10</span>s &#39;<span class="op">,</span> col<span class="op">)</span></span>
-<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
-<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>  <span class="co"># print divider</span></span>
-<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>  <span class="kw">printf</span><span class="op">(</span>&#39;\n&#39;<span class="op">)</span></span>
-<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>  i <span class="op">=</span> <span class="dv">0</span></span>
-<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>  <span class="cf">while</span> <span class="op">(</span>i <span class="op">&lt;</span> <span class="dv">32</span><span class="op">)</span> <span class="op">{</span></span>
-<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>    <span class="kw">printf</span><span class="op">(</span>&#39;<span class="op">-</span>&#39;<span class="op">)</span></span>
-<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>    i<span class="op">++</span></span>
-<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
-<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a>  <span class="kw">printf</span><span class="op">(</span>&#39;\n&#39;<span class="op">)</span></span>
-<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a>  <span class="co"># print rows</span></span>
-<span id="cb11-28"><a href="#cb11-28" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> <span class="op">(</span>row <span class="kw">in</span> rows<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb11-29"><a href="#cb11-29" aria-hidden="true" tabindex="-1"></a>    <span class="kw">printf</span><span class="op">(</span>&#39;<span class="op">%-</span><span class="dv">10</span>s <span class="op">%-</span><span class="dv">10</span>f <span class="op">%-</span><span class="dv">10</span>f\n&#39;<span class="op">,</span> row[<span class="dv">0</span>]<span class="op">,</span> row[<span class="dv">1</span>]<span class="op">,</span> row[<span class="dv">2</span>]<span class="op">)</span></span>
-<span id="cb11-30"><a href="#cb11-30" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
-<span id="cb11-31"><a href="#cb11-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-32"><a href="#cb11-32" aria-hidden="true" tabindex="-1"></a>  <span class="co"># print footer</span></span>
-<span id="cb11-33"><a href="#cb11-33" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> <span class="op">(</span>i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> <span class="dv">32</span><span class="op">;</span> i<span class="op">++)</span> <span class="op">{</span></span>
-<span id="cb11-34"><a href="#cb11-34" aria-hidden="true" tabindex="-1"></a>    <span class="kw">printf</span><span class="op">(</span>&#39;<span class="op">-</span>&#39;<span class="op">)</span></span>
-<span id="cb11-35"><a href="#cb11-35" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
-<span id="cb11-36"><a href="#cb11-36" aria-hidden="true" tabindex="-1"></a>  <span class="kw">printf</span><span class="op">(</span>&#39;\n&#39;<span class="op">)</span></span>
-<span id="cb11-37"><a href="#cb11-37" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode awk"><code class="sourceCode awk"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="cf">BEGIN</span> <span class="op">{</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  columns <span class="op">=</span> [&#39;name&#39;<span class="op">,</span> &#39;rate&#39;<span class="op">,</span> &#39;hours&#39;]</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  rows <span class="op">=</span> []</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> <span class="op">(</span>$.name <span class="op">!=</span> &#39;Dan&#39;<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>    rows.push<span class="op">(</span>[$.name<span class="op">,</span> $.rate<span class="op">,</span> $.hours]<span class="op">)</span></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a><span class="cf">END</span> <span class="op">{</span></span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>  <span class="co"># print column headers</span></span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> <span class="op">(</span>col <span class="kw">in</span> columns<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">printf</span><span class="op">(</span>&#39;<span class="op">%-</span><span class="dv">10</span>s &#39;<span class="op">,</span> col<span class="op">)</span></span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>  <span class="co"># print divider</span></span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>  <span class="kw">printf</span><span class="op">(</span>&#39;\n&#39;<span class="op">)</span></span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>  i <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>  <span class="cf">while</span> <span class="op">(</span>i <span class="op">&lt;</span> <span class="dv">32</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a>    <span class="kw">printf</span><span class="op">(</span>&#39;<span class="op">-</span>&#39;<span class="op">)</span></span>
+<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a>    i<span class="op">++</span></span>
+<span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb15-25"><a href="#cb15-25" aria-hidden="true" tabindex="-1"></a>  <span class="kw">printf</span><span class="op">(</span>&#39;\n&#39;<span class="op">)</span></span>
+<span id="cb15-26"><a href="#cb15-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-27"><a href="#cb15-27" aria-hidden="true" tabindex="-1"></a>  <span class="co"># print rows</span></span>
+<span id="cb15-28"><a href="#cb15-28" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> <span class="op">(</span>row <span class="kw">in</span> rows<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb15-29"><a href="#cb15-29" aria-hidden="true" tabindex="-1"></a>    <span class="kw">printf</span><span class="op">(</span>&#39;<span class="op">%-</span><span class="dv">10</span>s <span class="op">%-</span><span class="dv">10</span>f <span class="op">%-</span><span class="dv">10</span>f\n&#39;<span class="op">,</span> row[<span class="dv">0</span>]<span class="op">,</span> row[<span class="dv">1</span>]<span class="op">,</span> row[<span class="dv">2</span>]<span class="op">)</span></span>
+<span id="cb15-30"><a href="#cb15-30" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb15-31"><a href="#cb15-31" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb15-32"><a href="#cb15-32" aria-hidden="true" tabindex="-1"></a>  <span class="co"># print footer</span></span>
+<span id="cb15-33"><a href="#cb15-33" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> <span class="op">(</span>i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> <span class="dv">32</span><span class="op">;</span> i<span class="op">++)</span> <span class="op">{</span></span>
+<span id="cb15-34"><a href="#cb15-34" aria-hidden="true" tabindex="-1"></a>    <span class="kw">printf</span><span class="op">(</span>&#39;<span class="op">-</span>&#39;<span class="op">)</span></span>
+<span id="cb15-35"><a href="#cb15-35" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb15-36"><a href="#cb15-36" aria-hidden="true" tabindex="-1"></a>  <span class="kw">printf</span><span class="op">(</span>&#39;\n&#39;<span class="op">)</span></span>
+<span id="cb15-37"><a href="#cb15-37" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 <pre class="shellsession"><code>$ jqawk -f prog.jqawk emp.json
 name       rate       hours
 --------------------------------
@@ -487,57 +528,64 @@ Susie      4.25       18
 <h2 id="match-expressions">Match expressions</h2>
 <p>With a match expression you can test a variable against a set of
 values:</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode awk"><code class="sourceCode awk"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="cf">BEGIN</span> <span class="op">{</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  a <span class="op">=</span> <span class="dv">10</span></span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">print</span> <span class="fu">match</span><span class="op">(</span>a<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    <span class="dv">10</span> <span class="op">=&gt;</span> &#39;ten&#39;<span class="op">,</span></span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    <span class="dv">20</span> <span class="op">=&gt;</span> &#39;twenty&#39;<span class="op">,</span></span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>  <span class="co"># the body can be a block</span></span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">match</span><span class="op">(</span>a<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>    <span class="dv">100</span><span class="op">,</span> <span class="dv">200</span><span class="op">,</span> <span class="dv">300</span> <span class="op">=&gt;</span> <span class="op">{</span></span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>      <span class="kw">print</span> &#39;one<span class="op">,</span> two <span class="fu">or</span> three hundred&#39;</span>
-<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>    <span class="op">},</span></span>
-<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>    a <span class="op">=&gt;</span> <span class="op">{</span></span>
-<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>      <span class="kw">print</span> &#39;default case&#39;<span class="op">,</span> a</span>
-<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>    <span class="op">},</span></span>
-<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
-<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>  <span class="co"># arrays can also be destructured</span></span>
-<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>  b <span class="op">=</span> [<span class="dv">1</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">3</span>]</span>
-<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">match</span><span class="op">(</span>b<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>    [<span class="dv">1</span><span class="op">,</span> x<span class="op">,</span> y] <span class="op">=&gt;</span> <span class="op">{</span></span>
-<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>      <span class="kw">print</span> x</span>
-<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>      <span class="kw">print</span> y</span>
-<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
-<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
-<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb17"><pre class="sourceCode awk"><code class="sourceCode awk"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="cf">BEGIN</span> <span class="op">{</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  a <span class="op">=</span> <span class="dv">10</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">print</span> <span class="fu">match</span><span class="op">(</span>a<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>    <span class="dv">10</span> <span class="op">=&gt;</span> &#39;ten&#39;<span class="op">,</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>    <span class="dv">20</span> <span class="op">=&gt;</span> &#39;twenty&#39;<span class="op">,</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>  <span class="co"># the body can be a block</span></span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">match</span><span class="op">(</span>a<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>    <span class="dv">100</span><span class="op">,</span> <span class="dv">200</span><span class="op">,</span> <span class="dv">300</span> <span class="op">=&gt;</span> <span class="op">{</span></span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>      <span class="kw">print</span> &#39;one<span class="op">,</span> two <span class="fu">or</span> three hundred&#39;</span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>    <span class="op">},</span></span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>    a <span class="op">=&gt;</span> <span class="op">{</span></span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>      <span class="kw">print</span> &#39;default case&#39;<span class="op">,</span> a</span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>    <span class="op">},</span></span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a>  <span class="co"># arrays can also be destructured</span></span>
+<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a>  b <span class="op">=</span> [<span class="dv">1</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">3</span>]</span>
+<span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">match</span><span class="op">(</span>b<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb17-21"><a href="#cb17-21" aria-hidden="true" tabindex="-1"></a>    [<span class="dv">1</span><span class="op">,</span> x<span class="op">,</span> y] <span class="op">=&gt;</span> <span class="op">{</span></span>
+<span id="cb17-22"><a href="#cb17-22" aria-hidden="true" tabindex="-1"></a>      <span class="kw">print</span> x</span>
+<span id="cb17-23"><a href="#cb17-23" aria-hidden="true" tabindex="-1"></a>      <span class="kw">print</span> y</span>
+<span id="cb17-24"><a href="#cb17-24" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb17-25"><a href="#cb17-25" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb17-26"><a href="#cb17-26" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 <pre class="shellsession"><code>$ jqawk -f match.jqawk
 ten
 default case 10
 2
 3</code></pre>
 <h2 id="regex">Regex</h2>
-<p>Regex literals can be matched against with the <code>~</code>
-operator:</p>
+<p>Regex literals can be matched with the <code>~</code> operator:</p>
 <pre class="shellsession"><code>$ jqawk &quot;$.name ~ /^M/ { print $.name }&quot; emp.json
 Mark
 Mary</code></pre>
 <p>Use <code>!~</code> to invert the match.</p>
+<p>A regex may appear on either side:</p>
+<pre><code>$.name ~ /greg/
+/greg/ ~ $.greg</code></pre>
+<p>The other side is converted to a string.</p>
+<p>If the left side is not a regex and the right side is a string, it&#39;s
+treated as a regex pattern:</p>
+<pre><code>pat = &#39;greg&#39;
+$.name ~ pat</code></pre>
 <h2 id="functions">Functions</h2>
 <p>Functions can be defined both inside and outside of rules:</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode awk"><code class="sourceCode awk"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> pay<span class="op">(</span>rate<span class="op">,</span> hours<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> rate <span class="op">*</span> hours</span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">function</span> get_name<span class="op">(</span>emp<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> emp.name</span>
-<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
-<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>  <span class="kw">print</span> get_name<span class="op">(</span>$<span class="op">),</span> pay<span class="op">(</span>$.rate<span class="op">,</span> $.hours<span class="op">)</span></span>
-<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb22"><pre class="sourceCode awk"><code class="sourceCode awk"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> pay<span class="op">(</span>rate<span class="op">,</span> hours<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> rate <span class="op">*</span> hours</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">function</span> get_name<span class="op">(</span>emp<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> emp.name</span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>  <span class="kw">print</span> get_name<span class="op">(</span>$<span class="op">),</span> pay<span class="op">(</span>$.rate<span class="op">,</span> $.hours<span class="op">)</span></span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 <pre class="shellsession"><code>$ jqawk -f prog.jqawk emp.json
 Beth 0
 Dan 0
@@ -547,28 +595,28 @@ Mary 121
 Susie 76.5</code></pre>
 <p>They are also first-class, and can be assigned to variables and
 passed as parameters:</p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode awk"><code class="sourceCode awk"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="cf">BEGIN</span> <span class="op">{</span></span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  myfunc <span class="op">=</span> <span class="kw">function</span><span class="op">()</span> <span class="op">{</span></span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">print</span> &#39;hello&#39;</span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
-<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>  myfunc<span class="op">()</span></span>
-<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb24"><pre class="sourceCode awk"><code class="sourceCode awk"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="cf">BEGIN</span> <span class="op">{</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  myfunc <span class="op">=</span> <span class="kw">function</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">print</span> &#39;hello&#39;</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>  myfunc<span class="op">()</span></span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 <p>Anonymous functions can be declared with the <code>fn() =&gt;</code>
 shorthand:</p>
-<div class="sourceCode" id="cb19"><pre class="sourceCode awk"><code class="sourceCode awk"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="cf">BEGIN</span> <span class="op">{</span></span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">print</span> [<span class="dv">1</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">3</span>].map<span class="op">(</span>fn<span class="op">(</span>x<span class="op">)</span> <span class="op">=&gt;</span> x <span class="op">*</span> <span class="dv">2</span><span class="op">)</span></span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb25"><pre class="sourceCode awk"><code class="sourceCode awk"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="cf">BEGIN</span> <span class="op">{</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">print</span> [<span class="dv">1</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">3</span>].map<span class="op">(</span>fn<span class="op">(</span>x<span class="op">)</span> <span class="op">=&gt;</span> x <span class="op">*</span> <span class="dv">2</span><span class="op">)</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 <pre class="shellsession"><code>$ jqawk -f prog.jqawk emp.json
 [2, 4, 6]</code></pre>
 <p>The body can be an expression, which is implied to be the return
 value. The body can also be a block, and <code>return</code> can be used
 to return a value:</p>
-<div class="sourceCode" id="cb21"><pre class="sourceCode awk"><code class="sourceCode awk"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="cf">BEGIN</span> <span class="op">{</span></span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">print</span> [<span class="dv">1</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">3</span>].map<span class="op">(</span>fn<span class="op">(</span>x<span class="op">)</span> <span class="op">=&gt;</span> <span class="op">{</span></span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> x <span class="op">*</span> <span class="dv">2</span></span>
-<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>  <span class="op">})</span></span>
-<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb27"><pre class="sourceCode awk"><code class="sourceCode awk"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="cf">BEGIN</span> <span class="op">{</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">print</span> [<span class="dv">1</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">3</span>].map<span class="op">(</span>fn<span class="op">(</span>x<span class="op">)</span> <span class="op">=&gt;</span> <span class="op">{</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> x <span class="op">*</span> <span class="dv">2</span></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>  <span class="op">})</span></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 <h2 id="-variables"><code>$</code> Variables</h2>
 <p>If the input is an array, jqawk sets two variables:</p>
 <ul>
@@ -610,6 +658,52 @@ $ jqawk -o - &quot;{ $.name_length = $.name.length() }&quot; example.json
 <h2 id="interactive-repl">Interactive REPL</h2>
 <p>The <code>-i</code> flag will start the interactive REPL. The REPL
 can only be run with files, not JSON read from stdin.</p>
+<h2 id="differences-from-awk">differences from Awk</h2>
+<p>jqawk is awk-inspired but differs from awk in many ways. These are
+some of the subtler differences.</p>
+<p>jqawk uses <code>+</code> for string concatenation, awk concatenates
+adjacent strings:</p>
+<pre><code>  awk: &quot;a&quot; &quot;b&quot;
+jqawk: &quot;a&quot; + &quot;b&quot;</code></pre>
+<p>Patterns do not implicitly test against <code>$</code>:</p>
+<pre><code>  awk: /a/ { print }
+jqawk: $ ~ /a/ { print }</code></pre>
+<p>Range patterns are not supported. In jqawk you have to store some
+state:</p>
+<pre><code>  awk: /a/, /b/ { print }
+jqawk: $ ~ /a/ { in_range = true }
+       in_range { print }
+       $ ~ /b/ { in_range = false }</code></pre>
+<p>True local variables with <code>let</code>:</p>
+<pre><code>  awk: function x(arg,      a) {
+         a = 2
+         ...
+       }
+jqawk: function x(arg) {
+         let a = 2
+         ...
+       }</code></pre>
+<p>There is no dynamic field syntax, <code>$</code> is a JSON value and
+can be indexed with <code>[]</code>:</p>
+<pre><code>  awk: $(i + 1)
+jqawk: $[i + 1]</code></pre>
+<p><code>exit</code> exits the program immediately, without running
+<code>END</code> rules.</p>
+<p>Awk uses <code>OFMT</code> for print statements, which defaults to
+<code>%.6g</code>. jqawk prints the full precision by default:</p>
+<pre><code>  awk: print 123456.789  # prints 123457
+jqawk: print 123456.789  # prints 123456.789</code></pre>
+<p>To change precision, use <code>printf</code>.</p>
+<p>Awk hash table iteration order is implementation defined, jqawk
+preserves the order keys were inserted. This program prints
+<code>a</code> then <code>b</code> in GNU Awk and One True Awk. It
+prints <code>b</code> then <code>a</code> in jqawk:</p>
+<div class="sourceCode" id="cb35"><pre class="sourceCode awk"><code class="sourceCode awk"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="cf">BEGIN</span> <span class="op">{</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>  tbl[&#39;b&#39;] <span class="op">=</span> <span class="dv">1</span></span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>  tbl[&#39;a&#39;] <span class="op">=</span> <span class="dv">2</span></span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> <span class="op">(</span>k <span class="kw">in</span> tbl<span class="op">)</span></span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">print</span> k</span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 <h2 id="language-reference">Language reference</h2>
 <p>A rough jqawk language reference.</p>
 <h3 id="operators">Operators</h3>
@@ -703,7 +797,7 @@ for (&lt;preexpression&gt;; &lt;checkexpression&gt;; &lt;postexpression&gt;) &lt
 for (&lt;identifier&gt; in &lt;expression&gt;) &lt;body&gt;
   execute &lt;body&gt; for each element in &lt;expression&gt; with &lt;identifier&gt; set to its
   value.
-
+  
   if &lt;expression&gt; is an array, &lt;identifier&gt; is each element.
   if it&#39;s an object, &lt;identifier&gt; is each key.
   if it&#39;s a string, &lt;identifier&gt; is each character.
@@ -831,7 +925,10 @@ array.map(fn)
   array
 
 array.filter(fn)
-  return a new array that only includes elements where fn(value) is truthy</code></pre>
+  return a new array that only includes elements where fn(value) is truthy
+
+array.join(sep)
+  return the elements of the array as a single string, separated by sep</code></pre>
 
 <footer>
     <div>a thing by <a href="https://alligatr.co.uk">alligator</a></div>

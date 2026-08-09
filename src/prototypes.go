@@ -340,6 +340,31 @@ func getArrayPrototype() *Value {
 			},
 		})
 
+		proto.Obj.Set("join", Value{
+			Tag: ValueNativeFn,
+			NativeFn: func(e *Evaluator, v []*Value, this *Value) (*Value, error) {
+				if this == nil {
+					return nil, nil
+				}
+
+				sep, err := checkArg(v, 0, ValueStr)
+				if err != nil {
+					return nil, err
+				}
+
+				var sb strings.Builder
+				for i, val := range this.Array.Items {
+					sb.WriteString(val.String())
+					if i < len(this.Array.Items)-1 {
+						sb.WriteString(*sep.Str)
+					}
+				}
+
+				val := NewValue(sb.String())
+				return &val, nil
+			},
+		})
+
 		arrayPrototype = &proto
 	}
 	return arrayPrototype

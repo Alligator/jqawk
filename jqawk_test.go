@@ -1061,6 +1061,7 @@ rhs not null
 				print a.popfirst(), a
 				print a.contains(1), a.contains(2)
 				print a.reverse()
+				print a.join(', ')
 			}
 		`,
 		json: "[]",
@@ -1069,6 +1070,7 @@ rhs not null
 1 [2, 3]
 false true
 [3, 2]
+2, 3
 `,
 	},
 	{
