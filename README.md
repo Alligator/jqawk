@@ -440,7 +440,7 @@ $ jqawk -o - "{ $.name_length = $.name.length() }" example.json
 
 The `-i` flag will start the interactive REPL. The REPL can only be run with files, not JSON read from stdin.
 
-## differences from Awk
+## Differences from Awk
 
 jqawk is awk-inspired but differs from awk in many ways. These are some of the subtler differences.
 
@@ -494,7 +494,7 @@ jqawk: print 123456.789  # prints 123456.789
 
 To change precision, use `printf`.
 
-Awk hash table iteration order is implementation defined, jqawk preserves the order keys were inserted. This program prints `a` then `b` in GNU Awk and One True Awk. It prints `b` then `a` in jqawk:
+Awk hash table iteration order is implementation defined, jqawk preserves the order keys were inserted. This program prints `a` then `b` in GNU awk and One true awk. It prints `b` then `a` in jqawk:
 
 ```awk
 BEGIN {

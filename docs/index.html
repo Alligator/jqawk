@@ -658,7 +658,7 @@ $ jqawk -o - &quot;{ $.name_length = $.name.length() }&quot; example.json
 <h2 id="interactive-repl">Interactive REPL</h2>
 <p>The <code>-i</code> flag will start the interactive REPL. The REPL
 can only be run with files, not JSON read from stdin.</p>
-<h2 id="differences-from-awk">differences from Awk</h2>
+<h2 id="differences-from-awk">Differences from Awk</h2>
 <p>jqawk is awk-inspired but differs from awk in many ways. These are
 some of the subtler differences.</p>
 <p>jqawk uses <code>+</code> for string concatenation, awk concatenates
@@ -696,7 +696,7 @@ jqawk: print 123456.789  # prints 123456.789</code></pre>
 <p>To change precision, use <code>printf</code>.</p>
 <p>Awk hash table iteration order is implementation defined, jqawk
 preserves the order keys were inserted. This program prints
-<code>a</code> then <code>b</code> in GNU Awk and One True Awk. It
+<code>a</code> then <code>b</code> in GNU awk and One true awk. It
 prints <code>b</code> then <code>a</code> in jqawk:</p>
 <div class="sourceCode" id="cb35"><pre class="sourceCode awk"><code class="sourceCode awk"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="cf">BEGIN</span> <span class="op">{</span></span>
 <span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>  tbl[&#39;b&#39;] <span class="op">=</span> <span class="dv">1</span></span>
