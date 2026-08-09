@@ -1426,6 +1426,16 @@ false true
 		expectedError: "call depth limit exceeded",
 	},
 	{
+		name: "compound assignment evaluates once",
+		prog: `BEGIN {
+			a = [10, 20]
+			i = 0
+			a[i++] += 1
+			print a[0], a[1], i
+		}`,
+		expected: "11 20 1\n",
+	},
+	{
 		name: "bug: statement after block",
 		prog: `
 			{
@@ -2603,6 +2613,31 @@ Africa:1888
 	})
 
 	test(t, testCase{
+		name:     "t.cond",
+		prog:     "BEGIN { print false ? 1 : true ? 2 : 3 }",
+		expected: "2\n",
+	})
+
+	test(t, testCase{
+		name: "t.contin",
+		prog: `{
+			for (i = 0; i < $.length(); i++) {
+				if ($[i] ~ /^[0-9]+$/)
+					continue;
+				print $[i], 'is non-numeric'
+				next
+			}
+			print $index, 'is all numeric'
+		}`,
+		json: `[
+			["123", "456", "789"],
+			["12a", "456", "789"],
+			["123", "45b", "789"]
+		]`,
+		expected: "0 is all numeric\n12a is non-numeric\n45b is non-numeric\n",
+	})
+
+	test(t, testCase{
 		name: "t.for",
 		prog: `BEGIN {
 			for (i = 1; i < 4; i++) {
@@ -2667,6 +2702,16 @@ Africa:1888
 		`,
 		json:     "[1, 2, 3, 4, 5]",
 		expected: "1\n2\n3\n",
+	})
+
+	test(t, testCase{
+		name: "t.not",
+		prog: `
+			!($ ~ /bwk/) { print 'a', $ }
+			$ !~ /bwk/ { print 'b', $ }
+		`,
+		json:     `["bwk", "aho"]`,
+		expected: "a aho\nb aho\n",
 	})
 
 	test(t, testCase{
